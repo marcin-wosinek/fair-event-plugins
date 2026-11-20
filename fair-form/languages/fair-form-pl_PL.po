@@ -63,7 +63,7 @@ msgstr "Nie udało się przetworzyć zgłoszenia. Spróbuj ponownie."
 
 #: src/API/FairFormController.php:271
 #: src/blocks/fair-form/render.php:18
-#: src/blocks/fair-form/editor.js:165
+#: src/blocks/fair-form/editor.js:168
 #: src/blocks/fair-form/frontend.js:138
 msgid "Thank you for your submission!"
 msgstr "Dziękujemy za Twoją przesyłkę!"
@@ -80,14 +80,15 @@ msgid "Post #%d"
 msgstr "Post #%d"
 
 #: src/API/QuestionnaireResponsesController.php:327
-#: src/Admin/submission-detail/SubmissionDetail.js:65
+#: src/Admin/submission-detail/SubmissionDetail.js:66
 msgid "No page"
 msgstr "Brak strony"
 
+#. translators: %d: event date ID.
 #. translators: %d: event date ID
 #: src/API/QuestionnaireResponsesController.php:347
-#: src/Admin/form-answers/FormAnswers.js:249
-#, php-format, js-format
+#: src/Admin/form-answers/FormAnswers.js:250
+#, php-format,js-format
 msgid "Event date #%d"
 msgstr "Data wydarzenia #%d"
 
@@ -102,7 +103,7 @@ msgstr "Starsze (brak identyfikatora formularza)"
 
 #: src/API/QuestionnaireResponsesController.php:449
 #: src/API/QuestionnaireResponsesController.php:621
-#: src/Admin/submission-detail/SubmissionDetail.js:336
+#: src/Admin/submission-detail/SubmissionDetail.js:337
 msgid "Submission not found."
 msgstr "Zgłoszenie nie znalezione."
 
@@ -150,8 +151,8 @@ msgid "Select an option..."
 msgstr "Wybierz opcję..."
 
 #: src/blocks/fair-form/render.php:17
-#: src/blocks/fair-form/editor.js:157
-#: src/blocks/fair-form/editor.js:222
+#: src/blocks/fair-form/editor.js:160
+#: src/blocks/fair-form/editor.js:225
 msgid "Submit"
 msgstr "Wyślij"
 
@@ -168,25 +169,25 @@ msgid "Forced by a wp-config constant — change it there."
 msgstr "Wymuszone przez stałą w wp-config – zmień ją tam."
 
 #. translators: %s: site name
-#: src/Services/FormNotificationService.php:214
+#: src/Services/FormNotificationService.php:215
 #, php-format
 msgid "New form submission — %s"
 msgstr "Nowe zgłoszenie formularza – %s"
 
-#: src/Services/FormNotificationService.php:221
-#: src/Admin/form-answers/FormAnswers.js:165
+#: src/Services/FormNotificationService.php:222
+#: src/Admin/form-answers/FormAnswers.js:166
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:158
-#: src/Admin/submission-detail/SubmissionDetail.js:430
+#: src/Admin/submission-detail/SubmissionDetail.js:431
 msgid "Email"
 msgstr "Email"
 
 #. translators: %s: page title
-#: src/Services/FormNotificationService.php:233
+#: src/Services/FormNotificationService.php:234
 #, php-format
 msgid "Page: %s"
 msgstr "Strona: %s"
 
-#: src/Services/FormNotificationService.php:242
+#: src/Services/FormNotificationService.php:243
 msgid "A new form submission has been received."
 msgstr "Otrzymano nowe zgłoszenie formularza."
 
@@ -241,7 +242,7 @@ msgid "Failed to save uploaded file."
 msgstr "Nie udało się zapisać przesłanego pliku."
 
 #: src/Admin/answers-overview/AnswersOverview.js:54
-#: src/Admin/form-answers/FormAnswers.js:151
+#: src/Admin/form-answers/FormAnswers.js:152
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:624
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:140
 msgid "Name"
@@ -272,22 +273,22 @@ msgid "Group by"
 msgstr "Grupuj wg"
 
 #: src/Admin/answers-overview/AnswersOverview.js:109
-#: src/Admin/submission-detail/SubmissionDetail.js:407
+#: src/Admin/submission-detail/SubmissionDetail.js:408
 msgid "Page"
 msgstr "Strona"
 
 #: src/Admin/answers-overview/AnswersOverview.js:113
-#: src/Admin/form-answers/FormAnswers.js:177
-#: src/Admin/form-answers/FormAnswers.js:307
-#: src/Admin/submission-detail/SubmissionDetail.js:438
-#: src/blocks/fair-form/editor.js:92
+#: src/Admin/form-answers/FormAnswers.js:178
+#: src/Admin/form-answers/FormAnswers.js:308
+#: src/Admin/submission-detail/SubmissionDetail.js:439
+#: src/blocks/fair-form/editor.js:95
 msgid "Event"
 msgstr "Zdarzenie"
 
 #: src/Admin/answers-overview/AnswersOverview.js:117
 #: src/Admin/components/SubmissionContext.js:41
-#: src/Admin/form-answers/FormAnswers.js:171
-#: src/Admin/submission-detail/SubmissionDetail.js:403
+#: src/Admin/form-answers/FormAnswers.js:172
+#: src/Admin/submission-detail/SubmissionDetail.js:404
 msgid "Form"
 msgstr "Formularz"
 
@@ -306,9 +307,9 @@ msgid "This permanently deletes this submission and its answers. The participant
 msgstr "Spowoduje to trwałe usunięcie tego zgłoszenia i jego odpowiedzi. Uczestnik, inne zgłoszenia i przesłane pliki zostaną zachowane."
 
 #: src/Admin/components/DeleteSubmissionDialog.js:122
-#: src/Admin/form-answers/FormAnswers.js:350
+#: src/Admin/form-answers/FormAnswers.js:351
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:658
-#: src/Admin/submission-detail/SubmissionDetail.js:274
+#: src/Admin/submission-detail/SubmissionDetail.js:275
 msgid "Cancel"
 msgstr "Anuluj"
 
@@ -347,59 +348,59 @@ msgstr "Przesłano"
 msgid "Submission ID"
 msgstr "ID zgłoszenia"
 
-#: src/Admin/form-answers/FormAnswers.js:135
+#: src/Admin/form-answers/FormAnswers.js:136
 msgid "The submission could not be updated. Try again."
 msgstr "Nie udało się zaktualizować zgłoszenia. Spróbuj ponownie."
 
-#: src/Admin/form-answers/FormAnswers.js:183
+#: src/Admin/form-answers/FormAnswers.js:184
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:232
-#: src/Admin/submission-detail/SubmissionDetail.js:434
+#: src/Admin/submission-detail/SubmissionDetail.js:435
 msgid "Date"
 msgstr "Data"
 
-#: src/Admin/form-answers/FormAnswers.js:205
-#: src/Admin/submission-detail/SubmissionDetail.js:246
+#: src/Admin/form-answers/FormAnswers.js:206
+#: src/Admin/submission-detail/SubmissionDetail.js:247
 msgid "Edit"
 msgstr "Edytuj"
 
-#: src/Admin/form-answers/FormAnswers.js:212
+#: src/Admin/form-answers/FormAnswers.js:213
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:364
 msgid "View"
 msgstr "Wyświetl"
 
-#: src/Admin/form-answers/FormAnswers.js:221
+#: src/Admin/form-answers/FormAnswers.js:222
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:373
 msgid "Delete"
 msgstr "Usuń"
 
-#: src/Admin/form-answers/FormAnswers.js:257
-#: src/Admin/submission-detail/SubmissionDetail.js:228
-#: src/blocks/fair-form/editor.js:83
+#: src/Admin/form-answers/FormAnswers.js:258
+#: src/Admin/submission-detail/SubmissionDetail.js:229
+#: src/blocks/fair-form/editor.js:84
 msgid "— None —"
 msgstr "— Brak —"
 
-#: src/Admin/form-answers/FormAnswers.js:264
+#: src/Admin/form-answers/FormAnswers.js:265
 msgid "Form Answers"
 msgstr "Odpowiedzi formularza"
 
-#: src/Admin/form-answers/FormAnswers.js:298
+#: src/Admin/form-answers/FormAnswers.js:299
 msgid "Edit Submission"
 msgstr "Edytuj zgłoszenie"
 
-#: src/Admin/form-answers/FormAnswers.js:314
+#: src/Admin/form-answers/FormAnswers.js:315
 msgid "Loading events…"
 msgstr "Ładowanie wydarzeń…"
 
-#: src/Admin/form-answers/FormAnswers.js:320
+#: src/Admin/form-answers/FormAnswers.js:321
 msgid "The list of events could not be loaded. The current assignment is kept."
 msgstr "Nie udało się wczytać listy wydarzeń. Bieżące przypisanie zostaje zachowane."
 
-#: src/Admin/form-answers/FormAnswers.js:328
+#: src/Admin/form-answers/FormAnswers.js:329
 msgid "Retry"
 msgstr "Spróbuj ponownie"
 
-#: src/Admin/form-answers/FormAnswers.js:361
-#: src/Admin/submission-detail/SubmissionDetail.js:267
+#: src/Admin/form-answers/FormAnswers.js:362
+#: src/Admin/submission-detail/SubmissionDetail.js:268
 msgid "Save"
 msgstr "Zapisz"
 
@@ -444,7 +445,7 @@ msgid "File"
 msgstr "Plik"
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:428
-#: src/Admin/submission-detail/SubmissionDetail.js:299
+#: src/Admin/submission-detail/SubmissionDetail.js:300
 msgid "Clipboard not available."
 msgstr "Schowek niedostępny."
 
@@ -453,7 +454,7 @@ msgid "Message copied to clipboard."
 msgstr "Wiadomość skopiowana do schowka."
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:443
-#: src/Admin/submission-detail/SubmissionDetail.js:317
+#: src/Admin/submission-detail/SubmissionDetail.js:318
 msgid "Failed to copy."
 msgstr "Nie udało się skopiować."
 
@@ -552,85 +553,85 @@ msgid "Copy to clipboard"
 msgstr "Skopiuj do schowka"
 
 #. translators: 1: number of the ticket within its purchase, 2: short ticket reference
-#: src/Admin/submission-detail/SubmissionDetail.js:33
+#: src/Admin/submission-detail/SubmissionDetail.js:34
 #, js-format
 msgid "Ticket %1$d (%2$s)"
 msgstr "Bilet %1$d (%2$s)"
 
 #. translators: %s: ticket label, e.g. "Ticket 1 (AE2671B5)"
-#: src/Admin/submission-detail/SubmissionDetail.js:41
+#: src/Admin/submission-detail/SubmissionDetail.js:42
 #, js-format
 msgid "%s — attached automatically because the answers predate per-ticket answers. Check that they belong to this ticket."
 msgstr "%s — dołączony automatycznie, ponieważ odpowiedzi pochodzą sprzed wprowadzenia odpowiedzi dla poszczególnych biletów. Sprawdź, czy należą do tego biletu."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:49
+#: src/Admin/submission-detail/SubmissionDetail.js:50
 msgid "No ticket — these answers predate per-ticket answers and no matching ticket was found. Check which ticket they belong to."
 msgstr "Brak biletu — odpowiedzi pochodzą sprzed wprowadzenia odpowiedzi dla poszczególnych biletów i nie znaleziono pasującego biletu. Sprawdź, do którego biletu należą."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:55
+#: src/Admin/submission-detail/SubmissionDetail.js:56
 msgid "No ticket — the ticket these answers belonged to was removed. Check whether they still apply."
 msgstr "Brak biletu — bilet, do którego należały te odpowiedzi, został usunięty. Sprawdź, czy nadal się do niego stosują."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:96
+#: src/Admin/submission-detail/SubmissionDetail.js:97
 msgid "View file"
 msgstr "Wyświetl plik"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:136
+#: src/Admin/submission-detail/SubmissionDetail.js:137
 #: src/Admin/utils/submission-markdown.js:40
 msgid "Yes"
 msgstr "Tak"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:137
+#: src/Admin/submission-detail/SubmissionDetail.js:138
 #: src/Admin/utils/submission-markdown.js:41
 msgid "No"
 msgstr "Nie"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:216
+#: src/Admin/submission-detail/SubmissionDetail.js:217
 msgid "The event could not be changed. Try again."
 msgstr "Nie udało się zmienić zdarzenia. Spróbuj ponownie."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:308
+#: src/Admin/submission-detail/SubmissionDetail.js:309
 msgid "Markdown copied to clipboard. Paste into Google Docs."
 msgstr "Markdown skopiowany do schowka. Wklej do Dokumentów Google."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:325
+#: src/Admin/submission-detail/SubmissionDetail.js:326
 msgid "No submission ID provided."
 msgstr "Nie podano identyfikatora zgłoszenia."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:374
+#: src/Admin/submission-detail/SubmissionDetail.js:375
 msgid "Form Submission"
 msgstr "Przesłanie formularza"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:377
+#: src/Admin/submission-detail/SubmissionDetail.js:378
 msgid "Copy markdown"
 msgstr "Kopiuj markdown"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:393
+#: src/Admin/submission-detail/SubmissionDetail.js:394
 msgid "Submission Info"
 msgstr "Informacje o zgłoszeniu"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:415
+#: src/Admin/submission-detail/SubmissionDetail.js:416
 msgid "Submitted by"
 msgstr "Przesłane przez"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:446
+#: src/Admin/submission-detail/SubmissionDetail.js:447
 msgid "Ticket"
 msgstr "Bilet"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:460
+#: src/Admin/submission-detail/SubmissionDetail.js:461
 msgid "Answers"
 msgstr "Odpowiedzi"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:465
+#: src/Admin/submission-detail/SubmissionDetail.js:466
 msgid "No answers recorded."
 msgstr "Brak zarejestrowanych odpowiedzi."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:473
+#: src/Admin/submission-detail/SubmissionDetail.js:474
 #: src/blocks/fair-form-conditional/editor.js:57
 msgid "Question"
 msgstr "Pytanie"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:474
+#: src/Admin/submission-detail/SubmissionDetail.js:475
 msgid "Answer"
 msgstr "Odpowiedź"
 
@@ -889,43 +890,43 @@ msgstr "Gdy odwiedzający opuści pole, szczegóły wydarzenia opublikowane pod 
 msgid "https://example.com"
 msgstr ""
 
-#: src/blocks/fair-form/editor.js:96
+#: src/blocks/fair-form/editor.js:99
 msgid "Optional. Link this form to a specific event."
 msgstr "Opcjonalnie. Połącz ten formularz z konkretnym wydarzeniem."
 
-#: src/blocks/fair-form/editor.js:150
+#: src/blocks/fair-form/editor.js:153
 msgid "Form Settings"
 msgstr "Ustawienia formularza"
 
-#: src/blocks/fair-form/editor.js:152
+#: src/blocks/fair-form/editor.js:155
 msgid "Submit Button Text"
 msgstr "Tekst przycisku wysyłania"
 
-#: src/blocks/fair-form/editor.js:160
+#: src/blocks/fair-form/editor.js:163
 msgid "Success Message"
 msgstr "Wiadomość sukcesu"
 
-#: src/blocks/fair-form/editor.js:169
+#: src/blocks/fair-form/editor.js:172
 msgid "Message shown after successful form submission."
 msgstr "Wiadomość wyświetlana po pomyślnym wysłaniu formularza."
 
-#: src/blocks/fair-form/editor.js:181
+#: src/blocks/fair-form/editor.js:184
 msgid "Notification Email"
 msgstr "Email powiadomienia"
 
-#: src/blocks/fair-form/editor.js:190
+#: src/blocks/fair-form/editor.js:193
 msgid "Send a notification to this email when someone submits the form. Leave empty to disable."
 msgstr "Wyślij powiadomienie na ten adres email, gdy ktoś wyśle formularz. Pozostaw puste, aby wyłączyć."
 
-#: src/blocks/fair-form/editor.js:196
+#: src/blocks/fair-form/editor.js:199
 msgid "Form Title"
 msgstr "Tytuł formularza"
 
-#: src/blocks/fair-form/editor.js:201
+#: src/blocks/fair-form/editor.js:204
 msgid "e.g. Volunteer signup"
 msgstr "np. Zapisy wolontariuszy"
 
-#: src/blocks/fair-form/editor.js:205
+#: src/blocks/fair-form/editor.js:208
 msgid "Internal label for grouping submissions by form. Does not appear on the frontend."
 msgstr "Wewnętrzna etykieta do grupowania zgłoszeń według formularza. Nie jest wyświetlana na stronie."
 
@@ -1639,4 +1640,3 @@ msgid_plural "%1$s include outdated copies of the Fair Event Plugins shared libr
 msgstr[0] "%1$s zawiera przestarzałą kopię wspólnej biblioteki Fair Event Plugins. Zaktualizuj %1$s, aby wszystkie wtyczki Fair działały prawidłowo."
 msgstr[1] "%1$s zawierają przestarzałe kopie wspólnej biblioteki Fair Event Plugins. Zaktualizuj %1$s, aby wszystkie wtyczki Fair działały prawidłowo."
 msgstr[2] "%1$s zawierają przestarzałe kopie wspólnej biblioteki Fair Event Plugins. Zaktualizuj %1$s, aby wszystkie wtyczki Fair działały prawidłowo."
-

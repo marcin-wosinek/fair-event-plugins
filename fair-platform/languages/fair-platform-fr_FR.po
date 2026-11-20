@@ -39,7 +39,7 @@ msgid "Fair Platform Settings"
 msgstr "Paramètres Fair Platform"
 
 #: src/Admin/AdminHooks.php:37
-#: src/Core/Plugin.php:158
+#: src/Core/Plugin.php:184
 msgid "Fair Platform"
 msgstr ""
 
@@ -281,21 +281,17 @@ msgstr "Suppression de %d anciens journaux de connexion Instagram."
 msgid "You do not have permission to view Instagram connection logs."
 msgstr "Vous n'avez pas la permission de consulter les journaux de connexion Instagram."
 
-#: src/Core/Plugin.php:1515
-#: src/Core/Plugin.php:1539
-#: src/Core/Plugin.php:1563
+#: src/Core/Plugin.php:1419
+#: src/Core/Plugin.php:1443
+#: src/Core/Plugin.php:1467
 msgid "Fair Platform:"
 msgstr "Fair Platform :"
 
-#: src/Core/Plugin.php:1516
-msgid "Instagram OAuth credentials not configured. Please add INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET to wp-config.php for Instagram integration."
-msgstr "Les identifiants OAuth Instagram ne sont pas configurés. Veuillez ajouter INSTAGRAM_APP_ID et INSTAGRAM_APP_SECRET à wp-config.php pour l'intégration Instagram."
-
-#: src/Core/Plugin.php:1540
+#: src/Core/Plugin.php:1444
 msgid "Mollie OAuth credentials not configured. Please add MOLLIE_CLIENT_ID and MOLLIE_CLIENT_SECRET to wp-config.php"
 msgstr "Les identifiants OAuth Mollie ne sont pas configurés. Veuillez ajouter MOLLIE_CLIENT_ID et MOLLIE_CLIENT_SECRET à wp-config.php"
 
-#: src/Core/Plugin.php:1564
+#: src/Core/Plugin.php:1468
 msgid "Mollie PHP library not installed. Please run: composer require mollie/mollie-api-php"
 msgstr "La bibliothèque PHP Mollie n'est pas installée. Veuillez exécuter : composer require mollie/mollie-api-php"
 
@@ -314,8 +310,8 @@ msgstr "Connecté"
 
 #: src/Admin/connections/ConnectionsPage.js:87
 #: src/Admin/connections/ConnectionsPage.js:108
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:89
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:105
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:94
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:110
 msgid "Failed"
 msgstr "Échoué"
 
@@ -328,12 +324,12 @@ msgid "Monitor OAuth connections from WordPress sites."
 msgstr "Surveiller les connexions OAuth depuis les sites WordPress."
 
 #: src/Admin/connections/ConnectionsPage.js:99
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:96
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:101
 msgid "Total Connections"
 msgstr "Connexions totales"
 
 #: src/Admin/connections/ConnectionsPage.js:103
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:100
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:105
 msgid "Successful"
 msgstr "Réussi"
 
@@ -341,53 +337,53 @@ msgstr "Réussi"
 msgid "Unique Sites"
 msgstr "Sites uniques"
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:197
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:203
 msgid "Status Filter"
 msgstr "Filtre de statut"
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:201
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:207
 msgid "All Statuses"
 msgstr "Tous les statuts"
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:215
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:223
 msgid "Sort By"
 msgstr "Trier par"
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:219
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:227
 msgid "Connection Date"
 msgstr "Date de connexion"
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:226
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:234
 msgid "Site Name"
 msgstr "Nom du site"
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:173
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:230
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:178
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:241
 msgid "Status"
 msgstr "Statut"
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:171
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:234
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:176
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:245
 msgid "ID"
 msgstr "ID"
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:241
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:254
 msgid "Order"
 msgstr "Ordre"
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:245
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:258
 msgid "Descending"
 msgstr "Décroissant"
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:249
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:265
 msgid "Ascending"
 msgstr "Croissant"
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:257
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:277
 msgid "Cleanup Days"
 msgstr "Jours de nettoyage"
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:275
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:291
 msgid "Cleanup Old Logs"
 msgstr "Nettoyer les anciens journaux"
 
@@ -399,7 +395,7 @@ msgstr "Historique des connexions"
 msgid "No connections found."
 msgstr "Aucune connexion trouvée."
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:172
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:177
 msgid "Site"
 msgstr "Site"
 
@@ -411,11 +407,11 @@ msgstr "Organisation"
 msgid "Profile"
 msgstr "Profil"
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:175
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:180
 msgid "Connected At"
 msgstr "Connecté à"
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:176
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:181
 msgid "Last Refresh"
 msgstr "Dernier rafraîchissement"
 
@@ -423,11 +419,11 @@ msgstr "Dernier rafraîchissement"
 msgid "✓ Profile created"
 msgstr "✓ Profil créé"
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:435
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:443
 msgid "Previous"
 msgstr "Précédent"
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:442
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:450
 msgid "Next"
 msgstr "Suivant"
 
@@ -443,7 +439,7 @@ msgstr "Journaux de connexion Instagram"
 msgid "Monitor Instagram OAuth connections from WordPress sites."
 msgstr "Surveillez les connexions OAuth Instagram depuis les sites WordPress."
 
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:110
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:115
 msgid "Unique Usernames"
 msgstr "Noms d'utilisateur uniques"
 
@@ -468,7 +464,7 @@ msgstr "ID utilisateur IG"
 msgid "https://github.com/marcin-wosinek/fair-event-plugins"
 msgstr ""
 
-#: src/Core/Plugin.php:162
+#: src/Core/Plugin.php:188
 msgid "Forced by a wp-config constant — change it there."
 msgstr "Forcé par une constante wp-config — modifiez-la là-bas."
 
@@ -485,11 +481,11 @@ msgid "Bundled translations"
 msgstr "Traductions intégrées"
 
 #: src/Core/Features.php:93
-#: src/Core/Plugin.php:159
+#: src/Core/Plugin.php:185
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr "Charger les fichiers .mo/.json fournis avec l'extension au lieu de dépendre des packs de langue WordPress.org. Utile lorsqu'une locale est en dessous du seuil de 90 % sur translate.wordpress.org ou pour les chaînes en cours."
 
-#: src/Core/Plugin.php:153
+#: src/Core/Plugin.php:179
 msgid "Translations"
 msgstr "Traductions"
 
@@ -505,11 +501,11 @@ msgstr "Les anciens journaux n'ont pas pu être supprimés. Réessayez."
 msgid "Delete old connection logs"
 msgstr "Supprimer les anciens journaux de connexion"
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:294
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:310
 msgid "Delete old logs"
 msgstr "Supprimer les anciens journaux"
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:295
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:311
 msgid "Deleting…"
 msgstr "Suppression…"
 
@@ -521,7 +517,7 @@ msgid_plural "This deletes every connection log entry older than %d days."
 msgstr[0] "Ceci supprime chaque entrée de journal de connexion antérieure à %d jour."
 msgstr[1] "Ceci supprime chaque entrée de journal de connexion antérieure à %d jours."
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:304
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:320
 msgid "Only the log history is deleted; existing connections keep working. This cannot be undone."
 msgstr "Seul l'historique des journaux est supprimé ; les connexions existantes continuent de fonctionner. Cette action ne peut pas être annulée."
 
@@ -562,8 +558,36 @@ msgstr[0] "%1$s inclut une copie obsolète de la bibliothèque partagée Fair Ev
 msgstr[1] "%1$s incluent des copies obsolètes de la bibliothèque partagée Fair Event Plugins. Mettez à jour %1$s pour que toutes les extensions Fair fonctionnent correctement."
 
 #. translators: 1: current page number, 2: total number of pages
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:424
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:432
 #, js-format
 msgid "Page %1$d of %2$d"
 msgstr "Page %1$d sur %2$d"
+
+#: src/Core/Plugin.php:1221
+msgid "Instagram connections are not configured on this service yet. Try again later."
+msgstr "Les connexions Instagram ne sont pas configurées sur ce service pour le moment. Réessayez plus tard."
+
+#: src/Core/Plugin.php:1231
+msgid "This site uses the retired Instagram connection. Update Fair Events Experimental, then connect again from Fair Events → Instagram."
+msgstr "Ce site utilise la connexion Instagram obsolète. Mettez à jour Fair Events Experimental, puis reconnectez-vous à partir de Fair Events → Instagram."
+
+#: src/Core/Plugin.php:1232
+msgid "This Instagram connection request is not valid. Start again from Fair Events → Instagram on your site."
+msgstr "Cette demande de connexion Instagram n'est pas valide. Recommencez à partir de Fair Events → Instagram sur votre site."
+
+#: src/Core/Plugin.php:1240
+msgid "The Instagram connection could not be started. Try again."
+msgstr "La connexion Instagram n'a pas pu être établie. Réessayez."
+
+#: src/Core/Plugin.php:1273
+msgid "This Instagram authorization expired or was already used. Start again from Fair Events → Instagram on your site."
+msgstr "Cette autorisation Instagram a expiré ou a déjà été utilisée. Recommencez à partir de Fair Events → Instagram sur votre site."
+
+#: src/Core/Plugin.php:1420
+msgid "Instagram connections are not configured. Add META_APP_ID, META_APP_SECRET and META_INSTAGRAM_CONFIG_ID (the Unified Login configuration ID) to wp-config.php; META_GRAPH_VERSION is optional."
+msgstr "Les connexions Instagram ne sont pas configurées. Ajoutez META_APP_ID, META_APP_SECRET et META_INSTAGRAM_CONFIG_ID (l'ID de configuration de la connexion unifiée) à wp-config.php ; META_GRAPH_VERSION est facultatif."
+
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:89
+msgid "Account choice pending"
+msgstr "Choix de compte en attente"
 

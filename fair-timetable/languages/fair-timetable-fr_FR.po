@@ -206,4 +206,3 @@ msgid "%1$s includes an outdated copy of the Fair Event Plugins shared library. 
 msgid_plural "%1$s include outdated copies of the Fair Event Plugins shared library. Update %1$s to keep all Fair plugins working correctly."
 msgstr[0] "%1$s inclut une copie obsolète de la bibliothèque partagée Fair Event Plugins. Mettez à jour %1$s pour que toutes les extensions Fair fonctionnent correctement."
 msgstr[1] "%1$s incluent des copies obsolètes de la bibliothèque partagée Fair Event Plugins. Mettez à jour %1$s pour que toutes les extensions Fair fonctionnent correctement."
-

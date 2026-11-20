@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-3.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Audience 2.0.0\n"
+"Project-Id-Version: Fair Audience 2.1.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-audience\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-15T07:21:50+00:00\n"
+"POT-Creation-Date: 2026-11-20T06:35:37+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience\n"
@@ -18,7 +18,7 @@ msgstr ""
 #: fair-audience.php
 #: src/Admin/AdminHooks.php:140
 #: src/Admin/AdminHooks.php:141
-#: src/Core/Plugin.php:159
+#: src/Core/Plugin.php:160
 msgid "Fair Audience"
 msgstr ""
 
@@ -44,7 +44,7 @@ msgstr ""
 
 #: src/Admin/AdminHooks.php:152
 #: src/Admin/AdminHooks.php:153
-#: src/Admin/all-participants/AllParticipants.js:623
+#: src/Admin/all-participants/AllParticipants.js:624
 msgid "All Participants"
 msgstr ""
 
@@ -193,7 +193,7 @@ msgid "Invalid or expired unsubscribe link."
 msgstr ""
 
 #: src/API/EventInterestController.php:266
-#: src/Core/Plugin.php:342
+#: src/Core/Plugin.php:343
 msgid "You will no longer receive updates about this event."
 msgstr ""
 
@@ -209,15 +209,15 @@ msgstr ""
 #: src/API/EventSignupController.php:2284
 #: src/API/EventSignupController.php:2617
 #: src/API/EventSignupController.php:2786
-#: src/Services/EmailService.php:307
-#: src/Services/EmailService.php:858
-#: src/Services/EmailService.php:1895
+#: src/Services/EmailService.php:309
+#: src/Services/EmailService.php:842
+#: src/Services/EmailService.php:1871
 msgid "Event not found."
 msgstr ""
 
 #: src/API/EventParticipantsController.php:967
 #: src/API/EventSignupController.php:1747
-#: src/Services/EmailService.php:1459
+#: src/Services/EmailService.php:1446
 msgid "Event Signup"
 msgstr ""
 
@@ -230,11 +230,11 @@ msgstr ""
 #: src/API/ParticipantsController.php:845
 #: src/API/ParticipantsController.php:882
 #: src/API/ParticipantsController.php:909
-#: src/Services/EmailService.php:331
-#: src/Services/EmailService.php:883
-#: src/Services/EmailService.php:1181
-#: src/Services/EmailService.php:1924
-#: src/Admin/participant-detail/ParticipantDetail.js:183
+#: src/Services/EmailService.php:333
+#: src/Services/EmailService.php:867
+#: src/Services/EmailService.php:1165
+#: src/Services/EmailService.php:1900
+#: src/Admin/participant-detail/ParticipantDetail.js:184
 msgid "Participant not found."
 msgstr ""
 
@@ -841,14 +841,14 @@ msgstr ""
 #: src/blocks/audience-signup/render.php:217
 #: src/blocks/event-interest/render.php:122
 #: src/blocks/mailing-signup/render.php:125
-#: src/Services/EmailService.php:1272
-#: src/Admin/all-participants/AllParticipants.js:113
+#: src/Services/EmailService.php:1256
+#: src/Admin/all-participants/AllParticipants.js:114
 #: src/Admin/all-participants/ImportAudienceModal.js:43
 #: src/Admin/components/ParticipantEditModal.js:343
 #: src/Admin/custom-mail/RecipientPreview.js:159
 #: src/Admin/custom-mail/RecipientPreview.js:209
 #: src/Admin/manage-event-audience-tab/AssignTicketModal.js:404
-#: src/Admin/participant-detail/ParticipantDetail.js:273
+#: src/Admin/participant-detail/ParticipantDetail.js:274
 msgid "Email"
 msgstr ""
 
@@ -858,10 +858,10 @@ msgid "Enter your email"
 msgstr ""
 
 #: src/blocks/audience-signup/render.php:232
-#: src/Admin/all-participants/AllParticipants.js:147
+#: src/Admin/all-participants/AllParticipants.js:148
 #: src/Admin/all-participants/ImportAudienceModal.js:47
-#: src/Admin/participant-detail/ParticipantDetail.js:319
-#: src/Admin/settings/SettingsApp.js:136
+#: src/Admin/participant-detail/ParticipantDetail.js:320
+#: src/Admin/settings/SettingsApp.js:50
 msgid "Instagram"
 msgstr ""
 
@@ -894,16 +894,16 @@ msgid "This block can only be used on event pages."
 msgstr ""
 
 #: src/blocks/event-interest/render.php:135
-#: src/Services/EmailService.php:1268
-#: src/Admin/all-participants/AllParticipants.js:98
+#: src/Services/EmailService.php:1252
+#: src/Admin/all-participants/AllParticipants.js:99
 #: src/Admin/custom-mail/RecipientPreview.js:158
 #: src/Admin/custom-mail/RecipientPreview.js:204
-#: src/Admin/event-participants/EventParticipants.js:711
+#: src/Admin/event-participants/EventParticipants.js:712
 #: src/Admin/manage-event-audience-tab/AssignTicketModal.js:390
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1360
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1696
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2047
-#: src/Admin/participant-detail/ParticipantDetail.js:269
+#: src/Admin/participant-detail/ParticipantDetail.js:270
 msgid "Name"
 msgstr ""
 
@@ -952,32 +952,32 @@ msgid "Bundled translations"
 msgstr ""
 
 #: src/Core/Features.php:93
-#: src/Core/Plugin.php:160
+#: src/Core/Plugin.php:161
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr ""
 
-#: src/Core/Plugin.php:154
+#: src/Core/Plugin.php:155
 msgid "Translations"
 msgstr ""
 
-#: src/Core/Plugin.php:163
+#: src/Core/Plugin.php:164
 msgid "Forced by a wp-config constant — change it there."
 msgstr ""
 
-#: src/Core/Plugin.php:315
+#: src/Core/Plugin.php:316
 msgid "Missing unsubscribe token."
 msgstr ""
 
-#: src/Core/Plugin.php:316
-#: src/Core/Plugin.php:326
+#: src/Core/Plugin.php:317
+#: src/Core/Plugin.php:327
 msgid "Unsubscribe"
 msgstr ""
 
-#: src/Core/Plugin.php:325
+#: src/Core/Plugin.php:326
 msgid "This unsubscribe link is invalid or has expired."
 msgstr ""
 
-#: src/Core/Plugin.php:343
+#: src/Core/Plugin.php:344
 msgid "Unsubscribed"
 msgstr ""
 
@@ -1259,123 +1259,123 @@ msgstr ""
 msgid "Failed to confirm your email. Please try again."
 msgstr ""
 
-#: src/Services/EmailService.php:174
+#: src/Services/EmailService.php:176
 msgid "Opted out of the weekly summary."
 msgstr ""
 
-#: src/Services/EmailService.php:175
+#: src/Services/EmailService.php:177
 msgid "Participant has not yet confirmed their email address."
 msgstr ""
 
-#: src/Services/EmailService.php:179
+#: src/Services/EmailService.php:181
 msgid "Participant has not yet confirmed their marketing subscription."
 msgstr ""
 
-#: src/Services/EmailService.php:182
+#: src/Services/EmailService.php:184
 msgid "Participant opted out of marketing emails."
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:247
+#: src/Services/EmailService.php:249
 #, php-format
 msgid "Quick question about %s"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:255
+#: src/Services/EmailService.php:257
 #, php-format
 msgid "We'd love to hear from you about %s!"
 msgstr ""
 
-#: src/Services/EmailService.php:264
+#: src/Services/EmailService.php:266
 msgid "Please take a moment to answer our quick poll:"
 msgstr ""
 
-#: src/Services/EmailService.php:265
+#: src/Services/EmailService.php:267
 msgid "Answer Poll"
 msgstr ""
 
-#: src/Services/EmailService.php:296
+#: src/Services/EmailService.php:298
 msgid "Poll not found."
 msgstr ""
 
-#: src/Services/EmailService.php:340
-#: src/Services/EmailService.php:902
-#: src/Services/EmailService.php:1012
-#: src/Services/EmailService.php:1190
-#: src/Services/EmailService.php:1932
+#: src/Services/EmailService.php:342
+#: src/Services/EmailService.php:886
+#: src/Services/EmailService.php:996
+#: src/Services/EmailService.php:1174
+#: src/Services/EmailService.php:1908
 msgid "Participant has no valid email address."
 msgstr ""
 
-#: src/Services/EmailService.php:358
-#: src/Services/EmailService.php:926
-#: src/Services/EmailService.php:1040
-#: src/Services/EmailService.php:1216
-#: src/Services/EmailService.php:1960
+#: src/Services/EmailService.php:360
+#: src/Services/EmailService.php:910
+#: src/Services/EmailService.php:1024
+#: src/Services/EmailService.php:1200
+#: src/Services/EmailService.php:1936
 msgid "wp_mail() failed to send."
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:386
+#: src/Services/EmailService.php:388
 #, php-format
 msgid "Confirm your subscription to %s"
 msgstr ""
 
-#: src/Services/EmailService.php:391
+#: src/Services/EmailService.php:393
 msgid "Thank you for signing up for our mailing list! Please confirm your email address by clicking the button below."
 msgstr ""
 
-#: src/Services/EmailService.php:392
+#: src/Services/EmailService.php:394
 msgid "Confirm Email"
 msgstr ""
 
-#: src/Services/EmailService.php:393
+#: src/Services/EmailService.php:395
 msgid "This link will expire in 48 hours."
 msgstr ""
 
-#: src/Services/EmailService.php:394
+#: src/Services/EmailService.php:396
 msgid "If you didn't sign up for this mailing list, you can safely ignore this email."
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:424
+#: src/Services/EmailService.php:426
 #, php-format
 msgid "Your signup answers — %s"
 msgstr ""
 
-#: src/Services/EmailService.php:431
+#: src/Services/EmailService.php:433
 msgid "Thank you for signing up! Here are the answers you submitted:"
 msgstr ""
 
-#: src/Services/EmailService.php:433
+#: src/Services/EmailService.php:435
 msgid "Edit Your Answers"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:467
+#: src/Services/EmailService.php:469
 #, php-format
 msgid "Continue registering for %s"
 msgstr ""
 
-#: src/Services/EmailService.php:472
+#: src/Services/EmailService.php:474
 msgid "Continue to payment"
 msgstr ""
 
-#: src/Services/EmailService.php:473
+#: src/Services/EmailService.php:475
 msgid "Continue to sign up"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:479
+#: src/Services/EmailService.php:481
 #, php-format
 msgid "You're registering for %s."
 msgstr ""
 
-#: src/Services/EmailService.php:483
+#: src/Services/EmailService.php:485
 msgid "We've saved your answers — click below to continue where you left off:"
 msgstr ""
 
-#: src/Services/EmailService.php:485
+#: src/Services/EmailService.php:487
 msgid "If you didn't try to register, you can safely ignore this email."
 msgstr ""
 
@@ -1385,8 +1385,7 @@ msgstr ""
 
 #. translators: %s: participant first name
 #: src/Services/EmailService.php:593
-#: src/Services/EmailService.php:702
-#: src/Services/EmailService.php:1500
+#: src/Services/EmailService.php:1487
 #, php-format
 msgid "Hi %s,"
 msgstr ""
@@ -1399,7 +1398,7 @@ msgstr ""
 
 #. translators: 1: line break, 2: site name
 #: src/Services/EmailService.php:628
-#: src/Services/EmailService.php:1509
+#: src/Services/EmailService.php:1496
 #, php-format
 msgid "See you there!%1$sThe %2$s Team"
 msgstr ""
@@ -1416,274 +1415,274 @@ msgstr ""
 msgid "Don't want to receive event invitations?"
 msgstr ""
 
-#: src/Services/EmailService.php:893
-#: src/Services/EmailService.php:1002
+#: src/Services/EmailService.php:877
+#: src/Services/EmailService.php:986
 msgid "Manually skipped."
 msgstr ""
 
 #. translators: %s: fee name
-#: src/Services/EmailService.php:1112
+#: src/Services/EmailService.php:1096
 #, php-format
 msgid "Payment reminder: %s"
 msgstr ""
 
-#: src/Services/EmailService.php:1117
+#: src/Services/EmailService.php:1101
 msgid "Fee:"
 msgstr ""
 
-#: src/Services/EmailService.php:1118
-#: src/Services/EmailService.php:1641
+#: src/Services/EmailService.php:1102
+#: src/Services/EmailService.php:1623
 msgid "Amount:"
 msgstr ""
 
-#: src/Services/EmailService.php:1121
+#: src/Services/EmailService.php:1105
 msgid "Due Date:"
 msgstr ""
 
-#: src/Services/EmailService.php:1125
+#: src/Services/EmailService.php:1109
 msgid "This is a friendly reminder about a pending payment:"
 msgstr ""
 
-#: src/Services/EmailService.php:1132
+#: src/Services/EmailService.php:1116
 msgid "Pay Now"
 msgstr ""
 
-#: src/Services/EmailService.php:1167
+#: src/Services/EmailService.php:1151
 msgid "Fee not found."
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:1262
+#: src/Services/EmailService.php:1246
 #, php-format
 msgid "New form submission — %s"
 msgstr ""
 
 #. translators: %s: page title
-#: src/Services/EmailService.php:1283
+#: src/Services/EmailService.php:1267
 #, php-format
 msgid "Page: %s"
 msgstr ""
 
-#: src/Services/EmailService.php:1292
+#: src/Services/EmailService.php:1276
 msgid "A new form submission has been received."
 msgstr ""
 
-#: src/Services/EmailService.php:1327
+#: src/Services/EmailService.php:1309
 msgid "[Test email — real sends to subscribers include a \"Manage your preferences\" unsubscribe link here.]"
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:1361
+#: src/Services/EmailService.php:1343
 #, php-format
 msgid "Your submission — %s"
 msgstr ""
 
 #. translators: %s: page title
-#: src/Services/EmailService.php:1372
+#: src/Services/EmailService.php:1354
 #, php-format
 msgid "Form: %s"
 msgstr ""
 
-#: src/Services/EmailService.php:1379
+#: src/Services/EmailService.php:1361
 msgid "Thank you for your submission! We have received your response."
 msgstr ""
 
-#: src/Services/EmailService.php:1383
+#: src/Services/EmailService.php:1365
 msgid "Here are the answers you submitted:"
 msgstr ""
 
-#: src/Services/EmailService.php:1414
-#: src/Services/EmailService.php:1535
-#: src/Services/EmailService.php:1607
+#: src/Services/EmailService.php:1400
+#: src/Services/EmailService.php:1522
+#: src/Services/EmailService.php:1589
 #: src/Admin/custom-mail/CustomMail.js:510
-#: src/Admin/events-list/EventsList.js:37
+#: src/Admin/events-list/EventsList.js:38
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1190
-#: src/Admin/participant-detail/ParticipantDetail.js:368
-#: src/Admin/participant-detail/ParticipantDetail.js:446
-#: src/Admin/participant-detail/ParticipantPurchases.js:157
+#: src/Admin/participant-detail/ParticipantDetail.js:369
+#: src/Admin/participant-detail/ParticipantDetail.js:451
+#: src/Admin/participant-detail/ParticipantPurchases.js:158
 msgid "Event"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:1418
+#: src/Services/EmailService.php:1405
 #, php-format
 msgid "Signup confirmed — %s"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:1472
+#: src/Services/EmailService.php:1459
 #, php-format
 msgid "Your signup for %s has been confirmed and your payment has been received."
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:1474
+#: src/Services/EmailService.php:1461
 #, php-format
 msgid "Your signup for %s has been confirmed."
 msgstr ""
 
-#: src/Services/EmailService.php:1502
+#: src/Services/EmailService.php:1489
 msgid "Event date:"
 msgstr ""
 
-#: src/Services/EmailService.php:1503
+#: src/Services/EmailService.php:1490
 msgid "Registration reference:"
 msgstr ""
 
-#: src/Services/EmailService.php:1504
+#: src/Services/EmailService.php:1491
 msgid "Ticket type:"
 msgstr ""
 
-#: src/Services/EmailService.php:1505
-#: src/Services/EmailService.php:1576
+#: src/Services/EmailService.php:1492
+#: src/Services/EmailService.php:1558
 msgid "Amount paid:"
 msgstr ""
 
-#: src/Services/EmailService.php:1506
+#: src/Services/EmailService.php:1493
 msgid "Selected options:"
 msgstr ""
 
-#: src/Services/EmailService.php:1507
+#: src/Services/EmailService.php:1494
 msgid "Your answers:"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:1547
+#: src/Services/EmailService.php:1534
 #, php-format
 msgid "Activities added — %s"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:1558
+#: src/Services/EmailService.php:1545
 #, php-format
 msgid "The following activities have been added to your signup for %s."
 msgstr ""
 
-#: src/Services/EmailService.php:1569
+#: src/Services/EmailService.php:1551
 msgid "Activities added:"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:1622
+#: src/Services/EmailService.php:1604
 #, php-format
 msgid "Payment didn’t go through — %s"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:1633
+#: src/Services/EmailService.php:1615
 #, php-format
 msgid "Your payment for %s didn’t go through. Your spot is still held for a short while — pick up where you left off using the link below."
 msgstr ""
 
-#: src/Services/EmailService.php:1650
+#: src/Services/EmailService.php:1628
 msgid "Resume payment"
 msgstr ""
 
-#: src/Services/EmailService.php:1654
+#: src/Services/EmailService.php:1630
 msgid "If the button doesn’t work, copy and paste this link into your browser:"
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:1661
+#: src/Services/EmailService.php:1637
 #, php-format
 msgid "See you soon,%1$sThe %2$s Team"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:1714
+#: src/Services/EmailService.php:1690
 #, php-format
 msgid "You're invited: %s"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:1722
+#: src/Services/EmailService.php:1698
 #, php-format
 msgid "We have a new event coming up: %s."
 msgstr ""
 
-#: src/Services/EmailService.php:1731
+#: src/Services/EmailService.php:1707
 msgid "Would you like to join? Click the button below to sign up:"
 msgstr ""
 
-#: src/Services/EmailService.php:1732
+#: src/Services/EmailService.php:1708
 msgid "Sign Up Now"
 msgstr ""
 
-#: src/Services/EmailService.php:1916
+#: src/Services/EmailService.php:1892
 msgid "Already signed up"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:2013
+#: src/Services/EmailService.php:1993
 #, php-format
 msgid "Thanks for your interest in %s"
 msgstr ""
 
-#: src/Services/EmailService.php:2017
-#: src/Services/EmailService.php:2070
-#: src/Services/EmailService.php:2118
+#: src/Services/EmailService.php:1997
+#: src/Services/EmailService.php:2050
+#: src/Services/EmailService.php:2098
 msgid "there"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:2021
+#: src/Services/EmailService.php:2001
 #, php-format
 msgid "Thanks for registering your interest in %s. We will let you know when there are updates."
 msgstr ""
 
-#: src/Services/EmailService.php:2027
+#: src/Services/EmailService.php:2007
 msgid "If you didn't register your interest, you can safely ignore this email."
 msgstr ""
 
-#: src/Services/EmailService.php:2030
+#: src/Services/EmailService.php:2010
 msgid "No longer interested?"
 msgstr ""
 
-#: src/Services/EmailService.php:2032
+#: src/Services/EmailService.php:2012
 msgid "Unsubscribe from updates about this event"
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:2066
+#: src/Services/EmailService.php:2046
 #, php-format
 msgid "Welcome to the %s mailing list"
 msgstr ""
 
 #. translators: 1: site name, 2: event title
-#: src/Services/EmailService.php:2075
+#: src/Services/EmailService.php:2055
 #, php-format
 msgid "You've been added to the %1$s mailing list following the consent you gave at %2$s. We'll keep you posted about upcoming events and news."
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:2082
+#: src/Services/EmailService.php:2062
 #, php-format
 msgid "You've been added to the %s mailing list following the consent you gave. We'll keep you posted about upcoming events and news."
 msgstr ""
 
-#: src/Services/EmailService.php:2091
+#: src/Services/EmailService.php:2071
 msgid "Changed your mind?"
 msgstr ""
 
-#: src/Services/EmailService.php:2093
+#: src/Services/EmailService.php:2073
 msgid "Manage your subscription or unsubscribe"
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:2122
+#: src/Services/EmailService.php:2102
 #, php-format
 msgid "Your %s email preferences"
 msgstr ""
 
-#: src/Services/EmailService.php:2127
+#: src/Services/EmailService.php:2107
 msgid "Someone asked to subscribe this address, which is already subscribed. Nothing was changed. To review or change which emails you receive, open your subscription page."
 msgstr ""
 
-#: src/Services/EmailService.php:2128
+#: src/Services/EmailService.php:2108
 msgid "Manage your subscription"
 msgstr ""
 
-#: src/Services/EmailService.php:2129
+#: src/Services/EmailService.php:2109
 msgid "If you did not ask for this, you can ignore this email."
 msgstr ""
 
@@ -1697,15 +1696,15 @@ msgstr ""
 msgid "This registration can’t be upgraded online. Please contact the organizer."
 msgstr ""
 
-#: src/Services/EventsUpgradeGate.php:115
+#: src/Services/EventsUpgradeGate.php:123
 msgid "Fair Audience is paused until Fair Events can run on this site."
 msgstr ""
 
-#: src/Services/EventsUpgradeGate.php:118
+#: src/Services/EventsUpgradeGate.php:126
 msgid "This version of Fair Audience needs a newer Fair Events. Update Fair Payments Connector, then Fair Events, then Fair Audience. Nothing on this site was changed."
 msgstr ""
 
-#: src/Services/EventsUpgradeGate.php:120
+#: src/Services/EventsUpgradeGate.php:128
 msgid "This site hasn’t finished the payment history migration. Follow the steps in the Fair Events notice. Nothing on this site was changed."
 msgstr ""
 
@@ -1745,7 +1744,7 @@ msgstr ""
 #: src/Services/MailingSignupWeeklyRenderer.php:76
 #: src/Admin/components/WeeklyPreferencesFields.js:183
 #: src/Admin/components/WeeklyPreferencesFields.js:236
-#: src/Admin/participant-detail/ParticipantDetail.js:308
+#: src/Admin/participant-detail/ParticipantDetail.js:309
 #: src/blocks/mailing-signup/WeeklyUpdatePanel.js:155
 msgid "Event feeds"
 msgstr ""
@@ -1924,9 +1923,9 @@ msgstr ""
 #: src/Admin/components/DeleteParticipantsModal.js:238
 #: src/Admin/components/ParticipantEditModal.js:514
 #: src/Admin/custom-mail/DeleteMailRecordModal.js:89
-#: src/Admin/event-participants/EventParticipants.js:1131
-#: src/Admin/event-participants/EventParticipants.js:1207
-#: src/Admin/event-participants/EventParticipants.js:1508
+#: src/Admin/event-participants/EventParticipants.js:1132
+#: src/Admin/event-participants/EventParticipants.js:1208
+#: src/Admin/event-participants/EventParticipants.js:1511
 #: src/Admin/manage-event-audience-tab/AssignTicketModal.js:463
 #: src/Admin/manage-event-audience-tab/AssignTicketModal.js:530
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2627
@@ -2083,221 +2082,224 @@ msgstr ""
 msgid "One of the chosen event feeds is not available. Please review your choice and try again."
 msgstr ""
 
-#: src/Settings/InstagramCredentials.php:180
+#: src/Settings/InstagramCredentials.php:258
 msgid "Instagram is paused: the access token is stored encrypted, but this server no longer provides the Sodium encryption support needed to read it. Ask your host to restore PHP Sodium support; Instagram then resumes without reconnecting."
 msgstr ""
 
-#: src/Settings/InstagramCredentials.php:184
-msgid "Instagram needs to be reconnected: the stored access token can no longer be read. This happens when the site’s security keys change or the database is moved to another site. Connect with Instagram or enter a new access token."
+#: src/Settings/InstagramCredentials.php:262
+msgid "Instagram needs to be reconnected: the stored access token can no longer be read. This happens when the site’s security keys change or the database is moved to another site. Connect again in Fair Events → Instagram, or disconnect to remove it."
 msgstr ""
 
-#: src/Settings/InstagramCredentials.php:253
+#: src/Settings/InstagramCredentials.php:290
+msgid "Instagram can no longer be connected here. Turn on Instagram in Fair Events → Settings → Experimental, then connect in Fair Events → Instagram."
+msgstr ""
+
+#: src/Settings/InstagramCredentials.php:346
 msgid "The Instagram access token could not be stored encrypted, so the previous token was kept. Try again."
 msgstr ""
 
-#: src/Settings/Settings.php:45
+#: src/Settings/Settings.php:60
 msgid "Instagram OAuth Access Token"
 msgstr ""
 
-#: src/Settings/Settings.php:63
-#: src/Admin/settings/InstagramTab.js:547
+#: src/Settings/Settings.php:78
 msgid "Instagram User ID"
 msgstr ""
 
-#: src/Settings/Settings.php:81
+#: src/Settings/Settings.php:96
 msgid "Instagram Username"
 msgstr ""
 
-#: src/Settings/Settings.php:94
+#: src/Settings/Settings.php:109
 msgid "Instagram Connection Status"
 msgstr ""
 
-#: src/Settings/Settings.php:112
+#: src/Settings/Settings.php:127
 msgid "Instagram Token Expiration (Unix timestamp)"
 msgstr ""
 
-#: src/Settings/Settings.php:130
+#: src/Settings/Settings.php:152
 msgid "Category IDs used for marketing mailing"
 msgstr ""
 
-#: src/Settings/Settings.php:165
+#: src/Settings/Settings.php:187
 msgid "Per-bundle feature toggles"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:119
+#: src/Admin/all-participants/AllParticipants.js:120
 #: src/Admin/all-participants/ImportAudienceModal.js:49
-#: src/Admin/settings/SettingsApp.js:140
+#: src/Admin/settings/SettingsApp.js:54
 msgid "Mailing"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:123
+#: src/Admin/all-participants/AllParticipants.js:124
 msgid "Marketing — pending confirmation"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:127
-#: src/Admin/all-participants/AllParticipants.js:168
-#: src/Admin/all-participants/AllParticipants.js:180
+#: src/Admin/all-participants/AllParticipants.js:128
+#: src/Admin/all-participants/AllParticipants.js:169
+#: src/Admin/all-participants/AllParticipants.js:181
 #: src/Admin/components/ParticipantEditModal.js:378
-#: src/Admin/participant-detail/ParticipantDetail.js:42
+#: src/Admin/participant-detail/ParticipantDetail.js:43
 msgid "Marketing"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:130
-#: src/Admin/all-participants/AllParticipants.js:167
-#: src/Admin/all-participants/AllParticipants.js:176
+#: src/Admin/all-participants/AllParticipants.js:131
+#: src/Admin/all-participants/AllParticipants.js:168
+#: src/Admin/all-participants/AllParticipants.js:177
 #: src/Admin/components/ParticipantEditModal.js:374
-#: src/Admin/participant-detail/ParticipantDetail.js:41
+#: src/Admin/participant-detail/ParticipantDetail.js:42
 msgid "Minimal"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:133
-#: src/Admin/all-participants/AllParticipants.js:169
-#: src/Admin/all-participants/AllParticipants.js:184
+#: src/Admin/all-participants/AllParticipants.js:134
+#: src/Admin/all-participants/AllParticipants.js:170
+#: src/Admin/all-participants/AllParticipants.js:185
 #: src/Admin/custom-mail/MailDetail.js:211
 #: src/Admin/manage-event-audience-tab/EventAudience.js:3033
 msgid "No"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:141
+#: src/Admin/all-participants/AllParticipants.js:142
 #: src/Admin/all-participants/ImportAudienceModal.js:45
 #: src/Admin/components/ParticipantEditModal.js:351
-#: src/Admin/participant-detail/ParticipantDetail.js:315
+#: src/Admin/participant-detail/ParticipantDetail.js:316
 msgid "Phone"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:164
+#: src/Admin/all-participants/AllParticipants.js:165
 #: src/Admin/components/ParticipantEditModal.js:370
 msgid "Email Profile"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:194
+#: src/Admin/all-participants/AllParticipants.js:195
 #: src/Admin/custom-mail/RecipientPreview.js:163
 #: src/Admin/custom-mail/RecipientPreview.js:225
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1699
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2069
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2155
 #: src/Admin/manage-event-audience-tab/ticketSearch.js:131
-#: src/Admin/participant-detail/ParticipantDetail.js:277
-#: src/Admin/participant-detail/ParticipantPurchases.js:160
+#: src/Admin/participant-detail/ParticipantDetail.js:278
+#: src/Admin/participant-detail/ParticipantPurchases.js:161
 msgid "Status"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:197
-#: src/Admin/all-participants/AllParticipants.js:205
-#: src/Admin/participant-detail/ParticipantDetail.js:47
-#: src/Admin/participant-detail/ParticipantPurchases.js:27
+#: src/Admin/all-participants/AllParticipants.js:198
+#: src/Admin/all-participants/AllParticipants.js:206
+#: src/Admin/participant-detail/ParticipantDetail.js:48
+#: src/Admin/participant-detail/ParticipantPurchases.js:28
 msgid "Pending"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:198
-#: src/Admin/all-participants/AllParticipants.js:209
+#: src/Admin/all-participants/AllParticipants.js:199
+#: src/Admin/all-participants/AllParticipants.js:210
 #: src/Admin/manage-event-audience-tab/ticketLabels.js:10
-#: src/Admin/participant-detail/ParticipantDetail.js:48
-#: src/Admin/participant-detail/ParticipantPurchases.js:18
+#: src/Admin/participant-detail/ParticipantDetail.js:49
+#: src/Admin/participant-detail/ParticipantPurchases.js:19
 msgid "Confirmed"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:219
+#: src/Admin/all-participants/AllParticipants.js:220
 #: src/Admin/components/ParticipantEditModal.js:415
 #: src/Admin/custom-mail/CustomMail.js:584
 msgid "Groups"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:232
+#: src/Admin/all-participants/AllParticipants.js:233
 #: src/Admin/all-participants/UserLinkSection.js:117
 #: src/Admin/all-participants/UserLinkSection.js:171
 msgid "WordPress User"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:248
+#: src/Admin/all-participants/AllParticipants.js:249
 #: src/Admin/all-participants/UserLinkSection.js:135
 msgid "Email addresses do not match"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:263
+#: src/Admin/all-participants/AllParticipants.js:264
 msgid "Events Signed Up"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:289
+#: src/Admin/all-participants/AllParticipants.js:290
 msgid "Events Collaborated"
 msgstr ""
 
 #. translators: %d: number of participant profiles
-#: src/Admin/all-participants/AllParticipants.js:429
+#: src/Admin/all-participants/AllParticipants.js:430
 #, js-format
 msgid "%d participant profile deleted."
 msgid_plural "%d participant profiles deleted."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/all-participants/AllParticipants.js:445
+#: src/Admin/all-participants/AllParticipants.js:446
 msgid "Participant added."
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:446
-#: src/Admin/participant-detail/ParticipantDetail.js:203
+#: src/Admin/all-participants/AllParticipants.js:447
+#: src/Admin/participant-detail/ParticipantDetail.js:204
 msgid "Participant updated."
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:456
-#: src/Admin/event-participants/EventParticipants.js:741
+#: src/Admin/all-participants/AllParticipants.js:457
+#: src/Admin/event-participants/EventParticipants.js:742
 msgid "Edit"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:463
+#: src/Admin/all-participants/AllParticipants.js:464
 msgid "Copy subscription link"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:471
+#: src/Admin/all-participants/AllParticipants.js:472
 msgid "Link copied."
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:474
-#: src/Admin/event-participants/EventParticipants.js:787
+#: src/Admin/all-participants/AllParticipants.js:475
+#: src/Admin/event-participants/EventParticipants.js:788
 msgid "Error: "
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:482
+#: src/Admin/all-participants/AllParticipants.js:483
 msgid "Resend mailing confirmation email"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:517
+#: src/Admin/all-participants/AllParticipants.js:518
 #: src/Admin/custom-mail/MailHistory.js:229
 #: src/blocks/audience-signup/QuestionBuilder.js:128
 msgid "Delete"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:538
+#: src/Admin/all-participants/AllParticipants.js:539
 msgid "Audience total"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:544
+#: src/Admin/all-participants/AllParticipants.js:545
 msgid "In the mailing"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:557
+#: src/Admin/all-participants/AllParticipants.js:558
 msgid "Pending confirmation"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:565
+#: src/Admin/all-participants/AllParticipants.js:566
 msgid "Declined"
 msgstr ""
 
 #. translators: %d: number of confirmation emails sent
-#: src/Admin/all-participants/AllParticipants.js:610
+#: src/Admin/all-participants/AllParticipants.js:611
 #, js-format
 msgid "Sent %d confirmation email"
 msgid_plural "Sent %d confirmation emails"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/all-participants/AllParticipants.js:630
+#: src/Admin/all-participants/AllParticipants.js:631
 #: src/Admin/components/ParticipantEditModal.js:320
 msgid "Add Participant"
 msgstr ""
 
-#: src/Admin/all-participants/AllParticipants.js:730
-#: src/blocks/audience-signup/EventLinkPanel.js:232
+#: src/Admin/all-participants/AllParticipants.js:731
+#: src/blocks/audience-signup/EventLinkPanel.js:233
 msgid "No events found."
 msgstr ""
 
@@ -2354,7 +2356,7 @@ msgid "Who to export"
 msgstr ""
 
 #: src/Admin/all-participants/ExportAudienceModal.js:146
-#: src/Admin/participant-detail/ParticipantDetail.js:239
+#: src/Admin/participant-detail/ParticipantDetail.js:240
 msgid "All participants"
 msgstr ""
 
@@ -2650,7 +2652,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/Admin/components/DeleteParticipantsModal.js:260
-#: src/Admin/participant-detail/ParticipantDetail.js:256
+#: src/Admin/participant-detail/ParticipantDetail.js:257
 msgid "Delete participant"
 msgstr ""
 
@@ -2814,7 +2816,7 @@ msgid "The participant could not be saved. Try again."
 msgstr ""
 
 #: src/Admin/components/ParticipantEditModal.js:319
-#: src/Admin/event-participants/EventParticipants.js:1161
+#: src/Admin/event-participants/EventParticipants.js:1162
 msgid "Edit Participant"
 msgstr ""
 
@@ -2831,7 +2833,7 @@ msgid "Enter handle only (without @)"
 msgstr ""
 
 #: src/Admin/components/ParticipantEditModal.js:382
-#: src/Admin/participant-detail/ParticipantDetail.js:43
+#: src/Admin/participant-detail/ParticipantDetail.js:44
 msgid "No marketing"
 msgstr ""
 
@@ -2844,7 +2846,7 @@ msgid "Update"
 msgstr ""
 
 #: src/Admin/components/ParticipantEditModal.js:507
-#: src/Admin/event-participants/EventParticipants.js:689
+#: src/Admin/event-participants/EventParticipants.js:690
 msgid "Add"
 msgstr ""
 
@@ -2861,7 +2863,7 @@ msgid "ID %d"
 msgstr ""
 
 #: src/Admin/components/WeeklyPreferencesFields.js:111
-#: src/Admin/participant-detail/ParticipantDetail.js:298
+#: src/Admin/participant-detail/ParticipantDetail.js:299
 msgid "Weekly summary"
 msgstr ""
 
@@ -2880,7 +2882,7 @@ msgid "Send the weekly events summary"
 msgstr ""
 
 #: src/Admin/components/WeeklyPreferencesFields.js:163
-#: src/Admin/participant-detail/ParticipantDetail.js:65
+#: src/Admin/participant-detail/ParticipantDetail.js:66
 msgid "Saved preference only: weekly summaries go to participants who confirmed their email address."
 msgstr ""
 
@@ -2889,13 +2891,13 @@ msgid "Event feeds cannot be listed right now. Saving now keeps the feed choice 
 msgstr ""
 
 #: src/Admin/components/WeeklyPreferencesFields.js:241
-#: src/Admin/participant-detail/ParticipantDetail.js:78
-#: src/Admin/participant-detail/ParticipantDetail.js:100
+#: src/Admin/participant-detail/ParticipantDetail.js:79
+#: src/Admin/participant-detail/ParticipantDetail.js:101
 msgid "Selected event feeds"
 msgstr ""
 
 #: src/Admin/components/WeeklyPreferencesFields.js:245
-#: src/Admin/participant-detail/ParticipantDetail.js:73
+#: src/Admin/participant-detail/ParticipantDetail.js:74
 msgid "No event feeds"
 msgstr ""
 
@@ -2909,7 +2911,7 @@ msgstr ""
 
 #. translators: %s: event feed name.
 #: src/Admin/components/WeeklyPreferencesFields.js:289
-#: src/Admin/participant-detail/ParticipantDetail.js:111
+#: src/Admin/participant-detail/ParticipantDetail.js:112
 #, js-format
 msgid "%s (not available right now)"
 msgstr ""
@@ -2948,8 +2950,8 @@ msgid "Search page…"
 msgstr ""
 
 #: src/Admin/custom-mail/ContentEditor.js:182
-#: src/Admin/participant-detail/ParticipantDetail.js:390
-#: src/Admin/participant-detail/ParticipantPurchases.js:174
+#: src/Admin/participant-detail/ParticipantDetail.js:393
+#: src/Admin/participant-detail/ParticipantPurchases.js:177
 msgid "(untitled)"
 msgstr ""
 
@@ -3038,12 +3040,12 @@ msgstr ""
 #: src/Admin/custom-mail/CustomMail.js:525
 #: src/Admin/custom-mail/RecipientPreview.js:161
 #: src/Admin/custom-mail/RecipientPreview.js:217
-#: src/Admin/manage-event-audience-tab/index.js:30
+#: src/Admin/manage-event-audience-tab/index.js:31
 msgid "Audience"
 msgstr ""
 
 #: src/Admin/custom-mail/CustomMail.js:528
-#: src/Admin/events-list/EventsList.js:64
+#: src/Admin/events-list/EventsList.js:66
 #: src/Admin/manage-event-audience-tab/AssignTicketModal.js:335
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2207
 msgid "Participants"
@@ -3055,12 +3057,12 @@ msgstr ""
 
 #: src/Admin/custom-mail/CustomMail.js:562
 #: src/Admin/custom-mail/RecipientPreview.js:43
-#: src/Admin/event-participants/EventParticipants.js:701
-#: src/Admin/event-participants/EventParticipants.js:1173
+#: src/Admin/event-participants/EventParticipants.js:702
+#: src/Admin/event-participants/EventParticipants.js:1174
 #: src/Admin/manage-event-audience-tab/EventAudience.js:48
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2402
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2723
-#: src/Admin/participant-detail/ParticipantDetail.js:37
+#: src/Admin/participant-detail/ParticipantDetail.js:38
 msgid "Interested"
 msgstr ""
 
@@ -3090,7 +3092,7 @@ msgid "Subject"
 msgstr ""
 
 #: src/Admin/custom-mail/CustomMail.js:674
-#: src/Admin/event-participants/EventParticipants.js:1519
+#: src/Admin/event-participants/EventParticipants.js:1522
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2638
 msgid "Sending…"
 msgstr ""
@@ -3165,9 +3167,9 @@ msgstr ""
 #: src/Admin/custom-mail/MailDetail.js:189
 #: src/Admin/custom-mail/MailHistory.js:123
 #: src/Admin/custom-mail/MailHistory.js:193
-#: src/Admin/events-list/EventsList.js:51
-#: src/Admin/participant-detail/ParticipantDetail.js:369
-#: src/Admin/participant-detail/ParticipantPurchases.js:158
+#: src/Admin/events-list/EventsList.js:53
+#: src/Admin/participant-detail/ParticipantDetail.js:370
+#: src/Admin/participant-detail/ParticipantPurchases.js:159
 #: src/blocks/audience-signup/QuestionBuilder.js:19
 msgid "Date"
 msgstr ""
@@ -3181,7 +3183,7 @@ msgstr ""
 #: src/Admin/custom-mail/MailDetail.js:197
 #: src/Admin/custom-mail/MailHistory.js:117
 #: src/Admin/custom-mail/MailHistory.js:177
-#: src/Admin/participant-detail/ParticipantPurchases.js:28
+#: src/Admin/participant-detail/ParticipantPurchases.js:29
 msgid "Failed"
 msgstr ""
 
@@ -3223,17 +3225,17 @@ msgstr ""
 #: src/Admin/custom-mail/RecipientPreview.js:39
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2137
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2289
-#: src/Admin/participant-detail/ParticipantDetail.js:243
+#: src/Admin/participant-detail/ParticipantDetail.js:244
 msgid "Participant"
 msgstr ""
 
 #: src/Admin/custom-mail/RecipientPreview.js:41
-#: src/Admin/event-participants/EventParticipants.js:699
-#: src/Admin/event-participants/EventParticipants.js:1181
+#: src/Admin/event-participants/EventParticipants.js:700
+#: src/Admin/event-participants/EventParticipants.js:1182
 #: src/Admin/manage-event-audience-tab/EventAudience.js:46
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2388
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2716
-#: src/Admin/participant-detail/ParticipantDetail.js:35
+#: src/Admin/participant-detail/ParticipantDetail.js:36
 msgid "Collaborator"
 msgstr ""
 
@@ -3334,24 +3336,24 @@ msgstr ""
 msgid "The emails were processed as shown above, but this message could not be saved to Mail History. Do not send it again."
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:86
+#: src/Admin/event-participants/EventParticipants.js:87
 msgid "Check which ticket these belong to"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:108
+#: src/Admin/event-participants/EventParticipants.js:109
 msgid "View file"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:221
+#: src/Admin/event-participants/EventParticipants.js:222
 msgid "No event date ID provided"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:240
+#: src/Admin/event-participants/EventParticipants.js:241
 msgid "No event date found for this event"
 msgstr ""
 
 #. translators: %d: number of participants
-#: src/Admin/event-participants/EventParticipants.js:427
+#: src/Admin/event-participants/EventParticipants.js:428
 #, js-format
 msgid "%d participant added."
 msgid_plural "%d participants added."
@@ -3359,34 +3361,34 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of participants
-#: src/Admin/event-participants/EventParticipants.js:444
+#: src/Admin/event-participants/EventParticipants.js:445
 #, js-format
 msgid "%d participant could not be added. They are still selected: try again."
 msgid_plural "%d participants could not be added. They are still selected: try again."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/event-participants/EventParticipants.js:459
+#: src/Admin/event-participants/EventParticipants.js:460
 msgid "The participants could not be added. Nothing was changed; try again."
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:490
+#: src/Admin/event-participants/EventParticipants.js:491
 msgid "Role updated."
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:494
+#: src/Admin/event-participants/EventParticipants.js:495
 msgid "The role could not be saved. Nothing was changed; try again."
 msgstr ""
 
 #. translators: %s: participant name
-#: src/Admin/event-participants/EventParticipants.js:526
+#: src/Admin/event-participants/EventParticipants.js:527
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1167
 #, js-format
 msgid "%s was removed from this date."
 msgstr ""
 
 #. translators: %d: number of participants
-#: src/Admin/event-participants/EventParticipants.js:531
+#: src/Admin/event-participants/EventParticipants.js:532
 #: src/Admin/manage-event-audience-tab/RemoveParticipantModal.js:396
 #, js-format
 msgid "%d participant was removed from this date."
@@ -3394,189 +3396,189 @@ msgid_plural "%d participants were removed from this date."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/event-participants/EventParticipants.js:669
+#: src/Admin/event-participants/EventParticipants.js:670
 msgid "The invitations could not be sent. Your selection is kept; try again."
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:683
-#: src/Admin/event-participants/EventParticipants.js:902
+#: src/Admin/event-participants/EventParticipants.js:684
+#: src/Admin/event-participants/EventParticipants.js:903
 msgid "Add Collaborators"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:685
-#: src/Admin/event-participants/EventParticipants.js:908
+#: src/Admin/event-participants/EventParticipants.js:686
+#: src/Admin/event-participants/EventParticipants.js:909
 msgid "Add Interested"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:687
-#: src/Admin/event-participants/EventParticipants.js:894
+#: src/Admin/event-participants/EventParticipants.js:688
+#: src/Admin/event-participants/EventParticipants.js:895
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2447
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2666
 msgid "Add Participants"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:697
-#: src/Admin/event-participants/EventParticipants.js:1177
+#: src/Admin/event-participants/EventParticipants.js:698
+#: src/Admin/event-participants/EventParticipants.js:1178
 msgid "Signed Up"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:720
+#: src/Admin/event-participants/EventParticipants.js:721
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1361
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1697
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2054
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2376
 #: src/Admin/manage-event-audience-tab/EventAudience.js:3192
-#: src/Admin/participant-detail/ParticipantDetail.js:370
+#: src/Admin/participant-detail/ParticipantDetail.js:371
 msgid "Role"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:727
+#: src/Admin/event-participants/EventParticipants.js:728
 #: src/blocks/audience-signup/editor.js:92
 msgid "Questions"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:746
+#: src/Admin/event-participants/EventParticipants.js:747
 msgid "Remove"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:776
-#: src/Admin/event-participants/EventParticipants.js:785
-#: src/Admin/event-participants/EventParticipants.js:795
-#: src/Admin/event-participants/EventParticipants.js:817
+#: src/Admin/event-participants/EventParticipants.js:777
+#: src/Admin/event-participants/EventParticipants.js:786
+#: src/Admin/event-participants/EventParticipants.js:796
+#: src/Admin/event-participants/EventParticipants.js:818
 msgid "Event Participants"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:831
+#: src/Admin/event-participants/EventParticipants.js:832
 msgid "Edit Article"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:839
+#: src/Admin/event-participants/EventParticipants.js:840
 msgid "Manage Event"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:857
+#: src/Admin/event-participants/EventParticipants.js:858
 msgid "Date:"
 msgstr ""
 
 #. translators: %d: number of signed up participants
-#: src/Admin/event-participants/EventParticipants.js:863
+#: src/Admin/event-participants/EventParticipants.js:864
 #, js-format
 msgid "%d Signed Up"
 msgstr ""
 
 #. translators: %d: number of collaborators
-#: src/Admin/event-participants/EventParticipants.js:870
+#: src/Admin/event-participants/EventParticipants.js:871
 #, js-format
 msgid "%d Collaborators"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:917
+#: src/Admin/event-participants/EventParticipants.js:918
 msgid "Send Invitation"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:945
+#: src/Admin/event-participants/EventParticipants.js:946
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2674
 msgid "All participants are already added to this event."
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:961
-#: src/Admin/event-participants/EventParticipants.js:1353
+#: src/Admin/event-participants/EventParticipants.js:962
+#: src/Admin/event-participants/EventParticipants.js:1354
 msgid "Search by name or email..."
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:981
+#: src/Admin/event-participants/EventParticipants.js:982
 msgid "All groups"
 msgstr ""
 
 #. translators: 1: selected count, 2: shown count
-#: src/Admin/event-participants/EventParticipants.js:1015
+#: src/Admin/event-participants/EventParticipants.js:1016
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2745
 #, js-format
 msgid "%1$d selected, %2$d shown"
 msgstr ""
 
 #. translators: %d: number of available participants
-#: src/Admin/event-participants/EventParticipants.js:1024
+#: src/Admin/event-participants/EventParticipants.js:1025
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2754
 #, js-format
 msgid "%d participant(s) available"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:1041
+#: src/Admin/event-participants/EventParticipants.js:1042
 msgid "Deselect All"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:1042
+#: src/Admin/event-participants/EventParticipants.js:1043
 msgid "Select All"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:1099
-#: src/Admin/event-participants/EventParticipants.js:1452
+#: src/Admin/event-participants/EventParticipants.js:1100
+#: src/Admin/event-participants/EventParticipants.js:1453
 #: src/Admin/manage-event-audience-tab/AssignTicketModal.js:326
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2816
 #: src/Admin/manage-event-audience-tab/EventAudience.js:3049
 msgid "No participants match your search."
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:1143
+#: src/Admin/event-participants/EventParticipants.js:1144
 msgid "Adding..."
 msgstr ""
 
 #. translators: %d: number of selected participants
-#: src/Admin/event-participants/EventParticipants.js:1146
+#: src/Admin/event-participants/EventParticipants.js:1147
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2849
 #, js-format
 msgid "Add %d Selected"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:1169
+#: src/Admin/event-participants/EventParticipants.js:1170
 msgid "Label"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:1215
+#: src/Admin/event-participants/EventParticipants.js:1216
 #: src/Admin/manage-event-audience-tab/EventAudience.js:3322
 #: src/Admin/settings/MailingTab.js:134
 msgid "Save"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:1223
+#: src/Admin/event-participants/EventParticipants.js:1224
 msgid "Send Event Invitations"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:1228
+#: src/Admin/event-participants/EventParticipants.js:1229
 msgid "Participants already signed up or who opted out of marketing emails will be skipped."
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:1262
+#: src/Admin/event-participants/EventParticipants.js:1263
 msgid "By Group"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:1286
+#: src/Admin/event-participants/EventParticipants.js:1287
 msgid "By Participant"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:1294
+#: src/Admin/event-participants/EventParticipants.js:1295
 msgid "No groups available. Create groups first."
 msgstr ""
 
 #. translators: 1: group name, 2: member count
-#: src/Admin/event-participants/EventParticipants.js:1323
+#: src/Admin/event-participants/EventParticipants.js:1324
 #, js-format
 msgid "%1$s (%2$d members)"
 msgstr ""
 
 #. translators: 1: selected count, 2: total count
-#: src/Admin/event-participants/EventParticipants.js:1379
+#: src/Admin/event-participants/EventParticipants.js:1380
 #, js-format
 msgid "%1$d selected of %2$d participants"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:1389
+#: src/Admin/event-participants/EventParticipants.js:1390
 msgid "No participants available."
 msgstr ""
 
 #. translators: %d: number of invitations to send
-#: src/Admin/event-participants/EventParticipants.js:1524
+#: src/Admin/event-participants/EventParticipants.js:1527
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2644
 #, js-format
 msgid "Send %d invitation"
@@ -3584,31 +3586,31 @@ msgid_plural "Send %d invitations"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/event-participants/EventParticipants.js:1534
+#: src/Admin/event-participants/EventParticipants.js:1537
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2485
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2580
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2654
 msgid "Send Invitations"
 msgstr ""
 
-#: src/Admin/event-participants/EventParticipants.js:1547
+#: src/Admin/event-participants/EventParticipants.js:1551
 msgid "this event"
 msgstr ""
 
-#: src/Admin/events-list/EventsList.js:82
+#: src/Admin/events-list/EventsList.js:84
 msgid "Edit Event"
 msgstr ""
 
-#: src/Admin/events-list/EventsList.js:89
+#: src/Admin/events-list/EventsList.js:91
 msgid "View Event"
 msgstr ""
 
-#: src/Admin/events-list/EventsList.js:96
+#: src/Admin/events-list/EventsList.js:98
 msgid "Questionnaire Responses"
 msgstr ""
 
-#: src/Admin/events-list/EventsList.js:175
-#: src/Admin/participant-detail/ParticipantDetail.js:358
+#: src/Admin/events-list/EventsList.js:177
+#: src/Admin/participant-detail/ParticipantDetail.js:359
 msgid "Events"
 msgstr ""
 
@@ -3721,7 +3723,7 @@ msgstr ""
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1362
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1757
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1913
-#: src/Admin/participant-detail/ParticipantPurchases.js:197
+#: src/Admin/participant-detail/ParticipantPurchases.js:202
 msgid "Ticket"
 msgstr ""
 
@@ -3765,7 +3767,7 @@ msgstr ""
 #: src/Admin/manage-event-audience-tab/EventAudience.js:47
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2395
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2709
-#: src/Admin/participant-detail/ParticipantDetail.js:36
+#: src/Admin/participant-detail/ParticipantDetail.js:37
 msgid "Signed up"
 msgstr ""
 
@@ -3964,7 +3966,7 @@ msgstr ""
 
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1577
 #: src/Admin/manage-event-audience-tab/ticketLabels.js:11
-#: src/Admin/participant-detail/ParticipantPurchases.js:19
+#: src/Admin/participant-detail/ParticipantPurchases.js:20
 msgid "Awaiting payment"
 msgstr ""
 
@@ -3977,7 +3979,7 @@ msgid "Managed on series date"
 msgstr ""
 
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1612
-#: src/Admin/participant-detail/ParticipantDetail.js:249
+#: src/Admin/participant-detail/ParticipantDetail.js:250
 msgid "Edit participant"
 msgstr ""
 
@@ -4213,7 +4215,7 @@ msgid "Forms"
 msgstr ""
 
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2523
-#: src/Admin/participant-detail/ParticipantDetail.js:444
+#: src/Admin/participant-detail/ParticipantDetail.js:449
 msgid "Form"
 msgstr ""
 
@@ -4226,7 +4228,7 @@ msgid "View Responses"
 msgstr ""
 
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2569
-#: src/Admin/participant-detail/ParticipantDetail.js:435
+#: src/Admin/participant-detail/ParticipantDetail.js:440
 msgid "No form submissions yet."
 msgstr ""
 
@@ -4467,7 +4469,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/Admin/manage-event-audience-tab/ticketLabels.js:12
-#: src/Admin/participant-detail/ParticipantPurchases.js:22
+#: src/Admin/participant-detail/ParticipantPurchases.js:23
 msgid "Cancelled"
 msgstr ""
 
@@ -4590,12 +4592,12 @@ msgstr ""
 msgid "Assignee email"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantDetail.js:60
+#: src/Admin/participant-detail/ParticipantDetail.js:61
 msgid "Saved preference only: this participant opted out of weekly summaries."
 msgstr ""
 
 #. translators: %d: number of selected event feeds.
-#: src/Admin/participant-detail/ParticipantDetail.js:83
+#: src/Admin/participant-detail/ParticipantDetail.js:84
 #, js-format
 msgid "%d feed is selected, but feed names cannot be retrieved right now."
 msgid_plural "%d feeds are selected, but feed names cannot be retrieved right now."
@@ -4603,351 +4605,227 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of deleted event feeds.
-#: src/Admin/participant-detail/ParticipantDetail.js:125
+#: src/Admin/participant-detail/ParticipantDetail.js:126
 #, js-format
 msgid "%d selected feed was deleted."
 msgid_plural "%d selected feeds were deleted."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/participant-detail/ParticipantDetail.js:166
+#: src/Admin/participant-detail/ParticipantDetail.js:167
 msgid "No participant ID provided."
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantDetail.js:263
+#: src/Admin/participant-detail/ParticipantDetail.js:264
 msgid "Profile"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantDetail.js:286
+#: src/Admin/participant-detail/ParticipantDetail.js:287
 msgid "Email profile"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantDetail.js:302
+#: src/Admin/participant-detail/ParticipantDetail.js:303
 msgid "Opted out"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantDetail.js:303
+#: src/Admin/participant-detail/ParticipantDetail.js:304
 msgid "Subscribed"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantDetail.js:336
+#: src/Admin/participant-detail/ParticipantDetail.js:337
 msgid "WordPress user"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantDetail.js:345
+#: src/Admin/participant-detail/ParticipantDetail.js:346
 msgid "Created"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantDetail.js:363
+#: src/Admin/participant-detail/ParticipantDetail.js:364
 msgid "No events yet."
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantDetail.js:372
+#: src/Admin/participant-detail/ParticipantDetail.js:373
 msgid "Signed up at"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantDetail.js:428
+#: src/Admin/participant-detail/ParticipantDetail.js:433
 msgid "Form submissions"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantDetail.js:445
+#: src/Admin/participant-detail/ParticipantDetail.js:450
 msgid "Page"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantDetail.js:448
+#: src/Admin/participant-detail/ParticipantDetail.js:453
 msgid "Submitted at"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantDetail.js:463
+#: src/Admin/participant-detail/ParticipantDetail.js:468
 msgid "Fair Form"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantPurchases.js:20
+#: src/Admin/participant-detail/ParticipantPurchases.js:21
 msgid "Payment failed"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantPurchases.js:21
+#: src/Admin/participant-detail/ParticipantPurchases.js:22
 msgid "Expired"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantPurchases.js:26
-#: src/Admin/participant-detail/ParticipantPurchases.js:161
+#: src/Admin/participant-detail/ParticipantPurchases.js:27
+#: src/Admin/participant-detail/ParticipantPurchases.js:162
 msgid "Paid"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantPurchases.js:40
-#: src/Admin/participant-detail/ParticipantPurchases.js:159
+#: src/Admin/participant-detail/ParticipantPurchases.js:41
+#: src/Admin/participant-detail/ParticipantPurchases.js:160
 msgid "Tickets"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantPurchases.js:42
+#: src/Admin/participant-detail/ParticipantPurchases.js:43
 msgid "Added activities"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantPurchases.js:44
+#: src/Admin/participant-detail/ParticipantPurchases.js:45
 msgid "Series upgrade"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantPurchases.js:46
+#: src/Admin/participant-detail/ParticipantPurchases.js:47
 msgid "Refund record (not counted)"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantPurchases.js:103
+#: src/Admin/participant-detail/ParticipantPurchases.js:104
 msgid "Missing in Fair Payments Connector"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantPurchases.js:111
+#: src/Admin/participant-detail/ParticipantPurchases.js:112
 msgid "(latest attempt)"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantPurchases.js:133
+#: src/Admin/participant-detail/ParticipantPurchases.js:134
 msgid "Purchases"
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantPurchases.js:140
+#: src/Admin/participant-detail/ParticipantPurchases.js:141
 msgid "Payment statuses and amounts paid aren’t available because payment information can’t be read."
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantPurchases.js:148
+#: src/Admin/participant-detail/ParticipantPurchases.js:149
 msgid "This participant hasn’t bought tickets."
 msgstr ""
 
-#: src/Admin/participant-detail/ParticipantPurchases.js:162
+#: src/Admin/participant-detail/ParticipantPurchases.js:163
 msgid "Payments"
 msgstr ""
 
 #. translators: 1: number of tickets, 2: ticket type name
-#: src/Admin/participant-detail/ParticipantPurchases.js:189
+#: src/Admin/participant-detail/ParticipantPurchases.js:194
 #, js-format
 msgid "%1$d × %2$s"
 msgid_plural "%1$d × %2$s"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/participant-detail/ParticipantPurchases.js:215
+#: src/Admin/participant-detail/ParticipantPurchases.js:220
 msgid "None"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:91
-msgid "Failed to load settings."
+#: src/Admin/settings/InstagramMoved.js:19
+#: src/Admin/settings/InstagramTab.js:214
+msgid "Instagram Connection"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:142
-msgid "Please enter an access token."
+#: src/Admin/settings/InstagramMoved.js:21
+msgid "The Instagram connection is managed in Fair Events → Instagram: connecting, testing and disconnecting the account. The connected account and its stored token are unchanged, and Instagram Posts keeps using it."
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:161
-msgid "Instagram token saved successfully."
+#: src/Admin/settings/InstagramMoved.js:28
+msgid "Open Fair Events → Instagram"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:171
-msgid "Failed to save token."
+#: src/Admin/settings/InstagramTab.js:53
+msgid "The Instagram connection could not be loaded. Reload the page to try again."
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:196
-msgid "Connection successful!"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:207
-msgid "Connection test failed."
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:236
-msgid "Instagram User ID saved successfully."
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:246
-msgid "Failed to save User ID."
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:291
+#: src/Admin/settings/InstagramTab.js:92
 msgid "Disconnected from Instagram."
 msgstr ""
 
 #. translators: %s: error message
-#: src/Admin/settings/InstagramTab.js:302
+#: src/Admin/settings/InstagramTab.js:104
 #, js-format
 msgid "Instagram could not be disconnected: %s"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:308
+#: src/Admin/settings/InstagramTab.js:110
 msgid "Instagram could not be disconnected. Try again."
 msgstr ""
 
+#: src/Admin/settings/InstagramTab.js:134
+msgid "Instagram is connected in Fair Events → Instagram, through Meta’s Unified Login. Turn on Instagram in Fair Events → Settings → Experimental (part of Fair Events Experimental), then connect there."
+msgstr ""
+
+#: src/Admin/settings/InstagramTab.js:143
+msgid "No Instagram account is connected."
+msgstr ""
+
+#: src/Admin/settings/InstagramTab.js:149
+msgid "Instagram needs to be reconnected: Meta replaced the way sites connect to Instagram, and this connection was made the old way. Instagram Posts cannot publish until you connect again. Posts already published, and their records on this site, are kept."
+msgstr ""
+
 #. translators: %s: Instagram username
-#: src/Admin/settings/InstagramTab.js:325
+#: src/Admin/settings/InstagramTab.js:174
+#, js-format
+msgid "Connected to Instagram as @%s."
+msgstr ""
+
+#: src/Admin/settings/InstagramTab.js:180
+msgid "Connected to Instagram."
+msgstr ""
+
+#. translators: %s: Instagram username
+#: src/Admin/settings/InstagramTab.js:189
 #, js-format
 msgid "Disconnect the Instagram account @%s from this site?"
 msgstr ""
 
 #. translators: %s: Instagram account ID
-#: src/Admin/settings/InstagramTab.js:334
+#: src/Admin/settings/InstagramTab.js:198
 #, js-format
 msgid "Disconnect the Instagram account with ID %s from this site?"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:341
+#: src/Admin/settings/InstagramTab.js:205
 msgid "Disconnect the Instagram account connected to this site? Its username and ID are not available."
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:356
+#. translators: %s: Instagram username
+#: src/Admin/settings/InstagramTab.js:223
+#, js-format
+msgid "Stored account: @%s"
+msgstr ""
+
+#: src/Admin/settings/InstagramTab.js:232
+msgid "Open Fair Events → Settings → Experimental"
+msgstr ""
+
+#: src/Admin/settings/InstagramTab.js:246
 msgid "Disconnect"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:365
-msgid "Loading Instagram settings..."
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:378
-msgid "Instagram Connection"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:389
-msgid "Connect your Instagram account to access your media and followers."
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:397
-msgid "Manual Token Entry"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:406
-msgid "Enter your Instagram access token manually. You can obtain this from the Meta Developer Portal."
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:412
-msgid "Access Token"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:415
-msgid "Enter Instagram access token..."
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:428
-#: src/Admin/settings/InstagramTab.js:595
-msgid "Saving..."
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:429
-msgid "Save Token"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:440
-msgid "OAuth Connection"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:449
-msgid "Or connect automatically via OAuth (requires server configuration)."
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:458
-msgid "Connect with Instagram"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:480
-msgid "Or disconnect to remove the unreadable token from this site."
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:497
-msgid "Connected to Instagram"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:508
-#: src/Admin/settings/InstagramTab.js:684
-msgid "Username:"
-msgstr ""
-
-#. translators: %s: expiration date
-#: src/Admin/settings/InstagramTab.js:525
-#, js-format
-msgid "Token expires: %s"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:556
-msgid "Set the Instagram User ID manually. This is required for posting to Instagram. You can find it by testing the connection above."
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:564
-msgid "Current User ID:"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:573
-msgid "User ID"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:576
-msgid "Enter Instagram User ID..."
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:581
-msgid "The numeric ID of your Instagram account (e.g., 17841400123456789)"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:596
-msgid "Save User ID"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:610
-#: src/Admin/settings/InstagramTab.js:637
-msgid "Test Connection"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:619
-msgid "Verify your Instagram connection is working correctly."
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:634
-msgid "Testing..."
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:671
-msgid "Account Details"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:718
-msgid "Token Info"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:731
-msgid "Expires:"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:755
-msgid "Scopes:"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:789
-msgid "Available Instagram Accounts"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:841
-msgid "(Active)"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:856
-msgid "User ID:"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:895
-msgid "Details"
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:933
+#: src/Admin/settings/InstagramTab.js:254
 msgid "Disconnect Instagram?"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:945
-msgid "The access token and connection details stored on this site are removed. Until you reconnect with “Connect with Instagram” or enter a valid access token again, this site cannot publish to Instagram."
+#: src/Admin/settings/InstagramTab.js:269
+msgid "The access token and account details stored on this site are removed. Posts already published on Instagram, and the post records on this site, are kept."
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:951
-msgid "Posts already published on Instagram, and the post records on this site, are kept."
-msgstr ""
-
-#: src/Admin/settings/InstagramTab.js:976
+#: src/Admin/settings/InstagramTab.js:291
 msgid "Keep connected"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:985
+#: src/Admin/settings/InstagramTab.js:300
 msgid "Disconnect Instagram"
 msgstr ""
 
@@ -4975,19 +4853,7 @@ msgstr ""
 msgid "No categories found."
 msgstr ""
 
-#: src/Admin/settings/SettingsApp.js:43
-msgid "Authorization cancelled. Please try again."
-msgstr ""
-
-#: src/Admin/settings/SettingsApp.js:84
-msgid "Successfully connected to Instagram!"
-msgstr ""
-
-#: src/Admin/settings/SettingsApp.js:98
-msgid "Failed to save OAuth tokens: "
-msgstr ""
-
-#: src/Admin/settings/SettingsApp.js:118
+#: src/Admin/settings/SettingsApp.js:32
 msgid "Fair Audience Settings"
 msgstr ""
 
@@ -5041,39 +4907,39 @@ msgstr ""
 msgid "Event Link"
 msgstr ""
 
-#: src/blocks/audience-signup/EventLinkPanel.js:112
+#: src/blocks/audience-signup/EventLinkPanel.js:113
 msgid "Auto-linked to this event page:"
 msgstr ""
 
-#: src/blocks/audience-signup/EventLinkPanel.js:116
+#: src/blocks/audience-signup/EventLinkPanel.js:117
 msgid "This page is an event, but a different event is linked:"
 msgstr ""
 
-#: src/blocks/audience-signup/EventLinkPanel.js:135
+#: src/blocks/audience-signup/EventLinkPanel.js:136
 msgid "Use auto-detected event"
 msgstr ""
 
-#: src/blocks/audience-signup/EventLinkPanel.js:153
+#: src/blocks/audience-signup/EventLinkPanel.js:154
 msgid "Linked event:"
 msgstr ""
 
-#: src/blocks/audience-signup/EventLinkPanel.js:176
+#: src/blocks/audience-signup/EventLinkPanel.js:177
 msgid "Remove link"
 msgstr ""
 
-#: src/blocks/audience-signup/EventLinkPanel.js:181
+#: src/blocks/audience-signup/EventLinkPanel.js:182
 msgid "Linked event not found (ID:"
 msgstr ""
 
-#: src/blocks/audience-signup/EventLinkPanel.js:192
+#: src/blocks/audience-signup/EventLinkPanel.js:193
 msgid "Search events"
 msgstr ""
 
-#: src/blocks/audience-signup/EventLinkPanel.js:195
+#: src/blocks/audience-signup/EventLinkPanel.js:196
 msgid "Type to search..."
 msgstr ""
 
-#: src/blocks/audience-signup/EventLinkPanel.js:198
+#: src/blocks/audience-signup/EventLinkPanel.js:199
 msgid "Link this form to a specific event."
 msgstr ""
 

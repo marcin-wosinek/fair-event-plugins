@@ -43,26 +43,26 @@ msgstr ""
 msgid "Fair Events Experimental requires the Fair Events plugin to be active."
 msgstr "Fair Events Experimental wymaga aktywnego wtyczki Fair Events."
 
-#: src/Admin/AdminPages.php:63
-#: src/Admin/AdminPages.php:64
+#: src/Admin/AdminPages.php:65
+#: src/Admin/AdminPages.php:66
 msgid "Experimental Settings"
 msgstr "Ustawienia eksperymentalne"
 
-#: src/Admin/AdminPages.php:75
-#: src/Admin/AdminPages.php:76
+#: src/Admin/AdminPages.php:77
+#: src/Admin/AdminPages.php:78
 #: src/Admin/compare-events/CompareEventsPage.js:485
 msgid "Compare events"
 msgstr "Porównaj wydarzenia"
 
-#: src/Admin/AdminPages.php:86
-#: src/Admin/AdminPages.php:87
+#: src/Admin/AdminPages.php:88
+#: src/Admin/AdminPages.php:89
 #: src/Admin/sources/SourcesList.js:446
 msgid "Event Feeds"
 msgstr "Kanały wydarzeń"
 
-#: src/Admin/AdminPages.php:95
-#: src/Admin/AdminPages.php:96
-#: src/Admin/AdminPages.php:102
+#: src/Admin/AdminPages.php:97
+#: src/Admin/AdminPages.php:98
+#: src/Admin/AdminPages.php:104
 msgid "View Event Feed"
 msgstr "Zobacz kanał wydarzeń"
 
@@ -263,6 +263,7 @@ msgstr "Typ uprawnień."
 msgid "Rule ID."
 msgstr "ID reguły."
 
+#: src/API/EventOrganizerController.php:262
 #: src/API/GroupPermissionRulesController.php:146
 #: src/API/GroupPermissionRulesController.php:183
 #: src/API/GroupPricingRulesController.php:177
@@ -352,32 +353,32 @@ msgstr "Zbyt wiele żądań. Spróbuj ponownie później."
 msgid "Event not found."
 msgstr "Zdarzenie nie znalezione."
 
-#: src/Core/Features.php:111
+#: src/Core/Features.php:128
 #: src/Admin/sources/SourcesList.js:410
 msgid "Event feeds"
 msgstr "Kanały wydarzeń"
 
-#: src/Core/Features.php:112
+#: src/Core/Features.php:129
 msgid "Event feeds with iCal/JSON output, external calendar imports, Facebook import, event proposals."
 msgstr "Kanały wydarzeń z wyjściem iCal/JSON, import zewnętrznych kalendarzy, import z Facebooka, propozycje wydarzeń."
 
-#: src/Core/Features.php:115
+#: src/Core/Features.php:132
 msgid "Ticketing extensions"
 msgstr "Rozszerzenia sprzedaży biletów"
 
-#: src/Core/Features.php:116
+#: src/Core/Features.php:133
 msgid "Group pricing and group permission rules for tickets. Requires Ticketing in the Fair Events features and Fair Audience. Turning this off keeps base ticketing and stored rules."
 msgstr "Ceny grupowe i reguły uprawnień grup dla biletów. Wymaga włączenia Sprzedaży biletów w funkcjach Fair Events oraz wtyczki Fair Audience. Wyłączenie zachowuje podstawową sprzedaż biletów i zapisane reguły."
 
-#: src/Core/Features.php:119
+#: src/Core/Features.php:136
 msgid "Mailings"
 msgstr "Wysyłki"
 
-#: src/Core/Features.php:120
+#: src/Core/Features.php:137
 msgid "Scheduled email mailings for event attendees. Requires fair-audience."
 msgstr "Zaplanowane wysyłki e-mail dla uczestników zdarzenia. Wymaga fair-audience."
 
-#: src/Core/Features.php:123
+#: src/Core/Features.php:140
 #: src/Admin/meta/MetaConversions.js:606
 #: src/Admin/settings/MetaMoved.js:17
 msgid "Meta Conversions"
@@ -482,9 +483,12 @@ msgstr "%1$s: %2$s"
 msgid "Event sales statistics could not be loaded."
 msgstr "Nie można było wczytać statystyk sprzedaży wydarzenia."
 
+#: src/Admin/calendar-organizer/CalendarOrganizerField.js:101
 #: src/Admin/compare-events/CompareEventsPage.js:154
 #: src/Admin/compare-events/CompareEventsPage.js:558
-#: src/Admin/meta/MetaCalendarTest.js:229
+#: src/Admin/manage-event-organizer/EventOrganizer.js:197
+#: src/Admin/meta/MetaCalendarTest.js:231
+#: src/Admin/organizers/OrganizersPage.js:257
 #: src/Admin/sources/SourcesList.js:357
 msgid "Try again"
 msgstr "Spróbuj ponownie"
@@ -578,21 +582,21 @@ msgstr "Sprawdź, jak sprzedaż biletów dwóch wydarzeń rozwijała się w dnia
 msgid "The list of events could not be loaded."
 msgstr "Nie można było wczytać listy wydarzeń."
 
-#: src/Frontend/WeeklySummaryPage.php:232
-#: src/Admin/compare-events/comparison.js:98
-#: src/Admin/meta/MetaCalendarTest.js:85
+#: src/Frontend/WeeklySummaryPage.php:237
+#: src/Admin/compare-events/comparison.js:99
+#: src/Admin/meta/MetaCalendarTest.js:87
 #: src/Admin/source-view/calendarLabels.js:20
 msgid "(untitled event)"
 msgstr "(wydarzenie bez tytułu)"
 
 #. translators: 1: event name, 2: event start date.
-#: src/Admin/compare-events/comparison.js:105
+#: src/Admin/compare-events/comparison.js:106
 #, js-format
 msgid "%1$s — %2$s"
 msgstr "%1$s — %2$s"
 
 #. translators: %d: number of calendar days before the event.
-#: src/Admin/compare-events/comparison.js:167
+#: src/Admin/compare-events/comparison.js:168
 #, js-format
 msgid "%d day before the event"
 msgid_plural "%d days before the event"
@@ -600,12 +604,12 @@ msgstr[0] "%d dzień przed wydarzeniem"
 msgstr[1] "%d dni przed wydarzeniem"
 msgstr[2] "%d dni przed wydarzeniem"
 
-#: src/Admin/compare-events/comparison.js:177
+#: src/Admin/compare-events/comparison.js:178
 msgid "Day of the event"
 msgstr "Dzień wydarzenia"
 
 #. translators: %d: event-day number, counting the first day as 1.
-#: src/Admin/compare-events/comparison.js:181
+#: src/Admin/compare-events/comparison.js:182
 #, js-format
 msgid "Day %d of the event"
 msgstr "Dzień %d wydarzenia"
@@ -698,7 +702,8 @@ msgid "Add schedule item"
 msgstr "Dodaj punkt programu"
 
 #: src/Admin/manage-event-schedule/EventSchedule.js:399
-#: src/Admin/whatsapp/WhatsAppConnection.js:400
+#: src/Admin/whatsapp/DefaultTestNumber.js:142
+#: src/Admin/whatsapp/WhatsAppConnection.js:416
 msgid "No unsaved changes."
 msgstr "Brak niezapisanych zmian."
 
@@ -795,6 +800,8 @@ msgid "Remove from schedule"
 msgstr "Usuń z harmonogramu"
 
 #: src/Admin/components/ConfirmActionModal.js:24
+#: src/Admin/instagram/AccountChoice.js:219
+#: src/Admin/instagram/InstagramPage.js:767
 #: src/Admin/manage-event-schedule/EventSchedule.js:763
 #: src/Admin/sources/components/SourceForm.js:251
 msgid "Cancel"
@@ -865,82 +872,82 @@ msgstr "Zapisywanie..."
 msgid "Save Features"
 msgstr "Zapisz funkcje"
 
-#: src/Admin/settings/index.js:29
+#: src/Admin/settings/index.js:32
 msgid "Experimental"
 msgstr "Eksperymentalne"
 
-#: src/Admin/meta/MetaCalendarTest.js:27
+#: src/Admin/meta/MetaCalendarTest.js:28
 msgid "This page cannot read marketing consent because the WP Consent API is not active."
 msgstr "Ta strona nie może odczytać zgody marketingowej, ponieważ interfejs API WP Consent nie jest aktywny."
 
-#: src/Admin/meta/MetaCalendarTest.js:33
+#: src/Admin/meta/MetaCalendarTest.js:34
 msgid "This browser has not given marketing consent. Accept marketing cookies on the site, then check again."
 msgstr "Ta przeglądarka nie wyraziła zgody marketingowej. Zaakceptuj marketingowe pliki cookie w witrynie, a następnie sprawdź ponownie."
 
-#: src/Admin/meta/MetaCalendarTest.js:39
+#: src/Admin/meta/MetaCalendarTest.js:40
 msgid "This browser has no Meta browser identifier (the _fbp or _fbc cookie). Open an event page with the Meta Pixel active, then check again."
 msgstr "Ta przeglądarka nie ma identyfikatora przeglądarki Meta (pliku cookie _fbp lub _fbc). Otwórz stronę wydarzenia z aktywnym pikselem Meta, a następnie sprawdź ponownie."
 
-#: src/Admin/meta/MetaCalendarTest.js:57
+#: src/Admin/meta/MetaCalendarTest.js:58
 msgid "This browser’s marketing consent or Meta cookies could not be read. Check the consent banner, then check again."
 msgstr "Nie udało się odczytać zgody marketingowej ani plików cookie Meta tej przeglądarki. Sprawdź baner zgody, a następnie sprawdź ponownie."
 
-#: src/Admin/meta/MetaCalendarTest.js:159
+#: src/Admin/meta/MetaCalendarTest.js:161
 msgid "Select the event the test click belongs to."
 msgstr "Wybierz wydarzenie, którego dotyczy testowe kliknięcie."
 
-#: src/Admin/meta/MetaCalendarTest.js:165
+#: src/Admin/meta/MetaCalendarTest.js:167
 msgid "Select a date of this series."
 msgstr "Wybierz termin tej serii."
 
-#: src/Admin/meta/MetaCalendarTest.js:193
+#: src/Admin/meta/MetaCalendarTest.js:195
 msgid "Calendar click test"
 msgstr "Test kliknięcia kalendarza"
 
-#: src/Admin/meta/MetaCalendarTest.js:195
+#: src/Admin/meta/MetaCalendarTest.js:197
 msgid "Sends one FairEventCalendarClick to Test Events, built like a real “Add to calendar” click from this browser. It does not appear in delivery outcomes or reports."
 msgstr "Wysyła jedno zdarzenie FairEventCalendarClick do zdarzeń testowych, zbudowane jak prawdziwe kliknięcie „Dodaj do kalendarza” z tej przeglądarki. Nie pojawia się w wynikach dostarczenia ani w raportach."
 
-#: src/Admin/meta/MetaCalendarTest.js:211
+#: src/Admin/meta/MetaCalendarTest.js:213
 #: src/Admin/meta/SentRequests.js:790
 msgid "Event"
 msgstr "Wydarzenie"
 
-#: src/Admin/meta/MetaCalendarTest.js:217
+#: src/Admin/meta/MetaCalendarTest.js:219
 msgid "Lists the latest events whose page is published and publicly accessible. Type to search by title."
 msgstr "Pokazuje najnowsze wydarzenia, których strona jest opublikowana i publicznie dostępna. Zacznij pisać, aby wyszukać po tytule."
 
-#: src/Admin/meta/MetaCalendarTest.js:237
+#: src/Admin/meta/MetaCalendarTest.js:239
 msgid "Events could not be loaded."
 msgstr "Nie udało się wczytać wydarzeń."
 
 #. translators: %s: text typed into the event search
-#: src/Admin/meta/MetaCalendarTest.js:250
+#: src/Admin/meta/MetaCalendarTest.js:252
 #, js-format
 msgid "No events with a publicly accessible page match “%s”."
 msgstr "Żadne wydarzenie z publicznie dostępną stroną nie pasuje do „%s”."
 
-#: src/Admin/meta/MetaCalendarTest.js:256
+#: src/Admin/meta/MetaCalendarTest.js:258
 msgid "There are no events with a publicly accessible page yet."
 msgstr "Nie ma jeszcze wydarzeń z publicznie dostępną stroną."
 
-#: src/Admin/meta/MetaCalendarTest.js:266
+#: src/Admin/meta/MetaCalendarTest.js:268
 msgid "Date"
 msgstr "Data"
 
-#: src/Admin/meta/MetaCalendarTest.js:270
+#: src/Admin/meta/MetaCalendarTest.js:272
 msgid "Select a date"
 msgstr "Wybierz datę"
 
-#: src/Admin/meta/MetaCalendarTest.js:279
+#: src/Admin/meta/MetaCalendarTest.js:281
 msgid "(no date)"
 msgstr "(brak daty)"
 
-#: src/Admin/meta/MetaCalendarTest.js:299
+#: src/Admin/meta/MetaCalendarTest.js:301
 msgid "Send FairEventCalendarClick test"
 msgstr "Wyślij testowe FairEventCalendarClick"
 
-#: src/Admin/meta/MetaCalendarTest.js:311
+#: src/Admin/meta/MetaCalendarTest.js:313
 msgid "Check this browser again"
 msgstr "Sprawdź tę przeglądarkę ponownie"
 
@@ -1070,7 +1077,7 @@ msgstr "Odebrane zdarzenia: %d"
 
 #. translators: %s: Meta trace ID
 #: src/Admin/meta/TestDiagnostics.js:53
-#: src/Admin/whatsapp/WhatsAppConnection.js:110
+#: src/Admin/whatsapp/WhatsAppConnection.js:111
 #, js-format
 msgid "Trace ID: %s"
 msgstr "Identyfikator śledzenia: %s"
@@ -1174,7 +1181,7 @@ msgid "Dataset / Pixel ID"
 msgstr "Zestaw danych / identyfikator piksela"
 
 #: src/Admin/meta/MetaConversions.js:657
-#: src/Admin/whatsapp/WhatsAppConnection.js:595
+#: src/Admin/whatsapp/WhatsAppConnection.js:611
 msgid "Manage in Connectors"
 msgstr "Zarządzaj w Łącznikach"
 
@@ -1187,7 +1194,8 @@ msgid "Save Meta settings"
 msgstr "Zapisz ustawienia Meta"
 
 #: src/Admin/meta/MetaConversions.js:716
-#: src/Admin/whatsapp/WhatsAppConnection.js:656
+#: src/Admin/organizers/OrganizersPage.js:513
+#: src/Admin/whatsapp/WhatsAppConnection.js:672
 msgid "Discard changes"
 msgstr "Anuluj zmiany"
 
@@ -1241,7 +1249,7 @@ msgid "Back to Event Feeds"
 msgstr "Wróć do kanałów wydarzeń"
 
 #. translators: %s: event feed name
-#: src/Frontend/WeeklySummaryPage.php:190
+#: src/Frontend/WeeklySummaryPage.php:191
 #: src/Admin/source-view/FeedHeader.js:44
 #, js-format, php-format
 msgid "Event feed: %s"
@@ -1468,10 +1476,12 @@ msgstr "Wczytywanie kanałów wydarzeń…"
 msgid "No event feeds yet. Add your first event feed to get started."
 msgstr "Nie ma jeszcze kanałów wydarzeń. Dodaj pierwszy kanał wydarzeń, aby zacząć."
 
+#: src/Admin/organizers/OrganizersPage.js:284
 #: src/Admin/sources/SourcesList.js:259
 msgid "Actions"
 msgstr "Działania"
 
+#: src/Admin/organizers/OrganizersPage.js:342
 #: src/Admin/sources/SourcesList.js:307
 msgid "Edit"
 msgstr "Edytuj"
@@ -1488,13 +1498,13 @@ msgstr "Brak wydarzeń w tym miesiącu."
 msgid "Failed to load events."
 msgstr "Nie udało się załadować wydarzeń."
 
-#: src/Admin/AdminPages.php:110
-#: src/Admin/AdminPages.php:111
+#: src/Admin/AdminPages.php:112
+#: src/Admin/AdminPages.php:113
 #: src/Admin/meta/MetaPage.js:24
 msgid "Meta"
 msgstr "Meta"
 
-#: src/Core/Features.php:124
+#: src/Core/Features.php:141
 msgid "Consent-gated server-side Meta measurement of event-button clicks, checkouts and purchases. Requires explicit credentials; checkout and purchase measurement also requires Fair Payments Connector."
 msgstr "Pomiar po stronie serwera Meta, za zgodą, kliknięć przycisków wydarzeń, przejść do kasy i zakupów. Wymaga jawnych poświadczeń; pomiar kasy i zakupów wymaga też Fair Payments Connector."
 
@@ -1873,41 +1883,41 @@ msgid "Older"
 msgstr "Starsze"
 
 #. translators: 1: ISO week number, 2: ISO week-numbering year
-#: src/Frontend/WeeklySummaryPage.php:167
+#: src/Frontend/WeeklySummaryPage.php:168
 #, php-format
 msgid "Week %1$d, %2$d"
 msgstr "Tydzień %1$d, %2$d"
 
 #. translators: 1: page title, 2: date range of the week
-#: src/Frontend/WeeklySummaryPage.php:175
+#: src/Frontend/WeeklySummaryPage.php:176
 #, php-format
 msgid "Weekly summary: %1$s, %2$s"
 msgstr "Podsumowanie tygodnia: %1$s, %2$s"
 
-#: src/Frontend/WeeklySummaryPage.php:200
+#: src/Frontend/WeeklySummaryPage.php:201
 msgid "Week"
 msgstr "Tydzień"
 
-#: src/Frontend/WeeklySummaryPage.php:201
+#: src/Frontend/WeeklySummaryPage.php:202
 msgid "Previous week"
 msgstr "Poprzedni tydzień"
 
-#: src/Frontend/WeeklySummaryPage.php:206
+#: src/Frontend/WeeklySummaryPage.php:207
 msgid "Next week"
 msgstr "Następny tydzień"
 
 #. translators: %s: week as given in the link, e.g. "2026-W60"
-#: src/Frontend/WeeklySummaryPage.php:215
+#: src/Frontend/WeeklySummaryPage.php:216
 #, php-format
 msgid "“%s” is not a valid week, so this shows the current week."
 msgstr "„%s” nie jest prawidłowym tygodniem, dlatego wyświetlany jest bieżący tydzień."
 
-#: src/Frontend/WeeklySummaryPage.php:224
+#: src/Frontend/WeeklySummaryPage.php:225
 msgid "Events this week"
 msgstr "Wydarzenia w tym tygodniu"
 
-#: src/Frontend/WeeklySummaryPage.php:277
-#: src/Frontend/WeeklySummaryPage.php:280
+#: src/Frontend/WeeklySummaryPage.php:283
+#: src/Frontend/WeeklySummaryPage.php:286
 msgid "Weekly summary unavailable"
 msgstr "Podsumowanie tygodnia niedostępne"
 
@@ -1958,31 +1968,31 @@ msgstr "Adresy URL kanałów iCal i JSON (uproszczona nazwa „%s”) przestaną
 msgid "Events and categories included in the feed are not changed. Deleting the feed cannot be undone."
 msgstr "Wydarzenia i kategorie zawarte w kanale nie zostaną zmienione. Usunięcie kanału nie może być cofnięte."
 
-#: src/Frontend/WeeklySummaryPage.php:184
+#: src/Frontend/WeeklySummaryPage.php:185
 msgid "Weekly summary for WhatsApp"
 msgstr "Podsumowanie tygodnia na WhatsApp"
 
-#: src/Frontend/WeeklySummaryPage.php:227
+#: src/Frontend/WeeklySummaryPage.php:228
 msgid "There are no public events this week. The message below has only its heading."
 msgstr "W tym tygodniu nie ma publicznych wydarzeń. Wiadomość poniżej zawiera tylko nagłówek."
 
-#: src/Frontend/WeeklySummaryPage.php:249
+#: src/Frontend/WeeklySummaryPage.php:255
 msgid "Message copied. Paste it into WhatsApp."
 msgstr "Wiadomość skopiowana. Wklej ją w WhatsApp."
 
-#: src/Frontend/WeeklySummaryPage.php:250
+#: src/Frontend/WeeklySummaryPage.php:256
 msgid "Couldn’t copy automatically. The message is selected below: copy it with your device’s copy command."
 msgstr "Nie udało się skopiować automatycznie. Wiadomość jest zaznaczona poniżej: skopiuj ją poleceniem kopiowania na swoim urządzeniu."
 
-#: src/Frontend/WeeklySummaryPage.php:252
+#: src/Frontend/WeeklySummaryPage.php:258
 msgid "WhatsApp message"
 msgstr "Wiadomość na WhatsApp"
 
-#: src/Frontend/WeeklySummaryPage.php:253
+#: src/Frontend/WeeklySummaryPage.php:259
 msgid "Copy this message, then paste it into your WhatsApp group or community. Nothing is sent automatically."
 msgstr "Skopiuj tę wiadomość, a następnie wklej ją w swojej grupie lub społeczności WhatsApp. Nic nie jest wysyłane automatycznie."
 
-#: src/Frontend/WeeklySummaryPage.php:254
+#: src/Frontend/WeeklySummaryPage.php:260
 msgid "Copy WhatsApp message"
 msgstr "Kopiuj wiadomość na WhatsApp"
 
@@ -1998,106 +2008,107 @@ msgstr "Włącz ten kanał, aby korzystać z jego podsumowania na WhatsApp."
 msgid "Open WhatsApp summary"
 msgstr "Otwórz podsumowanie na WhatsApp"
 
-#: src/Admin/AdminPages.php:121
-#: src/Admin/AdminPages.php:122
+#: src/Admin/AdminPages.php:152
+#: src/Admin/AdminPages.php:153
+#: src/Core/Features.php:152
 #: src/WhatsApp/Connector.php:69
 #: src/Admin/sources/SourcesList.js:257
-#: src/Admin/whatsapp/WhatsAppPage.js:24
+#: src/Admin/whatsapp/WhatsAppPage.js:25
 msgid "WhatsApp"
 msgstr "WhatsApp"
 
-#: src/API/WhatsAppController.php:187
+#: src/API/WhatsAppController.php:211
 msgid "Enter the recipient number in international format, with the country code, such as +34 600 123 456."
 msgstr "Wpisz numer odbiorcy w formacie międzynarodowym z kodem kraju, np. +34 600 123 456."
 
-#: src/API/WhatsAppController.php:234
+#: src/API/WhatsAppController.php:310
 msgid "The WhatsApp access token is managed in Settings → Connectors. Nothing was saved."
 msgstr "Token dostępu WhatsApp jest zarządzany w Ustawienia → Łączniki. Nic nie zostało zapisane."
 
-#: src/API/WhatsAppController.php:343
+#: src/API/WhatsAppController.php:419
 msgid "Confirm that the recipient agreed to receive this test message. Nothing was sent."
 msgstr "Potwierdź, że odbiorca wyraził zgodę na otrzymanie tej wiadomości testowej. Wiadomość nie została wysłana."
 
-#: src/API/WhatsAppController.php:369
+#: src/API/WhatsAppController.php:445
 msgid "This template is not an approved template without parameters in this language. Reload the templates and pick another. Nothing was sent."
 msgstr "Ten szablon nie jest zatwierdzonym szablonem bez parametrów w tym języku. Przeładuj szablony i wybierz inny. Wiadomość nie została wysłana."
 
-#: src/API/WhatsAppController.php:556
+#: src/API/WhatsAppController.php:632
 msgid "Add a WhatsApp access token in Settings → Connectors first."
 msgstr "Najpierw dodaj token dostępu WhatsApp w Ustawienia → Łączniki."
 
-#: src/API/WhatsAppController.php:564
+#: src/API/WhatsAppController.php:640
 msgid "Save the WhatsApp Business Account ID and the Phone Number ID first."
 msgstr "Najpierw zapisz identyfikator konta biznesowego WhatsApp i identyfikator numeru telefonu."
 
-#: src/API/WhatsAppController.php:571
+#: src/API/WhatsAppController.php:647
 msgid "Validate the connection with the saved settings first."
 msgstr "Najpierw sprawdź poprawność połączenia z zapisanymi ustawieniami."
 
-#: src/API/WhatsAppController.php:588
+#: src/API/WhatsAppController.php:664
 msgid "WhatsApp did not confirm the message, so it may or may not have been sent. Ask the recipient before sending again; it was not retried."
 msgstr "WhatsApp nie potwierdził wiadomości, więc może ona być wysłana lub nie. Zapytaj odbiorcę przed ponownym wysłaniem; wiadomość nie została ponownie wysłana."
 
-#: src/API/WhatsAppController.php:612
+#: src/API/WhatsAppController.php:688
 msgid "Meta rejected the access token: it is invalid or has expired. Generate a new token and save it in Settings → Connectors."
 msgstr "Meta odrzuciła token dostępu: jest nieprawidłowy lub wygasł. Wygeneruj nowy token i zapisz go w Ustawienia → Łączniki."
 
-#: src/API/WhatsAppController.php:614
+#: src/API/WhatsAppController.php:690
 msgid "The access token lacks the whatsapp_business_management or whatsapp_business_messaging permission, or access to this WhatsApp Business Account. Assign the account to the token's user and generate a new token."
 msgstr "Token dostępu nie ma uprawnień whatsapp_business_management lub whatsapp_business_messaging, lub dostępu do tego konta biznesowego WhatsApp. Przypisz konto do użytkownika tokenu i wygeneruj nowy token."
 
-#: src/API/WhatsAppController.php:616
+#: src/API/WhatsAppController.php:692
 msgid "Meta is limiting requests right now. Wait a few minutes and try again."
 msgstr "Meta ogranicza żądania w tej chwili. Czekaj kilka minut i spróbuj ponownie."
 
-#: src/API/WhatsAppController.php:618
+#: src/API/WhatsAppController.php:694
 msgid "Meta found no WhatsApp Business Account with this ID that the token can access. Check the WhatsApp Business Account ID and the token's access."
 msgstr "Meta nie znalazła konta biznesowego WhatsApp z tym identyfikatorem, do którego token może uzyskać dostęp. Sprawdź identyfikator konta biznesowego WhatsApp i dostęp tokenu."
 
-#: src/API/WhatsAppController.php:620
+#: src/API/WhatsAppController.php:696
 msgid "Meta found no phone number with this Phone Number ID that the token can access. Copy the Phone Number ID from the App Dashboard or WhatsApp Manager; it is not the telephone number."
 msgstr "Meta nie znalazła numeru telefonu z tym identyfikatorem numeru telefonu, do którego token może uzyskać dostęp. Skopiuj identyfikator numeru telefonu z Panelu aplikacji lub Menedżera WhatsApp; to nie jest numer telefonu."
 
-#: src/API/WhatsAppController.php:622
+#: src/API/WhatsAppController.php:698
 msgid "This Phone Number ID belongs to a different WhatsApp Business Account. Use two IDs from the same account."
 msgstr "Ten identyfikator numeru telefonu należy do innego konta biznesowego WhatsApp. Użyj dwóch identyfikatorów z tego samego konta."
 
-#: src/API/WhatsAppController.php:624
+#: src/API/WhatsAppController.php:700
 msgid "The recipient is not on the sender's list of allowed numbers. A test sender can only message numbers added in the App Dashboard."
 msgstr "Odbiorca nie znajduje się na liście dozwolonych numerów nadawcy. Nadawca testowy może wysyłać wiadomości tylko na numery dodane w Panelu aplikacji."
 
-#: src/API/WhatsAppController.php:626
+#: src/API/WhatsAppController.php:702
 msgid "WhatsApp cannot deliver to this recipient. Check that the number uses WhatsApp."
 msgstr "WhatsApp nie może dostarczyć wiadomości do tego odbiorcy. Sprawdź, czy numer korzysta z WhatsApp."
 
-#: src/API/WhatsAppController.php:518
-#: src/API/WhatsAppController.php:628
+#: src/API/WhatsAppController.php:594
+#: src/API/WhatsAppController.php:704
 msgid "The sender phone number is not registered with the Cloud API. Register it in WhatsApp Manager."
 msgstr "Numer telefonu nadawcy nie jest zarejestrowany w Cloud API. Zarejestruj go w Menedżerze WhatsApp."
 
-#: src/API/WhatsAppController.php:515
-#: src/API/WhatsAppController.php:630
+#: src/API/WhatsAppController.php:591
+#: src/API/WhatsAppController.php:706
 msgid "The WhatsApp Business Account is restricted or locked. Check its status in WhatsApp Manager."
 msgstr "Konto biznesowe WhatsApp jest ograniczone lub zablokowane. Sprawdź jego status w Menedżerze WhatsApp."
 
-#: src/API/WhatsAppController.php:512
-#: src/API/WhatsAppController.php:632
+#: src/API/WhatsAppController.php:588
+#: src/API/WhatsAppController.php:708
 msgid "The WhatsApp Business Account has a payment problem. Check its payment method in Meta Business Settings."
 msgstr "Konto biznesowe WhatsApp ma problem z płatnością. Sprawdź metodę płatności w Ustawieniach biznesowych Meta."
 
-#: src/API/WhatsAppController.php:634
+#: src/API/WhatsAppController.php:710
 msgid "Meta refused this template: it does not exist in this language or is not approved. Reload the templates and pick another."
 msgstr "Meta odrzuciła ten szablon: nie istnieje w tym języku lub nie jest zatwierdzony. Przeładuj szablony i wybierz inny."
 
-#: src/API/WhatsAppController.php:636
+#: src/API/WhatsAppController.php:712
 msgid "Meta could not process the request. Try again later."
 msgstr "Meta nie mogła przetworzyć żądania. Spróbuj ponownie później."
 
-#: src/API/WhatsAppController.php:638
+#: src/API/WhatsAppController.php:714
 msgid "Could not reach Meta. Check the site's outgoing connection and try again."
 msgstr "Nie można było połączyć się z Metą. Sprawdź wychodzące połączenie witryny i spróbuj ponownie."
 
-#: src/API/WhatsAppController.php:640
+#: src/API/WhatsAppController.php:716
 msgid "Meta rejected the request. Check both IDs and the token's access, then try again."
 msgstr "Meta odrzuciła żądanie. Sprawdź oba identyfikatory i dostęp tokenu, a następnie spróbuj ponownie."
 
@@ -2129,210 +2140,204 @@ msgstr "Token dostępu do interfejsu WhatsApp Cloud API."
 msgid "That does not look like a WhatsApp access token. Paste the full token generated in Meta Business Settings, without spaces. The saved token was not changed."
 msgstr "To nie wygląda na token dostępu WhatsApp. Wklej pełny token wygenerowany w Ustawieniach biznesowych Meta, bez spacji. Zapisany token nie został zmieniony."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:48
+#: src/Admin/whatsapp/WhatsAppConnection.js:49
 msgid "No WhatsApp access token is configured. Add one in Connectors."
 msgstr "Żaden token dostępu WhatsApp nie jest skonfigurowany. Dodaj go w Łącznikach."
 
 #. translators: %s: environment variable name
-#: src/Admin/whatsapp/WhatsAppConnection.js:59
+#: src/Admin/whatsapp/WhatsAppConnection.js:60
 #, js-format
 msgid "The access token comes from the %s environment variable, which overrides any token saved in Connectors. Validate the connection to confirm Meta accepts it."
 msgstr "Token dostępu pochodzi ze zmiennej środowiskowej %s, która zastępuje każdy token zapisany w Łącznikach. Sprawdź połączenie, aby potwierdzić, że Meta go akceptuje."
 
 #. translators: %s: PHP constant name
-#: src/Admin/whatsapp/WhatsAppConnection.js:72
+#: src/Admin/whatsapp/WhatsAppConnection.js:73
 #, js-format
 msgid "The access token comes from the %s constant, which overrides any token saved in Connectors. Validate the connection to confirm Meta accepts it."
 msgstr "Token dostępu pochodzi ze stałej %s, która zastępuje każdy token zapisany w Łącznikach. Sprawdź połączenie, aby potwierdzić, że Meta go akceptuje."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:82
+#: src/Admin/whatsapp/WhatsAppConnection.js:83
 msgid "An access token is saved in Connectors. It is not shown here. Validate the connection to confirm Meta accepts it."
 msgstr "Token dostępu jest zapisany w Łącznikach. Nie jest tu wyświetlany. Sprawdź połączenie, aby potwierdzić, że Meta go akceptuje."
 
 #. translators: %d: numeric error code reported by Meta
-#: src/Admin/whatsapp/WhatsAppConnection.js:101
+#: src/Admin/whatsapp/WhatsAppConnection.js:102
 #, js-format
 msgid "Meta error code: %d"
 msgstr "Kod błędu Meta: %d"
 
-#. translators: 1: sender's verified business name, 2: sender's telephone number, 3: date and time of the validation
-#: src/Admin/whatsapp/WhatsAppConnection.js:145
-#, js-format
-msgid "Connection validated: messages are sent as %1$s (%2$s). Checked on %3$s."
-msgstr "Połączenie sprawdzone: wiadomości są wysyłane jako %1$s (%2$s). Sprawdzono %3$s."
-
-#: src/Admin/whatsapp/WhatsAppConnection.js:150
+#: src/Admin/whatsapp/WhatsAppConnection.js:151
 msgid "(no display name)"
 msgstr "(brak nazwy wyświetlanej)"
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:152
+#: src/Admin/whatsapp/WhatsAppConnection.js:153
 msgid "number not reported"
 msgstr "liczba nie została zgłoszona"
 
 #. translators: %s: quality rating reported by Meta, such as GREEN
-#: src/Admin/whatsapp/WhatsAppConnection.js:160
+#: src/Admin/whatsapp/WhatsAppConnection.js:161
 #, js-format
 msgid "Quality rating: %s"
 msgstr "Klasyfikacja jakości: %s"
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:177
+#: src/Admin/whatsapp/WhatsAppConnection.js:178
 msgid "Not sent"
 msgstr "Nie wysłano"
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:179
+#: src/Admin/whatsapp/WhatsAppConnection.js:180
 msgid "Accepted by WhatsApp"
 msgstr "Zaakceptowano przez WhatsApp"
 
 #: src/Admin/whatsapp/DeliveryHistory.js:73
-#: src/Admin/whatsapp/WhatsAppConnection.js:181
+#: src/Admin/whatsapp/WhatsAppConnection.js:182
 msgid "Outcome unknown"
 msgstr "Wynik nieznany"
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:250
+#: src/Admin/whatsapp/WhatsAppConnection.js:266
 msgid "Failed to load the WhatsApp settings."
 msgstr "Nie udało się wczytać ustawień WhatsApp."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:344
+#: src/Admin/whatsapp/WhatsAppConnection.js:360
 msgid "Failed to load the templates."
 msgstr "Nie udało się wczytać szablonów."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:381
+#: src/Admin/whatsapp/WhatsAppConnection.js:397
 msgid "Loading WhatsApp settings…"
 msgstr "Wczytywanie ustawień WhatsApp…"
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:395
+#: src/Admin/whatsapp/WhatsAppConnection.js:411
 msgid "IDs contain digits only. Fix the highlighted field to save."
 msgstr "Identyfikatory zawierają tylko cyfry. Napraw wyróżnione pole, aby zapisać."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:405
+#: src/Admin/whatsapp/WhatsAppConnection.js:421
 msgid "Add a WhatsApp access token in Connectors before validating the connection."
 msgstr "Dodaj token dostępu WhatsApp w Łącznikach przed sprawdzeniem połączenia."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:410
+#: src/Admin/whatsapp/WhatsAppConnection.js:426
 msgid "Save the WhatsApp Business Account ID and the Phone Number ID before validating the connection."
 msgstr "Zapisz identyfikator konta biznesowego WhatsApp i identyfikator numeru telefonu przed sprawdzeniem połączenia."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:415
+#: src/Admin/whatsapp/WhatsAppConnection.js:431
 msgid "Save or discard your changes before validating: validation checks the saved settings, not what is in the fields."
 msgstr "Zapisz lub odrzuć zmiany przed sprawdzeniem: sprawdzanie weryfikuje zapisane ustawienia, a nie to, co znajduje się w polach."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:426
+#: src/Admin/whatsapp/WhatsAppConnection.js:442
 msgid "Validate the connection with the saved settings to send a test template."
 msgstr "Sprawdź połączenie z zapisanymi ustawieniami, aby wysłać szablon testowy."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:431
+#: src/Admin/whatsapp/WhatsAppConnection.js:447
 msgid "This account has no approved templates without parameters. Create one in WhatsApp Manager, or use hello_world, then reload the templates."
 msgstr "To konto nie ma zatwierdzonych szablonów bez parametrów. Utwórz jeden w Menedżerze WhatsApp lub użyj hello_world, a następnie przeładuj szablony."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:436
+#: src/Admin/whatsapp/WhatsAppConnection.js:452
 msgid "Choose a template to send."
 msgstr "Wybierz szablon do wysłania."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:441
+#: src/Admin/whatsapp/WhatsAppConnection.js:457
 msgid "Enter the recipient number."
 msgstr "Wpisz numer odbiorcy."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:446
+#: src/Admin/whatsapp/WhatsAppConnection.js:462
 msgid "Confirm that the recipient agreed to receive this test message."
 msgstr "Potwierdź, że odbiorca wyraził zgodę na otrzymanie tej wiadomości testowej."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:468
+#: src/Admin/whatsapp/WhatsAppConnection.js:484
 msgid "WhatsApp settings saved. Validate the connection to check them with Meta."
 msgstr "Ustawienia WhatsApp zapisane. Sprawdź połączenie, aby je zweryfikować za pomocą Meta."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:478
+#: src/Admin/whatsapp/WhatsAppConnection.js:494
 msgid "Failed to save the WhatsApp settings."
 msgstr "Nie udało się zapisać ustawień WhatsApp."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:502
+#: src/Admin/whatsapp/WhatsAppConnection.js:518
 msgid "The connection could not be validated."
 msgstr "Nie można było zweryfikować połączenia."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:552
+#: src/Admin/whatsapp/WhatsAppConnection.js:568
 msgid "The test template could not be sent."
 msgstr "Nie można było wysłać szablonu testowego."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:575
+#: src/Admin/whatsapp/WhatsAppConnection.js:591
 msgid "Use digits only."
 msgstr "Używaj tylko cyfr."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:589
+#: src/Admin/whatsapp/WhatsAppConnection.js:605
 msgid "Connection"
 msgstr "Połączenie"
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:610
+#: src/Admin/whatsapp/WhatsAppConnection.js:626
 msgid "WhatsApp Business Account ID"
 msgstr "Identyfikator konta WhatsApp Business"
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:614
+#: src/Admin/whatsapp/WhatsAppConnection.js:630
 msgid "Shown in the App Dashboard under WhatsApp → API Setup, and in WhatsApp Manager. It is an account ID, not a telephone number."
 msgstr "Wyświetlany w Panelu aplikacji w sekcji WhatsApp → Konfiguracja interfejsu API i w Menedżerze WhatsApp. To identyfikator konta, a nie numer telefonu."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:622
+#: src/Admin/whatsapp/WhatsAppConnection.js:638
 msgid "Phone Number ID"
 msgstr "Identyfikator numeru telefonu"
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:623
+#: src/Admin/whatsapp/WhatsAppConnection.js:639
 msgid "The ID Meta assigns to the sender number, shown under WhatsApp → API Setup. It differs from the telephone number itself."
 msgstr "Identyfikator przypisany przez Meta do numeru nadawcy, wyświetlany w sekcji WhatsApp → Konfiguracja interfejsu API. Różni się od samego numeru telefonu."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:643
+#: src/Admin/whatsapp/WhatsAppConnection.js:659
 msgid "Save settings"
 msgstr "Zapisz ustawienia"
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:670
+#: src/Admin/whatsapp/WhatsAppConnection.js:686
 msgid "Validate connection"
 msgstr "Sprawdź połączenie"
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:686
+#: src/Admin/whatsapp/WhatsAppConnection.js:702
 msgid "Checking the connection with Meta…"
 msgstr "Sprawdzanie połączenia z Meta…"
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:713
+#: src/Admin/whatsapp/WhatsAppConnection.js:729
 msgid "Settings saved, not validated."
 msgstr "Ustawienia zapisane, nie zweryfikowane."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:740
+#: src/Admin/whatsapp/WhatsAppConnection.js:756
 msgid "Send a test template"
 msgstr "Wyślij szablon testowy"
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:755
+#: src/Admin/whatsapp/WhatsAppConnection.js:771
 msgid "Loading templates…"
 msgstr "Wczytywanie szablonów…"
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:773
+#: src/Admin/whatsapp/WhatsAppConnection.js:789
 msgid "Template"
 msgstr "Szablon"
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:784
+#: src/Admin/whatsapp/WhatsAppConnection.js:800
 msgid "Choose a template"
 msgstr "Wybierz szablon"
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:799
+#: src/Admin/whatsapp/WhatsAppConnection.js:815
 msgid "Recipient number"
 msgstr "Numer odbiorcy"
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:803
+#: src/Admin/whatsapp/WhatsAppConnection.js:819
 msgid "International format with the country code, such as +34 600 123 456. A test sender only reaches numbers added in the App Dashboard."
 msgstr "Format międzynarodowy z kodem kraju, na przykład +34 600 123 456. Nadawca testowy dociera tylko do numerów dodanych w Panelu aplikacji."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:815
+#: src/Admin/whatsapp/WhatsAppConnection.js:831
 msgid "The recipient agreed to receive this test message."
 msgstr "Odbiorca wyraził zgodę na otrzymanie tej wiadomości testowej."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:837
+#: src/Admin/whatsapp/WhatsAppConnection.js:853
 msgid "Send test template"
 msgstr "Wyślij szablon testowy"
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:852
+#: src/Admin/whatsapp/WhatsAppConnection.js:868
 msgid "Reload templates"
 msgstr "Przeładuj szablony"
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:865
+#: src/Admin/whatsapp/WhatsAppConnection.js:881
 msgid "Sending the test template…"
 msgstr "Wysyłanie szablonu testowego…"
 
-#: src/Admin/whatsapp/WhatsAppPage.js:26
+#: src/Admin/whatsapp/WhatsAppPage.js:27
 msgid "Connect a WhatsApp Business sender and send a test template. Scheduled WhatsApp notifications are not available yet, so nothing is sent automatically."
 msgstr "Połącz nadawcę WhatsApp Business i wyślij szablon testowy. Zaplanowane powiadomienia WhatsApp nie są jeszcze dostępne, dlatego nic nie jest wysyłane automatycznie."
 
@@ -2350,56 +2355,56 @@ msgstr "Nie udało się zaplanować wysyłki do Meta w tle. Zdarzenia płatnośc
 msgid "Scheduling is retried automatically on later site visits, and queued events are delivered once it succeeds. Payments are not affected. If this warning stays, check that WP-Cron runs on this site."
 msgstr "Planowanie jest automatycznie ponawiane przy kolejnych odwiedzinach strony, a zdarzenia z kolejki zostaną wysłane, gdy się powiedzie. Płatności nie są objęte problemem. Jeśli to ostrzeżenie nie znika, sprawdź, czy WP-Cron działa na tej stronie."
 
-#: src/API/WhatsAppController.php:255
-#: src/Admin/whatsapp/WebhookSetup.js:352
+#: src/API/WhatsAppController.php:331
+#: src/Admin/whatsapp/WebhookSetup.js:376
 msgid "Enter an App Secret or a verify token to save."
 msgstr "Wpisz klucz aplikacji lub token weryfikacyjny, aby zapisać."
 
-#: src/API/WhatsAppController.php:390
+#: src/API/WhatsAppController.php:466
 msgid "The send could not be recorded, so nothing was sent. Try again; if it keeps failing, check the site's database."
 msgstr "Wysłanie nie mogło być zarejestrowane, więc nic nie zostało wysłane. Spróbuj ponownie; jeśli problem będzie się powtarzać, sprawdź bazę danych witryny."
 
-#: src/API/WhatsAppController.php:500
+#: src/API/WhatsAppController.php:576
 msgid "WhatsApp could not deliver to this number. It may not use WhatsApp, or may run an outdated app."
 msgstr "WhatsApp nie mógł dostarczyć wiadomości na ten numer. Numer może nie używać WhatsAppa lub może mieć zainstalowaną starszą wersję aplikacji."
 
-#: src/API/WhatsAppController.php:502
+#: src/API/WhatsAppController.php:578
 msgid "More than 24 hours passed since the recipient last wrote, so only an approved template can reach them."
 msgstr "Minęło więcej niż 24 godziny od ostatniej wiadomości od odbiorcy, dlatego tylko zatwierdzony szablon może go osiągnąć."
 
-#: src/API/WhatsAppController.php:504
+#: src/API/WhatsAppController.php:580
 msgid "WhatsApp chose not to deliver this message to keep engagement healthy. Wait before sending this person another marketing message."
 msgstr "WhatsApp zdecydował się nie dostarczać tej wiadomości, aby utrzymać zdrowy poziom zaangażowania. Poczekaj przed wysłaniem tej osobie kolejnej wiadomości marketingowej."
 
-#: src/API/WhatsAppController.php:506
+#: src/API/WhatsAppController.php:582
 msgid "The recipient stopped marketing messages from this business."
 msgstr "Odbiorca zatrzymał wiadomości marketingowe od tej firmy."
 
-#: src/API/WhatsAppController.php:508
+#: src/API/WhatsAppController.php:584
 msgid "The sender and the recipient are the same number."
 msgstr "Nadawca i odbiorca to ten sam numer."
 
-#: src/API/WhatsAppController.php:510
+#: src/API/WhatsAppController.php:586
 msgid "WhatsApp held this message back as part of an experiment on the recipient's number."
 msgstr "WhatsApp wstrzymał tę wiadomość w ramach eksperymentu na numerze odbiorcy."
 
-#: src/API/WhatsAppController.php:523
+#: src/API/WhatsAppController.php:599
 msgid "Too many messages were sent too quickly. Wait before sending again."
 msgstr "Zbyt wiele wiadomości zostało wysłanych zbyt szybko. Poczekaj przed wysłaniem kolejnej wiadomości."
 
-#: src/API/WhatsAppController.php:527
+#: src/API/WhatsAppController.php:603
 msgid "WhatsApp could not process the message content."
 msgstr "WhatsApp nie mógł przetworzyć zawartości wiadomości."
 
-#: src/API/WhatsAppController.php:535
+#: src/API/WhatsAppController.php:611
 msgid "The template is missing, paused or not approved in this language. Check it in WhatsApp Manager."
 msgstr "Szablon jest brakujący, wstrzymany lub nie zatwierdzony w tym języku. Sprawdź go w WhatsApp Manager."
 
-#: src/API/WhatsAppController.php:540
+#: src/API/WhatsAppController.php:616
 msgid "WhatsApp had a temporary problem delivering the message. Try again later."
 msgstr "WhatsApp miał tymczasowy problem z dostarczeniem wiadomości. Spróbuj ponownie później."
 
-#: src/API/WhatsAppController.php:542
+#: src/API/WhatsAppController.php:618
 msgid "WhatsApp reported that the message was not delivered."
 msgstr "WhatsApp zgłosił, że wiadomość nie została dostarczona."
 
@@ -2434,10 +2439,6 @@ msgstr "Zaakceptowano"
 #: src/Admin/whatsapp/DeliveryHistory.js:32
 msgid "WhatsApp accepted the message. Waiting for a delivery update."
 msgstr "WhatsApp zaakceptował wiadomość. Oczekiwanie na aktualizację dostarczenia."
-
-#: src/Admin/whatsapp/DeliveryHistory.js:40
-msgid "WhatsApp sent the message. It has not reached the phone yet."
-msgstr "WhatsApp wysłał wiadomość. Nie dotarła jeszcze do telefonu."
 
 #: src/Admin/whatsapp/DeliveryHistory.js:47
 msgid "Delivered"
@@ -2549,16 +2550,6 @@ msgstr "Zweryfikowane: Meta sprawdziła adres URL wywołania zwrotnego z bieżą
 msgid "Not verified: Meta has not checked the callback URL with the current verify token."
 msgstr "Nie zweryfikowane: Meta nie sprawdziła adresu URL wywołania zwrotnego z bieżącym tokenem weryfikacji."
 
-#. translators: %s: date and time
-#: src/Admin/whatsapp/WebhookSetup.js:89
-#, js-format
-msgid "Receiving updates: the last authenticated update for this account arrived on %s."
-msgstr "Odbieranie aktualizacji: ostatnia uwierzytelniona aktualizacja dla tego konta dotarła dnia %s."
-
-#: src/Admin/whatsapp/WebhookSetup.js:95
-msgid "No updates received yet: no authenticated update for this account has arrived. Verification alone does not show that updates arrive; subscribe to the messages field and send a test template."
-msgstr "Brak odebranych aktualizacji: żadna uwierzytelniona aktualizacja dla tego konta nie dotarła. Sama weryfikacja nie pokazuje, że aktualizacje docierają; subskrybuj pole wiadomości i wyślij szablon testowy."
-
 #: src/Admin/whatsapp/WebhookSetup.js:165
 msgid "Failed to save the webhook settings."
 msgstr "Nie udało się zapisać ustawień webhooka."
@@ -2599,29 +2590,29 @@ msgstr "Skopiuj klucz tajny aplikacji z Ustawień aplikacji → Podstawowe w Pan
 msgid "Subscribe the webhook to the messages field."
 msgstr "Subskrybuj webhook do pola wiadomości."
 
-#: src/Admin/whatsapp/WebhookSetup.js:312
+#: src/Admin/whatsapp/WebhookSetup.js:336
 msgid "Callback URL"
 msgstr "Adres URL wywołania zwrotnego"
 
-#: src/Admin/whatsapp/WebhookSetup.js:323
+#: src/Admin/whatsapp/WebhookSetup.js:347
 msgid "App Secret"
 msgstr "Klucz tajny aplikacji"
 
-#: src/Admin/whatsapp/WebhookSetup.js:327
+#: src/Admin/whatsapp/WebhookSetup.js:351
 msgid "Verify token"
 msgstr "Token weryfikacji"
 
-#: src/Admin/whatsapp/WebhookSetup.js:343
+#: src/Admin/whatsapp/WebhookSetup.js:367
 msgid "Save webhook settings"
 msgstr "Zapisz ustawienia webhooka"
 
 #. translators: 1: template name, 2: template language code, 3: recipient number with most digits hidden
-#: src/Admin/whatsapp/WhatsAppConnection.js:536
+#: src/Admin/whatsapp/WhatsAppConnection.js:552
 #, js-format
 msgid "WhatsApp accepted the %1$s (%2$s) template for %3$s. This does not confirm delivery yet: follow it under Recent messages."
 msgstr "WhatsApp zaakceptował szablon %1$s (%2$s) dla %3$s. To nie potwierdza jeszcze dostarczenia: śledź go w sekcji Ostatnie wiadomości."
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:748
+#: src/Admin/whatsapp/WhatsAppConnection.js:764
 msgid "Sends one approved template without parameters, once. Only send to someone who agreed to receive it. Only the last three digits of the recipient number are kept, in Recent messages."
 msgstr "Wysyła jeden zatwierdzony szablon bez parametrów, raz. Wysyłaj tylko do osób, które wyraziły zgodę na otrzymywanie wiadomości. W sekcji Ostatnie wiadomości przechowywane są tylko ostatnie trzy cyfry numeru odbiorcy."
 
@@ -2767,6 +2758,7 @@ msgid "Feed"
 msgstr "Źródło"
 
 #. translators: %s: event feed name
+#: src/Admin/organizers/OrganizersPage.js:348
 #: src/Admin/sources/SourcesList.js:310
 #, js-format
 msgid "Edit “%s”"
@@ -2790,4 +2782,846 @@ msgid_plural "%d event feeds"
 msgstr[0] "%d źródło wydarzeń"
 msgstr[1] "%d źródła wydarzeń"
 msgstr[2] "%d źródeł wydarzeń"
+
+#: src/Admin/AdminPages.php:125
+#: src/Admin/AdminPages.php:126
+#: src/Core/Features.php:148
+#: src/Admin/instagram/InstagramPage.js:380
+msgid "Instagram"
+msgstr "Instagram"
+
+#: src/Admin/AdminPages.php:139
+#: src/Admin/AdminPages.php:140
+#: src/Core/Features.php:144
+#: src/Admin/organizers/OrganizersPage.js:270
+#: src/Admin/organizers/OrganizersPage.js:372
+msgid "Organizers"
+msgstr "Organizatorzy"
+
+#: src/API/EventOrganizerController.php:86
+msgid "Unique identifier for the event date."
+msgstr "Unikatowy identyfikator daty wydarzenia."
+
+#: src/API/EventOrganizerController.php:101
+msgid "Organizer ID: \"default\" for the sitewide organizer, or an additional organizer's UUID."
+msgstr "Identyfikator organizatora: „default” dla organizatora witryny, lub UUID dodatkowego organizatora."
+
+#: src/API/EventOrganizerController.php:211
+msgid "This date is part of a series. Choose the organizer on the series."
+msgstr "Ta data jest częścią serii. Wybierz organizatora w serii."
+
+#: src/API/EventOrganizerController.php:220
+#: src/Services/EventOrganizer.php:209
+msgid "Choose the sitewide organizer or one of the organizers in the list."
+msgstr "Wybierz organizatora witryny lub jednego z organizatorów z listy."
+
+#: src/API/EventOrganizerController.php:228
+#: src/API/OrganizersController.php:207
+#: src/Admin/manage-event-organizer/EventOrganizer.js:162
+msgid "The organizer could not be saved. Try again."
+msgstr "Nie można było zapisać organizatora. Spróbuj ponownie."
+
+#: src/API/EventOrganizerController.php:275
+msgid "You do not have permission to change this event's organizer."
+msgstr "Nie posiadasz uprawnienia do zmiany organizatora tego wydarzenia."
+
+#: src/API/InstagramConnectionController.php:320
+msgid "This site’s Fair Audience is older than this plugin and still manages the Instagram connection. Update Fair Audience to manage it here; until then, use Fair Audience → Settings → Instagram."
+msgstr "Fair Audience tej witryny jest starszy niż ta wtyczka i nadal zarządza połączeniem Instagram. Zaktualizuj Fair Audience, aby zarządzać nim tutaj; do tego czasu użyj Fair Audience → Ustawienia → Instagram."
+
+#: src/API/InstagramConnectionController.php:322
+msgid "Fair Audience is updated, but the site still runs its previous code, so Fair Audience still manages the Instagram connection. Clear the PHP opcode cache or restart PHP, then try again."
+msgstr "Fair Audience jest zaktualizowany, ale witryna nadal uruchamia swój poprzedni kod, więc Fair Audience nadal zarządza połączeniem Instagram. Wyczyść pamięć podręczną kodu operacyjnego PHP lub uruchom ponownie PHP, a następnie spróbuj ponownie."
+
+#: src/API/InstagramConnectionController.php:324
+#: src/Admin/instagram/InstagramPage.js:185
+msgid "Instagram is turned off in Fair Events → Settings → Experimental. Turn it on to manage the connection here."
+msgstr "Instagram jest wyłączony w Fair Events → Ustawienia → Eksperymentalne. Włącz go, aby zarządzać połączeniem tutaj."
+
+#: src/API/InstagramConnectionController.php:326
+msgid "Fair Events Experimental did not take over the Instagram connection on this request. Reload the page and try again."
+msgstr "Fair Events Experimental nie przejął połączenia Instagram w tym żądaniu. Przeładuj stronę i spróbuj ponownie."
+
+#: src/API/OrganizersController.php:90
+msgid "Organizer ID: \"default\" for the sitewide organizer, or a UUID."
+msgstr "Identyfikator organizatora: „default” dla organizatora witryny, lub UUID."
+
+#: src/API/OrganizersController.php:121
+msgid "You do not have permission to manage organizers."
+msgstr "Nie posiadasz uprawnienia do zarządzania organizatorami."
+
+#: src/API/OrganizersController.php:260
+msgid "Enter a name for the organizer."
+msgstr "Wpisz nazwę organizatora."
+
+#. translators: %s: comma-separated list of allowed organizer types
+#: src/API/OrganizersController.php:271
+#, php-format
+msgid "Choose an organizer type: %s."
+msgstr "Wybierz typ organizatora: %s."
+
+#: src/API/OrganizersController.php:279
+msgid "Enter the website as a full URL, e.g. https://example.com."
+msgstr "Wpisz witrynę jako pełny adres URL, np. https://example.com."
+
+#. translators: %s: the rejected link as entered
+#: src/API/OrganizersController.php:291
+#, php-format
+msgid "\"%s\" is not a valid link. Enter full URLs, e.g. https://example.com/profile."
+msgstr "„%s” nie jest prawidłowym odnośnikiem. Wpisz pełne adresy URL, np. https://example.com/profile."
+
+#: src/API/OrganizersController.php:302
+msgid "Enter a valid contact email address, e.g. info@example.com."
+msgstr "Wpisz prawidłowy adres e-mail kontaktowy, np. info@example.com."
+
+#. translators: %s: the rejected email address as entered
+#: src/API/OrganizersController.php:314
+#, php-format
+msgid "\"%s\" is not a valid notification email address."
+msgstr "„%s” nie jest prawidłowym adresem e-mail powiadomienia."
+
+#: src/API/OrganizersController.php:325
+msgid "The selected logo is not an image in the Media Library. Choose another image."
+msgstr "Wybrany logotyp nie jest obrazkiem w bibliotece mediów. Wybierz inny obrazek."
+
+#. translators: %s: comma-separated list of invalid field names
+#: src/API/OrganizersController.php:333
+#, php-format
+msgid "Invalid parameter(s): %s"
+msgstr "Nieprawidłowy parametr (parametry): %s"
+
+#: src/API/OrganizersController.php:370
+msgid "Organizer not found."
+msgstr "Organizator nie znaleziony."
+
+#: src/API/WhatsAppController.php:251
+msgid "The default test number could not be saved. Try again; if it keeps failing, check the site's database."
+msgstr "Domyślny numer testowy nie mógł być zapisany. Spróbuj ponownie; jeśli problem się powtarza, sprawdź bazę danych witryny."
+
+#: src/Core/Features.php:145
+msgid "Manage additional organizers, each with its own identity and private notification addresses, next to the sitewide organizer. Turning this off keeps every organizer."
+msgstr "Zarządzaj dodatkowymi organizatorami, każdy z własną tożsamością i prywatnymi adresami powiadomień, obok organizatora witryny. Wyłączenie tej opcji zachowuje każdego organizatora."
+
+#: src/Core/Features.php:149
+msgid "Connect an Instagram professional account in Fair Events → Instagram. Turning this off keeps the stored connection; Fair Audience then manages it again."
+msgstr "Połącz profesjonalne konto Instagram w Fair Events → Instagram. Wyłączenie tej opcji zachowuje zapisane połączenie; Fair Audience będzie nim zarządzać ponownie."
+
+#: src/Core/Features.php:153
+msgid "Connect a WhatsApp Business account in Fair Events → WhatsApp and send test templates. Turning this off keeps the saved connection, credentials and delivery history."
+msgstr "Połącz konto WhatsApp Business w Fair Events → WhatsApp i wyślij szablony testowe. Wyłączenie tej opcji zachowuje zapisane połączenie, poświadczenia i historię dostarczania."
+
+#: src/Instagram/Authorization.php:88
+msgid "Instagram authorization was cancelled. Nothing was changed."
+msgstr "Autoryzacja Instagram została anulowana. Nic nie zostało zmienione."
+
+#: src/Instagram/Authorization.php:89
+#: src/Instagram/Connection.php:348
+msgid "Meta did not grant permission to publish to Instagram. Nothing was changed; connect again and allow every requested permission."
+msgstr "Meta nie udzieliła uprawnień do publikowania na Instagram. Nic nie zostało zmienione; połącz się ponownie i zezwól na każde żądane uprawnienie."
+
+#: src/Instagram/Authorization.php:90
+msgid "No Instagram professional account was shared with Fair Event Plugins. Nothing was changed; connect again and select the account this site publishes to."
+msgstr "Żadne profesjonalne konto Instagram nie zostało udostępnione wtyczce Fair Event Plugins. Nic nie zostało zmienione; połącz się ponownie i wybierz konto, na którym ta witryna publikuje."
+
+#: src/Instagram/Authorization.php:91
+msgid "More than one Instagram account was shared with Fair Event Plugins. Nothing was changed; connect again and select only the account this site publishes to. If Meta keeps sharing earlier accounts, first remove the app under Meta Business Settings → Integrations → Connected apps."
+msgstr "Więcej niż jedno konto Instagram zostało udostępnione wtyczce Fair Event Plugins. Nic nie zostało zmienione; połącz się ponownie i wybierz tylko konto, na którym ta witryna publikuje. Jeśli Meta nadal udostępnia wcześniejsze konta, najpierw usuń aplikację w Meta Business Settings → Integrations → Connected apps."
+
+#: src/Instagram/Authorization.php:92
+msgid "Meta shared several Instagram accounts but did not say the username of each, so they cannot be told apart. Nothing was changed; connect again."
+msgstr "Meta udostępniła kilka kont Instagram, ale nie podała nazwy użytkownika każdego z nich, więc nie można ich rozróżnić. Nic nie zostało zmienione; połącz się ponownie."
+
+#: src/Instagram/Authorization.php:111
+msgid "The Instagram connection could not be started: this server does not provide the Sodium encryption support it needs. Ask your host to enable PHP Sodium support."
+msgstr "Nie można było uruchomić połączenia Instagram: ten serwer nie zapewnia potrzebnego wsparcia szyfrowania Sodium. Poproś swojego hosta o włączenie wsparcia PHP Sodium."
+
+#: src/Instagram/Authorization.php:155
+msgid "This Instagram authorization was not started from this page by you, or it expired. Nothing was changed; connect again."
+msgstr "Ta autoryzacja Instagram nie została uruchomiona z tej strony przez ciebie lub wygasła. Nic nie zostało zmienione; połącz się ponownie."
+
+#: src/Instagram/Authorization.php:164
+#: src/Admin/instagram/InstagramPage.js:259
+msgid "Instagram authorization failed. Nothing was changed; try connecting again."
+msgstr "Autoryzacja Instagram nie powiodła się. Nic nie zostało zmienione; spróbuj połączyć się ponownie."
+
+#: src/Instagram/Authorization.php:233
+msgid "Choose one of the Instagram accounts listed. Nothing was changed."
+msgstr "Wybierz jedno z wymienionych kont Instagram. Nic nie zostało zmienione."
+
+#: src/Instagram/Authorization.php:291
+msgid "Meta shared several Instagram accounts, but they could not be told apart. Nothing was changed; connect again."
+msgstr "Meta udostępniła kilka kont Instagram, ale nie można ich było rozróżnić. Nic nie zostało zmienione; połącz się ponownie."
+
+#: src/Instagram/Authorization.php:322
+msgid "The Instagram accounts to choose from could not be kept on this site. Nothing was changed; connect again."
+msgstr "Nie można było zachować kont Instagram do wyboru na tej witrynie. Nic nie zostało zmienione; połącz się ponownie."
+
+#: src/Instagram/Authorization.php:397
+msgid "This Instagram account choice expired, was cancelled, or was replaced by a newer connection attempt. Nothing was changed; connect again."
+msgstr "Wybór tego konta Instagram wygasł, został anulowany lub został zastąpiony przez nowszą próbę połączenia. Nic nie zostało zmienione; połącz się ponownie."
+
+#: src/Instagram/Authorization.php:412
+msgid "The Instagram connection could not be completed with the Fair Event Plugins OAuth service. Nothing was changed; connect again."
+msgstr "Nie można było ukończyć połączenia Instagram z usługą OAuth Fair Event Plugins. Nic nie zostało zmienione; połącz się ponownie."
+
+#: src/Instagram/Connection.php:252
+msgid "Instagram is not connected. Connect an account in Fair Events → Instagram."
+msgstr "Instagram nie jest połączony. Połącz konto w Fair Events → Instagram."
+
+#: src/Instagram/Connection.php:267
+msgid "Instagram is paused: the access token is stored encrypted, but this server no longer provides the Sodium encryption support needed to read it. Ask your host to restore PHP Sodium support; Instagram then resumes without reconnecting."
+msgstr "Instagram jest wstrzymany: token dostępu jest przechowywany w postaci zaszyfrowanej, ale ten serwer nie zapewnia już obsługi szyfrowania Sodium potrzebnej do jego odczytania. Poproś swojego hosta o przywrócenie obsługi PHP Sodium; Instagram wznowi pracę bez ponownego łączenia."
+
+#: src/Instagram/Connection.php:269
+msgid "Instagram needs to be reconnected: the stored access token can no longer be read. This happens when the site’s security keys change or the database is moved to another site. Connect with Instagram again."
+msgstr "Instagram musi być ponownie połączony: przechowywany token dostępu nie może być już odczytany. Dzieje się tak, gdy klucze zabezpieczeń witryny ulegną zmianie lub baza danych zostanie przeniesiona na inną witrynę. Połącz się z Instagramem ponownie."
+
+#: src/Instagram/Connection.php:271
+msgid "Instagram needs to be reconnected: Meta replaced the way sites connect to Instagram, and this connection was made the old way. Connect with Instagram again. Posts already published, and their records on this site, are kept."
+msgstr "Instagram musi być ponownie połączony: Meta zmieniła sposób, w jaki witryny łączą się z Instagramem, a to połączenie zostało wykonane w stary sposób. Połącz się z Instagramem ponownie. Wpisy już opublikowane i ich rekordy na tej witrynie są zachowywane."
+
+#: src/Instagram/Connection.php:273
+msgid "Instagram needs to be reconnected: the access token has expired. Connect with Instagram again."
+msgstr "Instagram musi być ponownie połączony: token dostępu wygasł. Połącz się z Instagramem ponownie."
+
+#: src/Instagram/Connection.php:318
+msgid "The Instagram connection could not be completed: the OAuth service returned incomplete credentials. Nothing was changed; connect again."
+msgstr "Nie można było ukończyć połączenia z Instagramem: usługa OAuth zwróciła niekompletne poświadczenia. Nic nie zostało zmienione; spróbuj ponownie."
+
+#: src/Instagram/Connection.php:404
+msgid "The Instagram access token could not be stored encrypted, so the previous connection was kept. Try again."
+msgstr "Nie można było przechować zaszyfrowanego tokenu dostępu do Instagrama, dlatego poprzednie połączenie zostało zachowane. Spróbuj ponownie."
+
+#: src/Instagram/Connection.php:466
+msgid "Instagram is not connected. Connect with Instagram first."
+msgstr "Instagram nie jest połączony. Najpierw połącz się z Instagramem."
+
+#: src/Instagram/Connection.php:483
+msgid "Instagram could not be reached. Check the server’s internet connection and try again."
+msgstr "Nie można było osiągnąć Instagrama. Sprawdź połączenie internetowe serwera i spróbuj ponownie."
+
+#: src/Instagram/Connection.php:500
+msgid "Meta refused the access token: it was revoked, or the business removed this app in Meta Business Settings. Connect with Instagram again."
+msgstr "Meta odrzuciła token dostępu: został on cofnięty lub firma usunęła tę aplikację w ustawieniach Meta Business Settings. Połącz się z Instagramem ponownie."
+
+#: src/Instagram/Connection.php:508
+msgid "Meta did not let this site read the connected Instagram account. Its access may have been removed. Connect with Instagram again and share the account."
+msgstr "Meta nie pozwoliła tej witrynie odczytać połączonego konta Instagrama. Jego dostęp mógł zostać usunięty. Połącz się z Instagramem ponownie i udostępnij konto."
+
+#: src/Instagram/Connection.php:519
+msgid "Meta answered for a different Instagram account than the one connected. Connect with Instagram again."
+msgstr "Meta odpowiedziała dla innego konta Instagrama niż połączone. Połącz się z Instagramem ponownie."
+
+#. translators: %s: Instagram username
+#: src/Instagram/Connection.php:536
+#, php-format
+msgid "The connection works: Meta confirmed the account @%s."
+msgstr "Połączenie działa: Meta potwierdziła konto @%s."
+
+#: src/Instagram/Connection.php:539
+msgid "The connection works."
+msgstr "Połączenie działa."
+
+#: src/Instagram/EventListCaption.php:57
+#: src/Instagram/EventListImage.php:184
+msgid "(no title)"
+msgstr "(brak tytułu)"
+
+#. translators: 1: caption length in characters, 2: Instagram's limit
+#: src/Instagram/EventListCaption.php:73
+#, php-format
+msgid "The list of events makes a caption of %1$d characters, but Instagram accepts at most %2$d. Nothing was published. Choose an event feed with fewer events for this notification."
+msgstr "Lista wydarzeń tworzy podpis o długości %1$d znaków, ale Instagram akceptuje co najwyżej %2$d. Nic nie zostało opublikowane. Wybierz kanał wydarzeń z mniejszą liczbą wydarzeń dla tego powiadomienia."
+
+#. translators: %d: Instagram's hashtag limit
+#: src/Instagram/EventListCaption.php:85
+#, php-format
+msgid "The event names contain more than %d hashtags, which Instagram refuses. Nothing was published. Remove hashtags from the event names."
+msgstr "Nazwy wydarzeń zawierają więcej niż %d hasztagów, które Instagram odrzuca. Nic nie zostało opublikowane. Usuń hasztagi z nazw wydarzeń."
+
+#. translators: %d: Instagram's mention limit
+#: src/Instagram/EventListCaption.php:96
+#, php-format
+msgid "The event names mention more than %d accounts with @, which Instagram refuses. Nothing was published. Remove the mentions from the event names."
+msgstr "Nazwy wydarzeń zawierają więcej niż %d wzmianek kont za pomocą @, które Instagram odrzuca. Nic nie zostało opublikowane. Usuń wzmianki z nazw wydarzeń."
+
+#: src/Instagram/EventListImage.php:89
+msgid "This server cannot draw the Instagram image: PHP’s GD extension with FreeType support is missing. Ask your host to enable it. Nothing was published."
+msgstr "Ten serwer nie może narysować obrazu Instagrama: brakuje rozszerzenia GD PHP z obsługą FreeType. Poproś swojego hosta o jego włączenie. Nic nie zostało opublikowane."
+
+#: src/Instagram/EventListImage.php:100
+#: src/Instagram/EventListImage.php:113
+msgid "The Instagram image could not be drawn. Nothing was published."
+msgstr "Nie można było narysować obrazu Instagrama. Nic nie zostało opublikowane."
+
+#. translators: %d: number of events in the week
+#: src/Instagram/EventListImage.php:149
+#, php-format
+msgid "The week’s %d event does not fit readably in one Instagram image. Nothing was published. Shorten the event name or choose an event feed with fewer events for this notification."
+msgid_plural "The week’s %d events do not fit readably in one Instagram image. Nothing was published. Choose an event feed with fewer events for this notification, or shorten the event names."
+msgstr[0] "Wydarzenie z tego tygodnia (%d) nie mieści się czytelnie w jednym obrazku na Instagramie. Nic nie zostało opublikowane. Skróć nazwę wydarzenia lub wybierz źródło wydarzeń z mniejszą liczbą wydarzeń dla tego powiadomienia."
+msgstr[1] "Wydarzenia z tego tygodnia (%d) nie mieszczą się czytelnie w jednym obrazku na Instagramie. Nic nie zostało opublikowane. Wybierz źródło wydarzeń z mniejszą liczbą wydarzeń dla tego powiadomienia lub skróć nazwy wydarzeń."
+msgstr[2] "Wydarzeń z tego tygodnia (%d) nie mieści się czytelnie w jednym obrazku na Instagramie. Nic nie zostało opublikowane. Wybierz źródło wydarzeń z mniejszą liczbą wydarzeń dla tego powiadomienia lub skróć nazwy wydarzeń."
+
+#: src/Instagram/EventListPosts.php:81
+msgid "Instagram posts are paused because the Instagram feature is off. Turn on Instagram in Fair Events → Settings → Experimental. The notification’s settings are kept, and posting resumes with the next scheduled week."
+msgstr "Posty na Instagramie są wstrzymane, ponieważ funkcja Instagram jest wyłączona. Włącz Instagram w Fair Events → Ustawienia → Eksperymentalne. Ustawienia powiadomienia są zachowywane, a publikowanie wznawia się w następnym zaplanowanym tygodniu."
+
+#: src/Instagram/EventListPosts.php:84
+msgid "Instagram posts are paused because Fair Events Experimental does not manage the Instagram connection on this site yet. Open Fair Events → Instagram for what to do. The notification’s settings are kept, and posting resumes with the next scheduled week."
+msgstr "Posty na Instagramie są wstrzymane, ponieważ Fair Events Experimental nie zarządza jeszcze połączeniem z Instagramem na tej witrynie. Otwórz Fair Events → Instagram, aby dowiedzieć się, co robić. Ustawienia powiadomienia są zachowywane, a publikowanie wznawia się w następnym zaplanowanym tygodniu."
+
+#: src/Instagram/EventListPosts.php:139
+#: src/Instagram/EventListPosts.php:144
+#: src/Instagram/EventListPosts.php:156
+msgid "The image for Instagram could not be stored: the uploads folder is not writable. Nothing was published."
+msgstr "Obrazek dla Instagrama nie mógł być zapisany: folder przesyłania nie jest zapisywalny. Nic nie zostało opublikowane."
+
+#: src/Instagram/EventListPosts.php:162
+msgid "Instagram downloads the image from this site, which needs an HTTPS address. Serve the site over HTTPS. Nothing was published."
+msgstr "Instagram pobiera obrazek z tej witryny, która wymaga adresu HTTPS. Obsługuj witrynę przez HTTPS. Nic nie zostało opublikowane."
+
+#: src/Instagram/GraphClient.php:107
+msgid "Instagram did not return a container ID."
+msgstr "Instagram nie zwrócił identyfikatora kontenera."
+
+#: src/Services/EventOrganizer.php:201
+msgid "You do not have permission to choose an organizer for this event."
+msgstr "Przepraszamy, nie posiadasz uprawnienia do wyboru organizatora dla tego wydarzenia."
+
+#: src/Admin/calendar-organizer/CalendarOrganizerField.js:72
+#: src/Admin/organizers/OrganizersPage.js:131
+msgid "The organizers could not be loaded."
+msgstr "Nie można było wczytać organizatorów."
+
+#: src/Admin/calendar-organizer/CalendarOrganizerField.js:90
+msgid "Unless you try again, the event uses the sitewide organizer."
+msgstr "Jeśli nie spróbujesz ponownie, wydarzenie będzie używać organizatora całej witryny."
+
+#: src/Admin/calendar-organizer/CalendarOrganizerField.js:111
+#: src/Admin/components/OrganizerSelect.js:70
+#: src/Admin/manage-event-organizer/EventOrganizer.js:176
+msgid "Organizer"
+msgstr "Organizator"
+
+#: src/Admin/calendar-organizer/CalendarOrganizerField.js:127
+msgid "The organizer named for this event in public event information. All dates of a series share it."
+msgstr "Organizator wymieniony dla tego wydarzenia w publicznych informacjach o wydarzeniu. Wszystkie daty serii go dzielą."
+
+#. translators: %s: sitewide organizer name.
+#: src/Admin/components/OrganizerSelect.js:24
+#, js-format
+msgid "Sitewide default (%s)"
+msgstr "Domyślnie dla całej witryny (%s)"
+
+#: src/Admin/components/OrganizerSelect.js:27
+#: src/Admin/manage-event-organizer/EventOrganizer.js:228
+msgid "Sitewide default"
+msgstr "Domyślnie dla całej witryny"
+
+#: src/Admin/components/OrganizerSelect.js:32
+#: src/Admin/organizers/OrganizersPage.js:293
+#: src/Admin/organizers/OrganizersPage.js:303
+#: src/Admin/organizers/OrganizersPage.js:426
+#: src/Admin/organizers/OrganizersPage.js:530
+msgid "(unnamed organizer)"
+msgstr "(nienazwany organizator)"
+
+#: src/Admin/components/OrganizerSelect.js:63
+msgid "Unavailable organizer"
+msgstr "Niedostępny organizator"
+
+#: src/Admin/instagram/AccountChoice.js:98
+msgid "The selected Instagram account could not be connected. Nothing was changed; try again."
+msgstr "Wybranego konta Instagram nie można było połączyć. Nic nie zostało zmienione; spróbuj ponownie."
+
+#: src/Admin/instagram/AccountChoice.js:110
+msgid "The account choice could not be cancelled. Try again."
+msgstr "Nie można było anulować wyboru konta. Spróbuj ponownie."
+
+#. translators: %s: Instagram username
+#: src/Admin/instagram/AccountChoice.js:124
+#, js-format
+msgid "This site stays connected to @%s until you connect the selected account."
+msgstr "Ta witryna pozostaje połączona z @%s, dopóki nie połączysz wybranego konta."
+
+#: src/Admin/instagram/AccountChoice.js:131
+msgid "This site stays connected to its current Instagram account until you connect the selected account."
+msgstr "Ta witryna pozostaje połączona ze swoim bieżącym kontem Instagram, dopóki nie połączysz wybranego konta."
+
+#. translators: %s: Instagram username
+#: src/Admin/instagram/AccountChoice.js:143
+#, js-format
+msgid "@%s (currently connected)"
+msgstr "@%s (aktualnie połączone)"
+
+#: src/Admin/instagram/AccountChoice.js:159
+msgid "Choose the Instagram account"
+msgstr "Wybierz konto Instagram"
+
+#. translators: %d: number of Instagram accounts
+#: src/Admin/instagram/AccountChoice.js:169
+#, js-format
+msgid "Meta shared %d Instagram account. Choose the one this site publishes to."
+msgid_plural "Meta shared %d Instagram accounts. Choose the one this site publishes to."
+msgstr[0] "Meta udostępniła %d konto na Instagramie. Wybierz to, na które ta witryna publikuje."
+msgstr[1] "Meta udostępniła %d konta na Instagramie. Wybierz to, na które ta witryna publikuje."
+msgstr[2] "Meta udostępniła %d kont na Instagramie. Wybierz to, na które ta witryna publikuje."
+
+#: src/Admin/instagram/AccountChoice.js:181
+msgid "Instagram account"
+msgstr "Konto Instagram"
+
+#: src/Admin/instagram/AccountChoice.js:208
+msgid "Connect selected account"
+msgstr "Połącz wybrane konto"
+
+#: src/Admin/instagram/AccountChoice.js:223
+msgid "Choose an account to connect it."
+msgstr "Wybierz konto, aby je połączyć."
+
+#. translators: %s: Instagram username
+#: src/Admin/instagram/InstagramPage.js:74
+#, js-format
+msgid "Connected to Instagram as @%s."
+msgstr "Połączono z Instagramem jako @%s."
+
+#: src/Admin/instagram/InstagramPage.js:80
+msgid "Connected to Instagram."
+msgstr "Połączono z Instagramem."
+
+#: src/Admin/instagram/InstagramPage.js:102
+msgid "The access token does not expire. It stops working if the business removes the app in Meta Business Settings."
+msgstr "Token dostępu nie wygasa. Przestaje działać, jeśli firma usunie aplikację w ustawieniach Meta Business."
+
+#. translators: %s: date and time
+#: src/Admin/instagram/InstagramPage.js:110
+#, js-format
+msgid "The access token expires on %s. Connect again before then; it is not renewed automatically."
+msgstr "Token dostępu wygasa %s. Połącz się ponownie przed tą datą; nie jest odnawiany automatycznie."
+
+#: src/Admin/instagram/InstagramPage.js:117
+msgid "The access token’s expiry is not known."
+msgstr "Data wygaśnięcia tokenu dostępu nie jest znana."
+
+#: src/Admin/instagram/InstagramPage.js:143
+msgid "Nothing has to be re-entered: the stored connection moves here as it is."
+msgstr "Nic nie trzeba ponownie wprowadzać: zapisane połączenie przenosi się tutaj takie, jakie jest."
+
+#: src/Admin/instagram/InstagramPage.js:161
+msgid "This site’s Fair Audience is older than this plugin and still manages the Instagram connection. Update Fair Audience to manage the connection here."
+msgstr "Fair Audience tej witryny jest starsze niż ta wtyczka i nadal zarządza połączeniem z Instagramem. Zaktualizuj Fair Audience, aby zarządzać połączeniem tutaj."
+
+#: src/Admin/instagram/InstagramPage.js:173
+msgid "Fair Audience is updated, but the site still runs its previous code, so Fair Audience still manages the Instagram connection. Clear the PHP opcode cache or restart PHP (your hosting control panel usually offers this), then reload this page."
+msgstr "Fair Audience jest zaktualizowany, ale witryna nadal uruchamia swój poprzedni kod, dlatego Fair Audience nadal zarządza połączeniem z Instagramem. Wyczyść pamięć podręczną opcode PHP lub uruchom ponownie PHP (twój panel kontroli hostingu zwykle to oferuje), a następnie przeładuj tę stronę."
+
+#: src/Admin/instagram/InstagramPage.js:196
+msgid "Fair Events Experimental did not take over the Instagram connection while this page loaded, so Fair Audience still manages it. Reload this page. Until it is taken over, keep managing it in Fair Audience → Settings → Instagram."
+msgstr "Fair Events Experimental nie przejął połączenia z Instagramem podczas wczytywania tej strony, dlatego Fair Audience nadal nim zarządza. Przeładuj tę stronę. Dopóki nie zostanie przejęte, zarządzaj nim w Fair Audience → Ustawienia → Instagram."
+
+#: src/Admin/instagram/InstagramPage.js:208
+msgid "The site did not say who manages the Instagram connection. Reload this page. If this keeps happening, make sure no cache serves outdated responses for the site’s REST API."
+msgstr "Witryna nie wskazała, kto zarządza połączeniem z Instagramem. Przeładuj tę stronę. Jeśli to się powtarza, upewnij się, że żadna pamięć podręczna nie serwuje nieaktualnych odpowiedzi dla REST API witryny."
+
+#: src/Admin/instagram/InstagramPage.js:275
+msgid "The Instagram connection could not be loaded. Reload the page to try again."
+msgstr "Nie można było wczytać połączenia z Instagramem. Przeładuj stronę, aby spróbować ponownie."
+
+#: src/Admin/instagram/InstagramPage.js:299
+msgid "The Instagram connection could not be started. Try again."
+msgstr "Nie można było uruchomić połączenia z Instagramem. Spróbuj ponownie."
+
+#: src/Admin/instagram/InstagramPage.js:323
+msgid "The connection test failed. Try again."
+msgstr "Test połączenia nie powiódł się. Spróbuj ponownie."
+
+#: src/Admin/instagram/InstagramPage.js:355
+msgid "Disconnected from Instagram."
+msgstr "Rozłączono z Instagramem."
+
+#: src/Admin/instagram/InstagramPage.js:365
+msgid "Instagram could not be disconnected. Try again."
+msgstr "Nie można było rozłączyć Instagrama. Spróbuj ponownie."
+
+#: src/Admin/instagram/InstagramPage.js:425
+msgid "Open Fair Audience → Settings → Instagram"
+msgstr "Otwórz Fair Audience → Ustawienia → Instagram"
+
+#. translators: %s: Instagram username
+#: src/Admin/instagram/InstagramPage.js:449
+#, js-format
+msgid "Disconnect @%s from this site?"
+msgstr "Rozłączyć @%s z tej witryny?"
+
+#. translators: %s: Instagram account ID
+#: src/Admin/instagram/InstagramPage.js:455
+#, js-format
+msgid "Disconnect the Instagram account with ID %s from this site?"
+msgstr "Odłączyć konto Instagram o identyfikatorze %s z tej witryny?"
+
+#: src/Admin/instagram/InstagramPage.js:462
+msgid "Disconnect the Instagram account connected to this site? Its username and ID are not known."
+msgstr "Odłączyć konto Instagram połączone z tą witryną? Jego nazwa użytkownika i identyfikator nie są znane."
+
+#: src/Admin/instagram/InstagramPage.js:491
+msgid "The account choice was cancelled. Nothing was changed."
+msgstr "Wybór konta został anulowany. Nic się nie zmieniło."
+
+#: src/Admin/instagram/InstagramPage.js:512
+#: src/Admin/instagram/InstagramPage.js:700
+msgid "Disconnect"
+msgstr "Odłącz"
+
+#: src/Admin/instagram/InstagramPage.js:521
+msgid "The Instagram professional account this site publishes to. The access token is stored encrypted and is never shown again after it is saved."
+msgstr "Profesjonalne konto Instagram, na którym ta witryna publikuje. Token dostępu jest przechowywany w postaci zaszyfrowanej i nigdy nie będzie wyświetlany ponownie po zapisaniu."
+
+#: src/Admin/instagram/InstagramPage.js:533
+msgid "Connect an account"
+msgstr "Połącz konto"
+
+#: src/Admin/instagram/InstagramPage.js:546
+msgid "Connect with Instagram to sign in with Facebook, choose the business, and share the Instagram professional account this site publishes to. This uses the Fair Event Plugins OAuth service."
+msgstr "Połącz się z Instagramem, aby zalogować się za pośrednictwem Facebooka, wybrać firmę i udostępnić profesjonalne konto Instagram, na którym ta witryna publikuje. Korzysta to z usługi Fair Event Plugins OAuth."
+
+#: src/Admin/instagram/InstagramPage.js:563
+msgid "Connect with Instagram"
+msgstr "Połącz się z Instagramem"
+
+#: src/Admin/instagram/InstagramPage.js:577
+msgid "Or disconnect to remove the stored token from this site."
+msgstr "Lub odłącz, aby usunąć przechowywany token z tej witryny."
+
+#: src/Admin/instagram/InstagramPage.js:592
+msgid "Account"
+msgstr "Konto"
+
+#. translators: %s: Instagram account ID
+#: src/Admin/instagram/InstagramPage.js:615
+#, js-format
+msgid "Instagram account ID: %s"
+msgstr "Identyfikator konta Instagram: %s"
+
+#: src/Admin/instagram/InstagramPage.js:626
+msgid "The access token is not encrypted yet; it is encrypted on a later page load once this server supports it."
+msgstr "Token dostępu nie jest jeszcze zaszyfrowany; zostanie zaszyfrowany przy następnym wczytaniu strony, gdy serwer to obsługuje."
+
+#: src/Admin/instagram/InstagramPage.js:638
+msgid "Test the connection"
+msgstr "Przetestuj połączenie"
+
+#: src/Admin/instagram/InstagramPage.js:646
+msgid "Asks Meta whether the connected account can still be reached with the stored token. Nothing is published."
+msgstr "Pyta Meta, czy połączone konto jest nadal dostępne przy użyciu przechowowanego tokenu. Nic nie jest publikowane."
+
+#: src/Admin/instagram/InstagramPage.js:657
+msgid "Details from Meta"
+msgstr "Szczegóły z Meta"
+
+#: src/Admin/instagram/InstagramPage.js:680
+msgid "Test connection"
+msgstr "Przetestuj połączenie"
+
+#: src/Admin/instagram/InstagramPage.js:687
+msgid "Testing waits until the token can be read again."
+msgstr "Testowanie czeka, aż token będzie można ponownie odczytać."
+
+#: src/Admin/instagram/InstagramPage.js:708
+msgid "Removes the access token and account details from this site. To also revoke the app’s access in Meta, remove it under Meta Business Settings → Integrations → Connected apps."
+msgstr "Usuwa token dostępu i szczegóły konta z tej witryny. Aby również odwołać dostęp aplikacji w Meta, usuń ją w Meta Business Settings → Integracje → Połączone aplikacje."
+
+#: src/Admin/instagram/InstagramPage.js:721
+#: src/Admin/instagram/InstagramPage.js:776
+msgid "Disconnect Instagram"
+msgstr "Odłącz Instagram"
+
+#: src/Admin/instagram/InstagramPage.js:739
+msgid "The access token and account details stored on this site are removed. Until you connect again, this site cannot publish to Instagram, including manual posts from Fair Audience."
+msgstr "Token dostępu i szczegóły konta przechowywane na tej witrynie zostały usunięte. Dopóki się ponownie nie połączysz, ta witryna nie może publikować na Instagramie, w tym ręcznych postów z Fair Audience."
+
+#: src/Admin/instagram/InstagramPage.js:745
+msgid "Posts already published on Instagram, and the post records on this site, are kept."
+msgstr "Wpisy już opublikowane na Instagramie i rekordy wpisów na tej witrynie są zachowywane."
+
+#: src/Admin/manage-event-organizer/EventOrganizer.js:101
+msgid "The organizer could not be loaded."
+msgstr "Nie można było wczytać organizatora."
+
+#: src/Admin/manage-event-organizer/EventOrganizer.js:153
+msgid "Organizer saved. This event uses the sitewide organizer."
+msgstr "Organizator zapisany. To wydarzenie używa organizatora witryny."
+
+#: src/Admin/manage-event-organizer/EventOrganizer.js:157
+#: src/Admin/organizers/OrganizersPage.js:230
+msgid "Organizer saved."
+msgstr "Organizator zapisany."
+
+#: src/Admin/manage-event-organizer/EventOrganizer.js:210
+msgid "The organizer chosen for this event is no longer available, so the sitewide organizer is shown publicly. Choose another organizer to replace it."
+msgstr "Organizator wybrany dla tego wydarzenia nie jest już dostępny, dlatego organizator witryny jest wyświetlany publicznie. Wybierz innego organizatora, aby go zastąpić."
+
+#. translators: %s: organizer name.
+#: src/Admin/manage-event-organizer/EventOrganizer.js:225
+#, js-format
+msgid "Organizer: %s"
+msgstr "Organizator: %s"
+
+#: src/Admin/manage-event-organizer/EventOrganizer.js:235
+msgid "This date is part of a series. All its dates share the series’ organizer, which is chosen on the series."
+msgstr "Ta data jest częścią serii. Wszystkie jej daty dzielą organizatora serii, który jest wybierany w serii."
+
+#: src/Admin/manage-event-organizer/EventOrganizer.js:245
+msgid "Choose the organizer on the series"
+msgstr "Wybierz organizatora w serii"
+
+#: src/Admin/manage-event-organizer/EventOrganizer.js:267
+msgid "The organizer named for this event in search results and other public event information. All dates of a series share it. Saved separately from the other event details."
+msgstr "Organizator nazwany dla tego wydarzenia w wynikach wyszukiwania i innych publicznych informacjach o wydarzeniu. Wszystkie daty serii go dzielą. Zapisywane oddzielnie od innych szczegółów wydarzenia."
+
+#: src/Admin/manage-event-organizer/EventOrganizer.js:291
+msgid "Saving…"
+msgstr "Zapisywanie…"
+
+#: src/Admin/manage-event-organizer/EventOrganizer.js:292
+msgid "Save organizer"
+msgstr "Zapisz organizatora"
+
+#. translators: %s: error message returned by the server
+#: src/Admin/organizers/OrganizersPage.js:75
+#, js-format
+msgid "The organizer was not saved: %s"
+msgstr "Organizator nie został zapisany: %s"
+
+#: src/Admin/organizers/OrganizersPage.js:81
+msgid "The organizer was not saved. Try again."
+msgstr "Organizator nie został zapisany. Spróbuj ponownie."
+
+#: src/Admin/organizers/OrganizersPage.js:231
+msgid "Organizer added."
+msgstr "Organizator dodany."
+
+#: src/Admin/organizers/OrganizersPage.js:263
+msgid "Loading organizers…"
+msgstr "Wczytywanie organizatorów…"
+
+#: src/Admin/organizers/OrganizersPage.js:275
+msgid "Name"
+msgstr "Nazwa"
+
+#: src/Admin/organizers/OrganizersPage.js:278
+#: src/Admin/organizers/OrganizersPage.js:318
+msgid "Notification addresses"
+msgstr "Adresy powiadomień"
+
+#: src/Admin/organizers/OrganizersPage.js:309
+msgid "Default — used for the whole site"
+msgstr "Domyślnie – używane dla całej witryny"
+
+#. translators: %d: number of notification email addresses
+#: src/Admin/organizers/OrganizersPage.js:326
+#, js-format
+msgid "%d address"
+msgid_plural "%d addresses"
+msgstr[0] "%d adres"
+msgstr[1] "%d adresy"
+msgstr[2] "%d adresów"
+
+#: src/Admin/organizers/OrganizersPage.js:334
+msgid "None"
+msgstr "Brak"
+
+#: src/Admin/organizers/OrganizersPage.js:379
+#: src/Admin/organizers/OrganizersPage.js:419
+msgid "Add organizer"
+msgstr "Dodaj organizatora"
+
+#: src/Admin/organizers/OrganizersPage.js:388
+msgid "The default organizer identifies the whole site in its structured data. Additional organizers have their own identity and private notification addresses."
+msgstr "Domyślny organizator identyfikuje całą witrynę w jej danych strukturalnych. Dodatkowi organizatorzy mają swoją własną tożsamość i prywatne adresy powiadomień."
+
+#: src/Admin/organizers/OrganizersPage.js:401
+msgid "Central sales summary"
+msgstr "Centralne podsumowanie sprzedaży"
+
+#: src/Admin/organizers/OrganizersPage.js:405
+msgid "One email with every organizer’s ticket sales and paid revenue, grouped by organizer and event. It goes to the default organizer’s notification addresses on its own schedule, whatever each organizer chose for its own summary."
+msgstr "Jedna wiadomość e-mail ze sprzedażą biletów i przychodami każdego organizatora, pogrupowanymi według organizatora i wydarzenia. Trafia na adresy powiadomień domyślnego organizatora zgodnie z jego harmonogramem, niezależnie od tego, jaki harmonogram wybrał każdy organizator dla swojego podsumowania."
+
+#: src/Admin/organizers/OrganizersPage.js:421
+msgid "Edit default organizer"
+msgstr "Edytuj domyślnego organizatora"
+
+#. translators: %s: organizer name
+#: src/Admin/organizers/OrganizersPage.js:425
+#, js-format
+msgid "Edit organizer: %s"
+msgstr "Edytuj organizatora: %s"
+
+#: src/Admin/organizers/OrganizersPage.js:439
+msgid "← All organizers"
+msgstr "← Wszyscy organizatorzy"
+
+#: src/Admin/organizers/OrganizersPage.js:452
+msgid "Unsaved changes"
+msgstr "Niezapisane zmiany"
+
+#: src/Admin/organizers/OrganizersPage.js:481
+msgid "An additional organizer with its own identity and private notification addresses. Fields left blank stay empty: nothing is copied from the default organizer."
+msgstr "Dodatkowy organizator z własną tożsamością i prywatnymi adresami powiadomień. Pola pozostawione puste pozostają puste: nic nie jest kopiowane z domyślnego organizatora."
+
+#: src/Admin/organizers/OrganizersPage.js:494
+msgid "Sales summary"
+msgstr "Podsumowanie sprzedaży"
+
+#: src/Admin/organizers/OrganizersPage.js:498
+msgid "An email with this organizer’s own events only: tickets sold and paid revenue per event in the previous day or week, with totals to date. It is off until you choose how often to send it, and it is saved separately from the organizer details above."
+msgstr "Wiadomość e-mail tylko z własnymi wydarzeniami tego organizatora: sprzedane bilety i przychody za każde wydarzenie w poprzednim dniu lub tygodniu, z sumami do dzisiaj. Jest wyłączona, dopóki nie wybierzesz, jak często ją wysyłać, i jest zapisywana oddzielnie od szczegółów organizatora powyżej."
+
+#: src/Admin/organizers/OrganizersPage.js:517
+msgid "Keep editing"
+msgstr "Kontynuuj edycję"
+
+#. translators: %s: organizer name
+#: src/Admin/organizers/OrganizersPage.js:525
+#, js-format
+msgid "Discard your unsaved changes to “%s”? The saved organizer stays as it was."
+msgstr "Odrzucić niezapisane zmiany do „%s”? Zapisany organizator pozostaje bez zmian."
+
+#: src/Admin/organizers/OrganizersPage.js:535
+msgid "Discard the organizer you started adding? Nothing has been saved yet."
+msgstr "Odrzucić organizatora, którego zacząłeś dodawać? Nic nie zostało jeszcze zapisane."
+
+#: src/Admin/whatsapp/DefaultTestNumber.js:114
+msgid "The default test number could not be saved."
+msgstr "Nie można było zapisać domyślnego numeru testowego."
+
+#: src/Admin/whatsapp/DefaultTestNumber.js:127
+msgid "Loading your default test number…"
+msgstr "Wczytywanie twojego domyślnego numeru testowego…"
+
+#: src/Admin/whatsapp/DefaultTestNumber.js:133
+msgid "Enter a number to save, or clear your default test number."
+msgstr "Wpisz numer, aby go zapisać, lub wyczyść swój domyślny numer testowy."
+
+#: src/Admin/whatsapp/DefaultTestNumber.js:137
+msgid "Enter a number to save it as your default."
+msgstr "Wpisz numer, aby zapisać go jako domyślny."
+
+#: src/Admin/whatsapp/DefaultTestNumber.js:154
+#: src/Admin/whatsapp/DefaultTestNumber.js:173
+msgid "My default test number"
+msgstr "Mój domyślny numer testowy"
+
+#: src/Admin/whatsapp/DefaultTestNumber.js:157
+msgid "Fills in the recipient number each time you open this page. Only you can see it. Saving it sends nothing, and each test still needs your confirmation."
+msgstr "Wypełnia numer odbiorcy za każdym razem, gdy otworzysz tę stronę. Tylko ty możesz to zobaczyć. Zapisanie go nic nie wysyła, a każdy test nadal wymaga twojego potwierdzenia."
+
+#: src/Admin/whatsapp/DefaultTestNumber.js:164
+msgid "Your default test number could not be loaded. You can still enter the recipient number by hand."
+msgstr "Nie można było wczytać twojego domyślnego numeru testowego. Możesz nadal wpisać numer odbiorcy ręcznie."
+
+#: src/Admin/whatsapp/DefaultTestNumber.js:177
+msgid "International format with the country code, such as +34 600 123 456."
+msgstr "Format międzynarodowy z kodem kraju, np. +34 600 123 456."
+
+#: src/Admin/whatsapp/DefaultTestNumber.js:202
+msgid "Default test number saved. It fills in the recipient next time you open this page."
+msgstr "Domyślny numer testowy został zapisany. Zostanie wpisany jako odbiorca przy następnym otwarciu tej strony."
+
+#: src/Admin/whatsapp/DefaultTestNumber.js:211
+msgid "Save default number"
+msgstr "Zapisz domyślny numer"
+
+#: src/Admin/whatsapp/DefaultTestNumber.js:224
+msgid "Default test number cleared."
+msgstr "Domyślny numer testowy został wyczyszczony."
+
+#: src/Admin/whatsapp/DefaultTestNumber.js:232
+msgid "Clear default number"
+msgstr "Wyczyść domyślny numer"
+
+#: src/Admin/whatsapp/DefaultTestNumber.js:245
+msgid "Unsaved changes to your default test number."
+msgstr "Niezapisane zmiany w domyślnym numerze testowym."
+
+#: src/Admin/whatsapp/DeliveryHistory.js:40
+msgid "WhatsApp reported sending the message. Delivery has not been confirmed."
+msgstr "WhatsApp potwierdził wysłanie wiadomości. Dostarczenie nie zostało potwierdzone."
+
+#: src/Admin/whatsapp/SetupGuide.js:15
+msgid "Set up direct Cloud API access"
+msgstr "Skonfiguruj bezpośredni dostęp do Cloud API"
+
+#: src/Admin/whatsapp/SetupGuide.js:24
+msgid "Open your existing Meta app: Use cases → Connect on WhatsApp → Customize → Quickstart or API Setup. Older apps use WhatsApp → API Setup. Keep the app’s Instagram configuration unchanged."
+msgstr "Otwórz istniejącą aplikację Meta: Przypadki użycia → Połącz na WhatsAppie → Dostosuj → Szybki start lub Konfiguracja API. Starsze aplikacje używają WhatsApp → Konfiguracja API. Zachowaj konfigurację Instagrama aplikacji bez zmian."
+
+#: src/Admin/whatsapp/SetupGuide.js:30
+msgid "Start with Meta’s test sender and temporary access token. Add and verify the permitted test recipients in API Setup; test senders can message only those recipients. Save the access token in Settings → Connectors → WhatsApp."
+msgstr "Zacznij od testera Meta i tymczasowego tokena dostępu. Dodaj i zweryfikuj dozwolonych odbiorców testowych w Konfiguracji API; testery mogą wysyłać wiadomości tylko do tych odbiorców. Zapisz token dostępu w Ustawieniach → Łączniki → WhatsApp."
+
+#: src/Admin/whatsapp/SetupGuide.js:36
+msgid "Copy the WhatsApp Business Account ID (WABA ID) and Phone Number ID from API Setup into the connection form below. These identify the account and API sender; the Phone Number ID is not the telephone number. Save, then validate the connection."
+msgstr "Skopiuj identyfikator konta biznesowego WhatsApp (WABA ID) i identyfikator numeru telefonu z Konfiguracji API do formularza połączenia poniżej. Identyfikują one konto i nadawcę API; identyfikator numeru telefonu nie jest numerem telefonu. Zapisz, a następnie zweryfikuj połączenie."
+
+#: src/Admin/whatsapp/SetupGuide.js:42
+msgid "Configure Delivery updates below: save the App Secret and your chosen verify token, verify the HTTPS callback, and complete the messages-field subscription, WABA subscription, and publication checks in Meta."
+msgstr "Skonfiguruj aktualizacje dostarczania poniżej: zapisz tajny klucz aplikacji i wybrany token weryfikacji, zweryfikuj callback HTTPS i uzupełnij subskrypcję pola wiadomości, subskrypcję WABA i kontrole publikacji w Meta."
+
+#: src/Admin/whatsapp/SetupGuide.js:48
+msgid "For production, add a dedicated number, verify ownership by SMS or voice, and complete Meta’s registration and two-step verification. Configure billing. In Business Settings, assign the app and WhatsApp account to a system user and generate an access token with the required permissions. Replace the temporary token in Connectors, save the production IDs, and validate again. Prepare approved templates without parameters for this plugin’s test sender."
+msgstr "W produkcji dodaj dedykowany numer, zweryfikuj własność za pośrednictwem SMS lub połączenia głosowego i uzupełnij rejestrację Meta oraz weryfikację dwuetapową. Skonfiguruj rozliczenia. W Ustawieniach biznesowych przypisz aplikację i konto WhatsApp użytkownikowi systemu i wygeneruj token dostępu z wymaganymi uprawnieniami. Zastąp tymczasowy token w Łącznikach, zapisz identyfikatory produkcji i zweryfikuj ponownie. Przygotuj zatwierdzone szablony bez parametrów dla testera tej wtyczki."
+
+#: src/Admin/whatsapp/SetupGuide.js:55
+msgid "The access token authorizes Graph API requests. The App Secret comes from App settings → Basic and authenticates webhook signatures. The verify token is a separate value you choose and enter both here and in Meta’s callback configuration; it is neither the access token nor the App Secret."
+msgstr "Token dostępu autoryzuje żądania Graph API. Tajny klucz aplikacji pochodzi z Ustawień aplikacji → Podstawowe i uwierzytelnia podpisy webhook. Token weryfikacji to oddzielna wartość, którą wybierasz i wpisujesz zarówno tutaj, jak i w konfiguracji callback Meta; nie jest to ani token dostępu, ani tajny klucz aplikacji."
+
+#: src/Admin/whatsapp/SetupGuide.js:61
+msgid "Saving stores settings locally. Validation only checks account access and number ownership; it does not establish publication, billing, registration, subscriptions, or delivery readiness. Saving and validation do not send messages or change your Meta setup. Send a test only after the recipient agrees, then check Recent messages for the corresponding delivered or read update."
+msgstr "Zapisanie przechowuje ustawienia lokalnie. Weryfikacja sprawdza tylko dostęp do konta i własność numeru; nie ustanawia publikacji, rozliczeń, rejestracji, subskrypcji ani gotowości dostarczania. Zapisanie i weryfikacja nie wysyłają wiadomości ani nie zmieniają konfiguracji Meta. Wyślij test dopiero po zgodzie odbiorcy, a następnie sprawdź Ostatnie wiadomości w poszukiwaniu odpowiadającej aktualizacji dostarczenia lub przeczytania."
+
+#: src/Admin/whatsapp/SetupGuide.js:67
+msgid "Replies to the dedicated API number do not appear in the WhatsApp Business app on your original number. This plugin has no conversation inbox or reply interface."
+msgstr "Odpowiedzi na dedykowany numer API nie pojawiają się w aplikacji WhatsApp Business na twoim oryginalnym numerze. Ta wtyczka nie ma skrzynki odbiorczej rozmów ani interfejsu odpowiadania."
+
+#: src/Admin/whatsapp/SetupGuide.js:74
+msgid "Meta Cloud API setup and system-user permissions"
+msgstr "Konfiguracja Meta Cloud API i uprawnienia użytkownika systemu"
+
+#: src/Admin/whatsapp/SetupGuide.js:82
+msgid "Setup, credential rotation, and missing-update troubleshooting"
+msgstr "Konfiguracja, rotacja poświadczeń i rozwiązywanie problemów z brakującymi aktualizacjami"
+
+#. translators: %s: date and time
+#: src/Admin/whatsapp/WebhookSetup.js:89
+#, js-format
+msgid "Authenticated callback received: the last matching signed callback arrived on %s. It could be a dashboard test; only a corresponding delivered or read update confirms delivery of a message."
+msgstr "Odebrano uwierzytelniony callback: ostatni pasujący podpisany callback dotarł %s. Może to być test kokpitu; tylko odpowiadająca aktualizacja dostarczenia lub przeczytania potwierdza dostarczenie wiadomości."
+
+#: src/Admin/whatsapp/WebhookSetup.js:95
+msgid "No updates received yet: no authenticated update for this account has arrived. Verification alone does not show that updates arrive; check messages-field and WABA subscriptions and the app’s publication requirements before an authorized test send."
+msgstr "Brak odebranych aktualizacji: żadna uwierzytelniona aktualizacja dla tego konta nie dotarła. Sam proces weryfikacji nie pokazuje, że aktualizacje przychodzą; sprawdź subskrypcje pola wiadomości i WABA oraz wymagania publikacji aplikacji przed autoryzowanym testem wysyłania."
+
+#: src/Admin/whatsapp/WebhookSetup.js:309
+msgid "Use an externally reachable HTTPS callback URL. Callback verification, the messages-field subscription, and subscribing this app to the WhatsApp Business Account (WABA) are separate prerequisites."
+msgstr "Użyj zewnętrznie dostępnego adresu URL zwrotnego HTTPS. Weryfikacja zwrotna, subskrypcja pola wiadomości i subskrypcja tej aplikacji na koncie WhatsApp Business Account (WABA) to oddzielne wymagania wstępne."
+
+#: src/Admin/whatsapp/WebhookSetup.js:315
+msgid "In Meta’s Graph API Explorer, inspect GET /{WABA-ID}/subscribed_apps. If this app is missing, use POST /{WABA-ID}/subscribed_apps with a token for this app and account, following Meta’s current instructions. Validation here does not inspect or change that subscription."
+msgstr "W Eksploratorze interfejsu API Graph firmy Meta sprawdź GET /{WABA-ID}/subscribed_apps. Jeśli ta aplikacja nie istnieje, użyj POST /{WABA-ID}/subscribed_apps z tokenem dla tej aplikacji i konta, postępując zgodnie z bieżącymi instrukcjami firmy Meta. Walidacja tutaj nie sprawdza ani nie zmienia tej subskrypcji."
+
+#: src/Admin/whatsapp/WebhookSetup.js:320
+msgid "Inspect and configure WABA app subscriptions"
+msgstr "Sprawdź i skonfiguruj subskrypcje aplikacji WABA"
+
+#: src/Admin/whatsapp/WebhookSetup.js:327
+msgid "Check your app dashboard’s current publication requirements. The dashboard reported for this setup says unpublished apps receive only dashboard-generated test webhooks, even for administrators and testers. This restriction may depend on the app configuration. A verified callback or dashboard test does not establish real delivery updates or production readiness."
+msgstr "Sprawdź bieżące wymagania publikacji kokpitu aplikacji. Kokpit zgłoszony dla tej konfiguracji mówi, że nieopublikowane aplikacje otrzymują tylko wygenerowane przez kokpit testowe webhooki, nawet dla administratorów i testerów. To ograniczenie może zależeć od konfiguracji aplikacji. Zweryfikowany zwrot lub test kokpitu nie ustanawia rzeczywistych aktualizacji dostarczania ani gotowości do produkcji."
+
+#. translators: 1: sender's verified business name, 2: sender's telephone number, 3: date and time of the validation
+#: src/Admin/whatsapp/WhatsAppConnection.js:146
+#, js-format
+msgid "Connection validated: the token can read this account and its selected number, %1$s (%2$s). Checked on %3$s. Sending and production readiness have not been established."
+msgstr "Połączenie zweryfikowane: token może odczytać to konto i jego wybrany numer, %1$s (%2$s). Sprawdzono %3$s. Wysyłanie i gotowość do produkcji nie zostały ustanowione."
 

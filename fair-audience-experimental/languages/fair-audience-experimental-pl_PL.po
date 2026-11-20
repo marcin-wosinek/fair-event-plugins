@@ -34,7 +34,7 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: fair-audience-experimental.php:52
+#: fair-audience-experimental.php:57
 msgid "Fair Audience Experimental requires the Fair Audience plugin to be active."
 msgstr "Fair Audience Experimental wymaga aktywnego wtyczki Fair Audience."
 
@@ -72,7 +72,7 @@ msgstr "Szczegóły opłaty"
 #: src/Admin/AdminPages.php:106
 #: src/Admin/AdminPages.php:107
 #: src/Core/Features.php:159
-#: src/Admin/import/Import.js:317
+#: src/Admin/import/Import.js:320
 #: src/Admin/import/KitImport.js:186
 msgid "Import"
 msgstr "Import"
@@ -89,8 +89,8 @@ msgstr "Ankiety"
 #: src/Admin/AdminPages.php:127
 #: src/Admin/AdminPages.php:128
 #: src/Admin/AdminPages.php:134
-#: src/Admin/edit-poll/EditPoll.js:346
-#: src/Admin/edit-poll/EditPoll.js:358
+#: src/Admin/edit-poll/EditPoll.js:348
+#: src/Admin/edit-poll/EditPoll.js:360
 msgid "Edit Poll"
 msgstr "Edytuj ankietę"
 
@@ -132,7 +132,7 @@ msgstr "Edytuj dodatkową wiadomość"
 
 #: src/Admin/components/ConfirmActionModal.js:24
 #: src/Admin/edit-extra-message/EditExtraMessage.js:287
-#: src/Admin/edit-poll/EditPoll.js:773
+#: src/Admin/edit-poll/EditPoll.js:775
 #: src/Admin/fee-detail/FeeDetail.js:800
 #: src/Admin/fee-detail/FeeDetail.js:1293
 #: src/Admin/fee-detail/FeeDetail.js:1464
@@ -149,7 +149,7 @@ msgid "Cancel"
 msgstr "Anuluj"
 
 #: src/Admin/edit-extra-message/EditExtraMessage.js:271
-#: src/Admin/edit-poll/EditPoll.js:760
+#: src/Admin/edit-poll/EditPoll.js:762
 #: src/Admin/settings/FeaturesTab.js:178
 msgid "Saving..."
 msgstr "Zapisywanie..."
@@ -508,23 +508,11 @@ msgstr "Uczestnik %1$d: Nie udało się powiązać z wydarzeniem: %2$s"
 msgid "Participant %1$d: Failed to save participant: %2$s"
 msgstr "Uczestnik %1$d: Nie udało się zapisać uczestnika: %2$s"
 
-#: src/API/InstagramController.php:81
-msgid "No Instagram access token configured."
-msgstr "Nie skonfigurowano tokenu dostępu Instagram."
-
 #: src/API/InstagramController.php:117
 msgid "Failed to connect to Instagram API."
 msgstr "Nie udało się połączyć z API Instagram."
 
-#: src/API/InstagramController.php:131
-msgid "The access token is invalid or expired."
-msgstr "Token dostępu jest nieprawidłowy lub wygasł."
-
-#: src/API/InstagramController.php:154
-msgid "Token is valid!"
-msgstr "Token jest ważny!"
-
-#: src/API/InstagramController.php:163
+#: src/API/InstagramController.php:149
 msgid "Instagram Account"
 msgstr "Konto Instagram"
 
@@ -689,7 +677,7 @@ msgid "Sale-period anchors are not supported yet."
 msgstr "Kotwice okresu sprzedaży nie są jeszcze obsługiwane."
 
 #. translators: 1: number of people, 2: event title
-#: src/API/TimelineController.php:122
+#: src/API/TimelineController.php:124
 #, php-format
 msgid "%1$d person signed up %2$s"
 msgid_plural "%1$d people signed up %2$s"
@@ -697,29 +685,29 @@ msgstr[0] "%1$d osoba zarejestrowała się %2$s"
 msgstr[1] "%1$d osoby zarejestrowały się %2$s"
 msgstr[2] "%1$d osób zarejestrowało się %2$s"
 
-#: src/API/TimelineController.php:165
+#: src/API/TimelineController.php:167
 msgid "Fair Form"
 msgstr "Fair Form"
 
 #. translators: 1: participant name, 2: form name, 3: page title
-#: src/API/TimelineController.php:173
+#: src/API/TimelineController.php:175
 #, php-format
 msgid "%1$s submitted \"%2$s\" on \"%3$s\""
 msgstr "%1$s przesłał(a) \"%2$s\" w dniu \"%3$s\""
 
 #. translators: 1: participant name, 2: form name
-#: src/API/TimelineController.php:181
+#: src/API/TimelineController.php:183
 #, php-format
 msgid "%1$s submitted \"%2$s\""
 msgstr "%1$s przesłał(a) \"%2$s\""
 
-#: src/API/TimelineController.php:231
-#: src/API/TimelineController.php:334
+#: src/API/TimelineController.php:233
+#: src/API/TimelineController.php:336
 msgid "Unknown"
 msgstr "Nieznany"
 
 #. translators: 1: number of payments, 2: day
-#: src/API/TimelineController.php:251
+#: src/API/TimelineController.php:253
 #, php-format
 msgid "%1$d fee payment on %2$s"
 msgid_plural "%1$d fee payments on %2$s"
@@ -728,7 +716,7 @@ msgstr[1] "%1$d opłaty na %2$s"
 msgstr[2] "%1$d opłat na %2$s"
 
 #. translators: 1: number of sales, 2: day
-#: src/API/TimelineController.php:360
+#: src/API/TimelineController.php:362
 #, php-format
 msgid "%1$d ticket sale on %2$s"
 msgid_plural "%1$d ticket sales on %2$s"
@@ -796,57 +784,49 @@ msgstr "Karta Mailings w interfejsie administracyjnym manage-event."
 msgid "Every 5 minutes (fair-audience)"
 msgstr "Co 5 minut (fair-audience)"
 
-#: src/Services/InstagramPostingService.php:69
-msgid "Instagram user ID is not configured. Please connect your Instagram account in Settings."
-msgstr "Identyfikator użytkownika Instagram nie jest skonfigurowany. Proszę połączyć swoje konto Instagram w Ustawieniach."
-
-#: src/Services/InstagramPostingService.php:76
-msgid "Instagram access token is not configured. Please connect your Instagram account in Settings."
-msgstr "Token dostępu Instagram nie jest skonfigurowany. Proszę połączyć swoje konto Instagram w Ustawieniach."
-
 #. translators: %s: error message
-#: src/Services/InstagramPostingService.php:190
+#: src/Services/InstagramPostingService.php:168
 #, php-format
 msgid "Failed to connect to Instagram API: %s"
 msgstr "Nie udało się połączyć z API Instagram: %s"
 
-#: src/Services/InstagramPostingService.php:204
-#: src/Services/InstagramPostingService.php:358
+#: src/Services/InstagramPostingService.php:182
+#: src/Services/InstagramPostingService.php:331
 #: src/Admin/import/WordPressUsersImport.js:134
 msgid "Unknown error"
 msgstr "Nieznany błąd"
 
 #. translators: %s: error message
-#: src/Services/InstagramPostingService.php:209
+#: src/Services/InstagramPostingService.php:187
 #, php-format
 msgid "Instagram API error: %s"
 msgstr "Błąd API Instagram: %s"
 
-#: src/Services/InstagramPostingService.php:219
+#: src/Services/InstagramPostingService.php:197
 msgid "Invalid response from Instagram API: no container ID returned."
 msgstr "Nieprawidłowa odpowiedź z API Instagram: nie zwrócono identyfikatora kontenera."
 
-#: src/Services/InstagramPostingService.php:267
+#: src/Services/InstagramPostingService.php:246
 msgid "Instagram failed to process the image."
 msgstr "Instagram nie powiódł się w przetwarzaniu obrazu."
 
-#: src/Services/InstagramPostingService.php:276
+#: src/Services/InstagramPostingService.php:255
 msgid "Instagram took too long to process the image. Please try again."
 msgstr "Instagram zbyt długo przetwarzał obraz. Proszę spróbować ponownie."
 
 #. translators: %s: error message
-#: src/Services/InstagramPostingService.php:346
+#: src/Services/InstagramPostingService.php:319
 #, php-format
 msgid "Failed to publish to Instagram: %s"
 msgstr "Nie udało się opublikować na Instagramie: %s"
 
 #. translators: %s: error message
-#: src/Services/InstagramPostingService.php:363
+#: src/Services/InstagramPostingService.php:336
 #, php-format
 msgid "Failed to publish: %s"
 msgstr "Nie udało się opublikować: %s"
 
-#: src/Services/InstagramPostingService.php:373
+#: src/Services/InstagramPostingService.php:346
 msgid "Invalid response from Instagram API: no media ID returned."
 msgstr "Nieprawidłowa odpowiedź z API Instagrama: nie zwrócono identyfikatora mediów."
 
@@ -862,7 +842,7 @@ msgstr "Przełączniki funkcji dla pakietu dla funkcji eksperymentalnych"
 msgid "Return to Homepage"
 msgstr "Powrót na stronę główną"
 
-#: src/Admin/edit-poll/EditPoll.js:268
+#: src/Admin/edit-poll/EditPoll.js:270
 #: src/Admin/fee-detail/FeeDetail.js:181
 #: src/Admin/fees-list/FeesList.js:86
 #: src/Admin/fees-list/FeesList.js:590
@@ -876,7 +856,7 @@ msgstr "Powrót na stronę główną"
 msgid "Name"
 msgstr "Imię"
 
-#: src/Admin/edit-poll/EditPoll.js:269
+#: src/Admin/edit-poll/EditPoll.js:271
 msgid "Surname"
 msgstr "Nazwisko"
 
@@ -1017,7 +997,7 @@ msgstr "Wstaw link tokenu"
 msgid "Interested"
 msgstr "Zainteresowani"
 
-#: src/Admin/edit-poll/EditPoll.js:711
+#: src/Admin/edit-poll/EditPoll.js:713
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:208
 #: src/Admin/fee-detail/FeeDetail.js:208
 #: src/Admin/fees-list/FeesList.js:150
@@ -1073,7 +1053,7 @@ msgid "Limit this message to events in a specific category, or leave as \"All ca
 msgstr "Ogranicz tę wiadomość do wydarzeń w określonej kategorii lub pozostaw \"Wszystkie kategorie\" dla wszystkich wydarzeń."
 
 #: src/Admin/edit-extra-message/EditExtraMessage.js:245
-#: src/Admin/edit-poll/EditPoll.js:725
+#: src/Admin/edit-poll/EditPoll.js:727
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:249
 #: src/Admin/fees-list/FeesList.js:750
 msgid "Active"
@@ -1149,7 +1129,7 @@ msgstr "Brak członków w tej grupie."
 msgid "(unnamed)"
 msgstr "(bez nazwy)"
 
-#: src/Admin/edit-poll/EditPoll.js:695
+#: src/Admin/edit-poll/EditPoll.js:697
 #: src/Admin/group-detail/GroupDetail.js:415
 #: src/Admin/manage-event-ext/GroupRules.js:697
 msgid "Remove"
@@ -1746,147 +1726,147 @@ msgstr "Opcjonalnie powiąż z budżetem, aby śledzić finanse."
 msgid "The fee keeps its current budget unless you choose another."
 msgstr "Opłata zachowuje obecny budżet, dopóki nie wybierzesz innego."
 
-#: src/Admin/edit-poll/EditPoll.js:138
+#: src/Admin/edit-poll/EditPoll.js:139
 msgid "Please select an event."
 msgstr "Proszę wybrać wydarzenie."
 
-#: src/Admin/edit-poll/EditPoll.js:144
+#: src/Admin/edit-poll/EditPoll.js:145
 msgid "Please enter a title."
 msgstr "Proszę wprowadzić tytuł."
 
-#: src/Admin/edit-poll/EditPoll.js:150
+#: src/Admin/edit-poll/EditPoll.js:151
 msgid "Please enter a question."
 msgstr "Proszę wprowadzić pytanie."
 
-#: src/Admin/edit-poll/EditPoll.js:156
+#: src/Admin/edit-poll/EditPoll.js:157
 msgid "Please add at least one option."
 msgstr "Proszę dodać przynajmniej jedną opcję."
 
-#: src/Admin/edit-poll/EditPoll.js:169
+#: src/Admin/edit-poll/EditPoll.js:170
 msgid "Please fill in all option texts or remove empty options."
 msgstr "Proszę wypełnić wszystkie teksty opcji lub usunąć puste opcje."
 
-#: src/Admin/edit-poll/EditPoll.js:278
+#: src/Admin/edit-poll/EditPoll.js:280
 msgid "Comments"
 msgstr "Komentarze"
 
-#: src/Admin/edit-poll/EditPoll.js:291
+#: src/Admin/edit-poll/EditPoll.js:293
 msgid "Yes"
 msgstr "Tak"
 
-#: src/Admin/edit-poll/EditPoll.js:347
-#: src/Admin/edit-poll/EditPoll.js:359
+#: src/Admin/edit-poll/EditPoll.js:349
+#: src/Admin/edit-poll/EditPoll.js:361
 msgid "Add New Poll"
 msgstr "Dodaj nową ankietę"
 
-#: src/Admin/edit-poll/EditPoll.js:438
+#: src/Admin/edit-poll/EditPoll.js:440
 msgid "Poll Statistics"
 msgstr "Statystyki ankiety"
 
-#: src/Admin/edit-poll/EditPoll.js:468
+#: src/Admin/edit-poll/EditPoll.js:470
 msgid "Answered"
 msgstr "Odpowiedziano"
 
-#: src/Admin/edit-poll/EditPoll.js:492
+#: src/Admin/edit-poll/EditPoll.js:494
 msgid "Received Email"
 msgstr "Otrzymano e-mail"
 
-#: src/Admin/edit-poll/EditPoll.js:516
+#: src/Admin/edit-poll/EditPoll.js:518
 msgid "Did Not Receive Email"
 msgstr "Nie otrzymano e-maila"
 
-#: src/Admin/edit-poll/EditPoll.js:533
+#: src/Admin/edit-poll/EditPoll.js:535
 msgid "Send Poll Invitations"
 msgstr "Wyślij zaproszenia do ankiety"
 
-#: src/Admin/edit-poll/EditPoll.js:544
+#: src/Admin/edit-poll/EditPoll.js:546
 msgid "Generating PDF..."
 msgstr "Generowanie PDF..."
 
-#: src/Admin/edit-poll/EditPoll.js:548
+#: src/Admin/edit-poll/EditPoll.js:550
 msgid "Download Results PDF"
 msgstr "Pobierz wyniki PDF"
 
-#: src/Admin/edit-poll/EditPoll.js:554
+#: src/Admin/edit-poll/EditPoll.js:556
 msgid "Send this poll to all event participants who have not yet responded. Participants who have already answered will be skipped."
 msgstr "Wyślij tę ankietę do wszystkich uczestników wydarzenia, którzy jeszcze nie odpowiedzieli. Uczestnicy, którzy już odpowiedzieli, zostaną pominięci."
 
-#: src/Admin/edit-poll/EditPoll.js:573
+#: src/Admin/edit-poll/EditPoll.js:575
 msgid "Event"
 msgstr "Wydarzenie"
 
-#: src/Admin/edit-poll/EditPoll.js:580
+#: src/Admin/edit-poll/EditPoll.js:582
 msgid "Select an event..."
 msgstr "Wybierz wydarzenie..."
 
 #. translators: %1$s: event title, %2$d: number of participants
-#: src/Admin/edit-poll/EditPoll.js:589
+#: src/Admin/edit-poll/EditPoll.js:591
 #, js-format
 msgid "%1$s (%2$d participants)"
 msgstr "%1$s (%2$d uczestników)"
 
-#: src/Admin/edit-poll/EditPoll.js:603
+#: src/Admin/edit-poll/EditPoll.js:605
 msgid "Poll Title (Internal)"
 msgstr "Tytuł ankiety (wewnętrzny)"
 
-#: src/Admin/edit-poll/EditPoll.js:611
+#: src/Admin/edit-poll/EditPoll.js:613
 msgid "Internal reference for this poll."
 msgstr "Wewnętrzne odniesienie do tej ankiety."
 
-#: src/Admin/edit-poll/EditPoll.js:618
+#: src/Admin/edit-poll/EditPoll.js:620
 #: src/Admin/polls-list/PollsList.js:160
 msgid "Question"
 msgstr "Pytanie"
 
-#: src/Admin/edit-poll/EditPoll.js:623
+#: src/Admin/edit-poll/EditPoll.js:625
 msgid "The question shown to participants."
 msgstr "Pytanie wyświetlane uczestnikom."
 
-#: src/Admin/edit-poll/EditPoll.js:630
+#: src/Admin/edit-poll/EditPoll.js:632
 msgid "Options"
 msgstr "Opcje"
 
-#: src/Admin/edit-poll/EditPoll.js:632
+#: src/Admin/edit-poll/EditPoll.js:634
 msgid "Add the multiple-choice options for participants to select from."
 msgstr "Dodaj opcje wielokrotnego wyboru, spośród których uczestnicy będą mogli wybierać."
 
 #. translators: %d: option number (1, 2, 3, etc.)
-#: src/Admin/edit-poll/EditPoll.js:656
+#: src/Admin/edit-poll/EditPoll.js:658
 #, js-format
 msgid "Option %d"
 msgstr "Opcja %d"
 
-#: src/Admin/edit-poll/EditPoll.js:675
+#: src/Admin/edit-poll/EditPoll.js:677
 msgid "Move up"
 msgstr "Przesuń w górę"
 
-#: src/Admin/edit-poll/EditPoll.js:686
+#: src/Admin/edit-poll/EditPoll.js:688
 msgid "Move down"
 msgstr "Przesuń w dół"
 
-#: src/Admin/edit-poll/EditPoll.js:706
+#: src/Admin/edit-poll/EditPoll.js:708
 msgid "Add Option"
 msgstr "Dodaj opcję"
 
-#: src/Admin/edit-poll/EditPoll.js:718
+#: src/Admin/edit-poll/EditPoll.js:720
 #: src/Admin/fees-list/FeesList.js:743
 msgid "Draft"
 msgstr "Wersja robocza"
 
-#: src/Admin/edit-poll/EditPoll.js:732
+#: src/Admin/edit-poll/EditPoll.js:734
 #: src/Admin/fees-list/FeesList.js:757
 msgid "Closed"
 msgstr "Zamknięta"
 
-#: src/Admin/edit-poll/EditPoll.js:739
+#: src/Admin/edit-poll/EditPoll.js:741
 msgid "Active polls can receive responses. Closed polls do not accept new responses."
 msgstr "Aktywne ankiety mogą otrzymywać odpowiedzi. Zamknięte ankiety nie przyjmują nowych odpowiedzi."
 
-#: src/Admin/edit-poll/EditPoll.js:762
+#: src/Admin/edit-poll/EditPoll.js:764
 msgid "Update Poll"
 msgstr "Zaktualizuj ankietę"
 
-#: src/Admin/edit-poll/EditPoll.js:763
+#: src/Admin/edit-poll/EditPoll.js:765
 msgid "Create Poll"
 msgstr "Utwórz ankietę"
 
@@ -2115,149 +2095,149 @@ msgstr "Wpisz opis (opcjonalnie)..."
 msgid "Edit Fee"
 msgstr "Edytuj opłatę"
 
-#: src/Admin/import/Import.js:52
+#: src/Admin/import/Import.js:53
 #: src/Admin/import/KitImport.js:46
 msgid "Please select a file to import."
 msgstr "Proszę wybrać plik do importu."
 
-#: src/Admin/import/Import.js:104
+#: src/Admin/import/Import.js:105
 #: src/Admin/import/KitImport.js:78
 msgid "Import failed. Please try again."
 msgstr "Import nie powiódł się. Proszę spróbować ponownie."
 
-#: src/Admin/import/Import.js:158
+#: src/Admin/import/Import.js:159
 msgid "No participants to create. Please provide email addresses or select skip."
 msgstr "Brak uczestników do utworzenia. Proszę podać adresy e-mail lub wybrać opcję pominięcia."
 
-#: src/Admin/import/Import.js:194
+#: src/Admin/import/Import.js:195
 msgid "Failed to resolve duplicates. Please try again."
 msgstr "Nie udało się rozwiązać duplikatów. Proszę spróbować ponownie."
 
-#: src/Admin/import/Import.js:207
+#: src/Admin/import/Import.js:208
 msgid "Import Participants"
 msgstr "Importuj Uczestników"
 
-#: src/Admin/import/Import.js:216
+#: src/Admin/import/Import.js:217
 msgid "Entradium"
 msgstr "Entradium"
 
-#: src/Admin/import/Import.js:220
+#: src/Admin/import/Import.js:221
 msgid "WordPress Users"
 msgstr "Użytkownicy WordPress"
 
-#: src/Admin/import/Import.js:227
+#: src/Admin/import/Import.js:228
 msgid "Kit.com"
 msgstr "Kit.com"
 
-#: src/Admin/import/Import.js:237
+#: src/Admin/import/Import.js:238
 msgid "Import from Entradium"
 msgstr "Import z Entradium"
 
-#: src/Admin/import/Import.js:243
+#: src/Admin/import/Import.js:244
 msgid "Upload an Entradium Excel file (.xlsx) to import participants. The file must contain columns: Nombre, Apellidos, and Email."
 msgstr "Prześlij plik Excel Entradium (.xlsx), aby zaimportować uczestników. Plik musi zawierać kolumny: Nombre, Apellidos i Email."
 
-#: src/Admin/import/Import.js:251
+#: src/Admin/import/Import.js:252
 msgid "Related Event (Optional)"
 msgstr "Powiązane wydarzenie (opcjonalne)"
 
-#: src/Admin/import/Import.js:260
+#: src/Admin/import/Import.js:261
 msgid "Select an event to associate imported participants with it. Leave empty to import without event association."
 msgstr "Wybierz wydarzenie, z którym chcesz powiązać importowanych uczestników. Pozostaw puste, aby zaimportować bez powiązania z wydarzeniem."
 
-#: src/Admin/import/Import.js:266
+#: src/Admin/import/Import.js:267
 msgid "No event association"
 msgstr "Brak powiązania z wydarzeniem"
 
-#: src/Admin/import/Import.js:296
+#: src/Admin/import/Import.js:299
 #: src/Admin/import/KitImport.js:168
 msgid "Selected file:"
 msgstr "Wybrany plik:"
 
-#: src/Admin/import/Import.js:313
+#: src/Admin/import/Import.js:316
 #: src/Admin/import/KitImport.js:185
 #: src/Admin/import/WordPressUsersImport.js:386
 msgid "Importing..."
 msgstr "Importowanie..."
 
-#: src/Admin/import/Import.js:358
+#: src/Admin/import/Import.js:361
 msgid "Import Partially Complete"
 msgstr "Import Częściowo Zakończony"
 
-#: src/Admin/import/Import.js:362
+#: src/Admin/import/Import.js:365
 #: src/Admin/import/KitImport.js:209
 #: src/Admin/import/WordPressUsersImport.js:415
 msgid "Import Complete"
 msgstr "Import Zakończony"
 
-#: src/Admin/import/Import.js:370
+#: src/Admin/import/Import.js:373
 #: src/Admin/import/KitImport.js:217
 #: src/Admin/import/WordPressUsersImport.js:423
 msgid "Imported:"
 msgstr "Zaimportowano:"
 
-#: src/Admin/import/Import.js:379
+#: src/Admin/import/Import.js:382
 msgid "Existing linked to event:"
 msgstr "Istniejące powiązane z wydarzeniem:"
 
-#: src/Admin/import/Import.js:390
+#: src/Admin/import/Import.js:393
 msgid "Set to marketing profile (Newsletter):"
 msgstr "Ustaw na profil marketingowy (Newsletter):"
 
-#: src/Admin/import/Import.js:402
+#: src/Admin/import/Import.js:405
 msgid "Auto-resolved from previous imports:"
 msgstr "Automatycznie rozwiązane z poprzednich importów:"
 
-#: src/Admin/import/Import.js:412
+#: src/Admin/import/Import.js:415
 #: src/Admin/import/KitImport.js:233
 msgid "Skipped (already exists):"
 msgstr "Pominięto (już istnieje):"
 
-#: src/Admin/import/Import.js:422
+#: src/Admin/import/Import.js:425
 msgid "Duplicates requiring resolution:"
 msgstr "Duplikaty wymagające rozwiązania:"
 
-#: src/Admin/import/Import.js:449
+#: src/Admin/import/Import.js:452
 msgid "Resolve Duplicate Emails"
 msgstr "Rozwiąż Duplikaty Adresów E-mail"
 
-#: src/Admin/import/Import.js:455
+#: src/Admin/import/Import.js:458
 msgid "The following people have duplicate email addresses. Please provide a unique email for each person or skip them."
 msgstr "Następujące osoby mają zduplikowane adresy e-mail. Proszę podać unikalny adres e-mail dla każdej osoby lub je pominąć."
 
-#: src/Admin/import/Import.js:484
+#: src/Admin/import/Import.js:487
 msgid "Original Email:"
 msgstr "Oryginalny E-mail:"
 
-#: src/Admin/import/Import.js:553
+#: src/Admin/import/Import.js:556
 msgid "New Email:"
 msgstr "Nowy E-mail:"
 
-#: src/Admin/import/Import.js:581
+#: src/Admin/import/Import.js:584
 msgid "Enter new email"
 msgstr "Wprowadź nowy e-mail"
 
-#: src/Admin/import/Import.js:600
+#: src/Admin/import/Import.js:603
 msgid "Use Gmail Alias"
 msgstr "Użyj Aliasu Gmail"
 
-#: src/Admin/import/Import.js:616
+#: src/Admin/import/Import.js:619
 msgid "Use Original Email"
 msgstr "Użyj oryginalnego e-maila"
 
-#: src/Admin/import/Import.js:652
+#: src/Admin/import/Import.js:655
 msgid "Skip this person"
 msgstr "Pomiń tę osobę"
 
-#: src/Admin/import/Import.js:682
+#: src/Admin/import/Import.js:685
 msgid "Resolving..."
 msgstr "Rozwiązywanie..."
 
-#: src/Admin/import/Import.js:686
+#: src/Admin/import/Import.js:689
 msgid "Create Participants"
 msgstr "Utwórz Uczestników"
 
-#: src/Admin/import/Import.js:706
+#: src/Admin/import/Import.js:709
 #: src/Admin/import/KitImport.js:250
 #: src/Admin/import/WordPressUsersImport.js:449
 msgid "Errors:"
@@ -2473,93 +2453,93 @@ msgstr "Ładowanie…"
 msgid "Load more"
 msgstr "Załaduj więcej"
 
-#: src/Admin/timeline/TimelineItem.js:64
+#: src/Admin/timeline/TimelineItem.js:65
 msgid "just now"
 msgstr "właśnie teraz"
 
-#: src/Admin/timeline/TimelineItem.js:68
+#: src/Admin/timeline/TimelineItem.js:69
 msgid "1 minute ago"
 msgstr "1 minutę temu"
 
-#: src/Admin/timeline/TimelineItem.js:69
+#: src/Admin/timeline/TimelineItem.js:70
 msgid "minutes ago"
 msgstr "minut temu"
 
-#: src/Admin/timeline/TimelineItem.js:73
+#: src/Admin/timeline/TimelineItem.js:74
 msgid "1 hour ago"
 msgstr "1 godzinę temu"
 
-#: src/Admin/timeline/TimelineItem.js:74
+#: src/Admin/timeline/TimelineItem.js:75
 msgid "hours ago"
 msgstr "godzin temu"
 
-#: src/Admin/timeline/TimelineItem.js:78
+#: src/Admin/timeline/TimelineItem.js:79
 msgid "yesterday"
 msgstr "wczoraj"
 
-#: src/Admin/timeline/TimelineItem.js:79
+#: src/Admin/timeline/TimelineItem.js:80
 msgid "days ago"
 msgstr "dni temu"
 
-#: src/Admin/timeline/TimelineItem.js:127
-#: src/Admin/timeline/TimelineItem.js:135
+#: src/Admin/timeline/TimelineItem.js:128
+#: src/Admin/timeline/TimelineItem.js:136
 msgid "submitted"
 msgstr "przesłane"
 
-#: src/Admin/timeline/TimelineItem.js:129
+#: src/Admin/timeline/TimelineItem.js:130
 msgid "on"
 msgstr "w"
 
-#: src/Admin/timeline/TimelineItem.js:141
+#: src/Admin/timeline/TimelineItem.js:142
 msgid "View answers"
 msgstr "Wyświetl odpowiedzi"
 
-#: src/Admin/timeline/TimelineItem.js:165
+#: src/Admin/timeline/TimelineItem.js:166
 msgid "New participants:"
 msgstr "Nowi uczestnicy:"
 
-#: src/Admin/timeline/TimelineItem.js:198
+#: src/Admin/timeline/TimelineItem.js:199
 msgid "New participant:"
 msgstr "Nowy uczestnik:"
 
-#: src/Admin/timeline/TimelineItem.js:219
+#: src/Admin/timeline/TimelineItem.js:220
 msgid "Created membership fee"
 msgstr "Utworzono opłatę członkowską"
 
-#: src/Admin/timeline/TimelineItem.js:223
+#: src/Admin/timeline/TimelineItem.js:224
 msgid "Total amount:"
 msgstr "Całkowita kwota:"
 
-#: src/Admin/timeline/TimelineItem.js:228
+#: src/Admin/timeline/TimelineItem.js:229
 msgid "Already paid:"
 msgstr "Już zapłacono:"
 
-#: src/Admin/timeline/TimelineItem.js:231
+#: src/Admin/timeline/TimelineItem.js:232
 msgid "Pending:"
 msgstr "Oczekujące:"
 
-#: src/Admin/timeline/TimelineItem.js:260
+#: src/Admin/timeline/TimelineItem.js:261
 msgid "fee payment on"
 msgstr "opłata na"
 
-#: src/Admin/timeline/TimelineItem.js:261
+#: src/Admin/timeline/TimelineItem.js:262
 msgid "fee payments on"
 msgstr "opłaty na"
 
-#: src/Admin/timeline/TimelineItem.js:268
-#: src/Admin/timeline/TimelineItem.js:335
+#: src/Admin/timeline/TimelineItem.js:269
+#: src/Admin/timeline/TimelineItem.js:336
 msgid "total:"
 msgstr "razem:"
 
-#: src/Admin/timeline/TimelineItem.js:327
+#: src/Admin/timeline/TimelineItem.js:328
 msgid "ticket sale on"
 msgstr "sprzedaż biletów w"
 
-#: src/Admin/timeline/TimelineItem.js:328
+#: src/Admin/timeline/TimelineItem.js:329
 msgid "ticket sales on"
 msgstr "sprzedaż biletów w"
 
-#: src/Admin/timeline/TimelineItem.js:392
+#: src/Admin/timeline/TimelineItem.js:395
 msgid "Test"
 msgstr "Test"
 
@@ -2612,37 +2592,37 @@ msgstr "Wyślij odpowiedź"
 msgid "Activates advanced feature bundles for Fair Audience (fees, polls, Instagram, groups, messaging, timeline, import, invitations, manage-event-ext). Requires fair-audience."
 msgstr "Włącza zaawansowane pakiety funkcji dla Fair Audience (opłaty, ankiety, Instagram, grupy, wiadomości, oś czasu, import, zaproszenia, manage-event-ext). Wymaga fair-audience."
 
-#: src/Admin/edit-poll/EditPoll.js:229
+#: src/Admin/edit-poll/EditPoll.js:230
 msgid "Invitations were sent, but the statistics could not be refreshed. Reload the page to see them."
 msgstr "Zaproszenia zostały wysłane, ale nie można było odświeżyć statystyk. Przeładuj stronę, aby je zobaczyć."
 
-#: src/Admin/edit-poll/EditPoll.js:236
+#: src/Admin/edit-poll/EditPoll.js:237
 msgid "The invitations could not be sent. Some may already have gone out; check the statistics before trying again."
 msgstr "Nie można było wysłać zaproszeń. Niektóre mogły już zostać wysłane; sprawdź statystyki przed ponowną próbą."
 
 #. translators: %s: poll title
-#: src/Admin/edit-poll/EditPoll.js:377
+#: src/Admin/edit-poll/EditPoll.js:379
 #, js-format
 msgid "Send poll invitations — %s"
 msgstr "Wyślij zaproszenia do ankiety — %s"
 
-#: src/Admin/edit-poll/EditPoll.js:383
+#: src/Admin/edit-poll/EditPoll.js:385
 msgid "Send invitations"
 msgstr "Wyślij zaproszenia"
 
-#: src/Admin/edit-poll/EditPoll.js:387
+#: src/Admin/edit-poll/EditPoll.js:389
 #: src/Admin/fee-detail/FeeDetail.js:1121
 msgid "Sending…"
 msgstr "Wysyłanie…"
 
 #. translators: %s: event title
-#: src/Admin/edit-poll/EditPoll.js:396
+#: src/Admin/edit-poll/EditPoll.js:398
 #, js-format
 msgid "An invitation email goes to every participant of %s who has not answered this poll yet, including those who already received one."
 msgstr "Wiadomość e-mail z zaproszeniem trafia do każdego uczestnika %s, który jeszcze nie odpowiedział na tę ankietę, w tym do tych, którzy już ją otrzymali."
 
 #. translators: %d: number of participants who answered
-#: src/Admin/edit-poll/EditPoll.js:407
+#: src/Admin/edit-poll/EditPoll.js:409
 #, js-format
 msgid "%d participant has already answered and is skipped."
 msgid_plural "%d participants have already answered and are skipped."
@@ -2650,7 +2630,7 @@ msgstr[0] "%d uczestnik już odpowiedział i został pominięty."
 msgstr[1] "%d uczestnicy już odpowiedzieli i zostali pominięci."
 msgstr[2] "%d uczestników już odpowiedziało i zostało pominiętych."
 
-#: src/Admin/edit-poll/EditPoll.js:418
+#: src/Admin/edit-poll/EditPoll.js:420
 msgid "Sent emails cannot be recalled. Unsaved changes on this page are not saved and not used in the email."
 msgstr "Wysłanych wiadomości e-mail nie można odwołać. Niezapisane zmiany na tej stronie nie są zapisywane i nie są używane w wiadomości e-mail."
 
@@ -3084,4 +3064,40 @@ msgid_plural "%1$s include outdated copies of the Fair Event Plugins shared libr
 msgstr[0] "%1$s zawiera przestarzałą kopię biblioteki wspólnej Fair Event Plugins. Zaktualizuj %1$s, aby wszystkie wtyczki Fair działały prawidłowo."
 msgstr[1] "%1$s zawierają przestarzałe kopie biblioteki wspólnej Fair Event Plugins. Zaktualizuj %1$s, aby wszystkie wtyczki Fair działały prawidłowo."
 msgstr[2] "%1$s zawierają przestarzałe kopie biblioteki wspólnej Fair Event Plugins. Zaktualizuj %1$s, aby wszystkie wtyczki Fair działały prawidłowo."
+
+#: src/API/InstagramController.php:66
+msgid "The Instagram connection is managed in Fair Events → Instagram. Test it there."
+msgstr "Połączenie z Instagramem jest zarządzane w Fair Events → Instagram. Przetestuj je tam."
+
+#: src/API/InstagramController.php:129
+msgid "Meta refused the access token or the connected account. Connect again in Fair Events → Instagram."
+msgstr "Meta odrzuciła token dostępu lub połączone konto. Połącz się ponownie w Fair Events → Instagram."
+
+#: src/API/InstagramController.php:144
+msgid "The connection works."
+msgstr "Połączenie działa."
+
+#: src/Services/InstagramConnection.php:79
+msgid "The Instagram connection is managed by Fair Events Experimental, which is not available right now. Make sure Fair Events and Fair Events Experimental are active and up to date."
+msgstr "Połączenie z Instagramem jest zarządzane przez Fair Events Experimental, które nie są dostępne w tej chwili. Upewnij się, że Fair Events i Fair Events Experimental są włączone i zaktualizowane."
+
+#: src/Services/InstagramConnection.php:87
+msgid "Instagram publishing needs an updated Fair Events Experimental. Update it, then connect again in Fair Events → Instagram."
+msgstr "Publikowanie na Instagramie wymaga zaktualizowanego Fair Events Experimental. Zaktualizuj je, a następnie połącz się ponownie w Fair Events → Instagram."
+
+#: src/Services/InstagramConnection.php:99
+msgid "Instagram needs to be reconnected: Meta replaced the way sites connect to Instagram, and this connection was made the old way. Turn on Instagram in Fair Events → Settings → Experimental, then connect again in Fair Events → Instagram."
+msgstr "Instagram wymaga ponownego połączenia: Meta zmieniła sposób, w jaki witryny łączą się z Instagramem, a to połączenie zostało wykonane w stary sposób. Włącz Instagram w Fair Events → Ustawienia → Eksperymentalne, a następnie połącz się ponownie w Fair Events → Instagram."
+
+#: src/Services/InstagramConnection.php:106
+msgid "Instagram needs to be reconnected: the access token has expired. Turn on Instagram in Fair Events → Settings → Experimental, then connect again in Fair Events → Instagram."
+msgstr "Instagram wymaga ponownego połączenia: token dostępu wygasł. Włącz Instagram w Fair Events → Ustawienia → Eksperymentalne, a następnie połącz się ponownie w Fair Events → Instagram."
+
+#: src/Services/InstagramConnection.php:121
+msgid "Instagram is not connected. Turn on Instagram in Fair Events → Settings → Experimental, then connect an account in Fair Events → Instagram."
+msgstr "Instagram nie jest połączony. Włącz Instagram w Fair Events → Ustawienia → Eksperymentalne, a następnie połącz konto w Fair Events → Instagram."
+
+#: src/Services/InstagramConnection.php:128
+msgid "The Instagram account is not known. Connect again in Fair Events → Instagram."
+msgstr "Konto na Instagramie jest nieznane. Połącz się ponownie w Fair Events → Instagram."
 

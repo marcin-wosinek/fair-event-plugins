@@ -2,14 +2,14 @@
 # This file is distributed under the Private.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Platform - Mollie OAuth Integration 1.5.1\n"
+"Project-Id-Version: Fair Platform - Mollie OAuth Integration 1.5.2\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-platform\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-15T07:22:02+00:00\n"
+"POT-Creation-Date: 2026-11-20T06:35:37+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-platform\n"
@@ -44,7 +44,7 @@ msgid "Fair Platform Settings"
 msgstr ""
 
 #: src/Admin/AdminHooks.php:37
-#: src/Core/Plugin.php:158
+#: src/Core/Plugin.php:184
 msgid "Fair Platform"
 msgstr ""
 
@@ -299,33 +299,53 @@ msgid "Bundled translations"
 msgstr ""
 
 #: src/Core/Features.php:93
-#: src/Core/Plugin.php:159
+#: src/Core/Plugin.php:185
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr ""
 
-#: src/Core/Plugin.php:153
+#: src/Core/Plugin.php:179
 msgid "Translations"
 msgstr ""
 
-#: src/Core/Plugin.php:162
+#: src/Core/Plugin.php:188
 msgid "Forced by a wp-config constant — change it there."
 msgstr ""
 
-#: src/Core/Plugin.php:1515
-#: src/Core/Plugin.php:1539
-#: src/Core/Plugin.php:1563
+#: src/Core/Plugin.php:1221
+msgid "Instagram connections are not configured on this service yet. Try again later."
+msgstr ""
+
+#: src/Core/Plugin.php:1231
+msgid "This site uses the retired Instagram connection. Update Fair Events Experimental, then connect again from Fair Events → Instagram."
+msgstr ""
+
+#: src/Core/Plugin.php:1232
+msgid "This Instagram connection request is not valid. Start again from Fair Events → Instagram on your site."
+msgstr ""
+
+#: src/Core/Plugin.php:1240
+msgid "The Instagram connection could not be started. Try again."
+msgstr ""
+
+#: src/Core/Plugin.php:1273
+msgid "This Instagram authorization expired or was already used. Start again from Fair Events → Instagram on your site."
+msgstr ""
+
+#: src/Core/Plugin.php:1419
+#: src/Core/Plugin.php:1443
+#: src/Core/Plugin.php:1467
 msgid "Fair Platform:"
 msgstr ""
 
-#: src/Core/Plugin.php:1516
-msgid "Instagram OAuth credentials not configured. Please add INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET to wp-config.php for Instagram integration."
+#: src/Core/Plugin.php:1420
+msgid "Instagram connections are not configured. Add META_APP_ID, META_APP_SECRET and META_INSTAGRAM_CONFIG_ID (the Unified Login configuration ID) to wp-config.php; META_GRAPH_VERSION is optional."
 msgstr ""
 
-#: src/Core/Plugin.php:1540
+#: src/Core/Plugin.php:1444
 msgid "Mollie OAuth credentials not configured. Please add MOLLIE_CLIENT_ID and MOLLIE_CLIENT_SECRET to wp-config.php"
 msgstr ""
 
-#: src/Core/Plugin.php:1564
+#: src/Core/Plugin.php:1468
 msgid "Mollie PHP library not installed. Please run: composer require mollie/mollie-api-php"
 msgstr ""
 
@@ -357,91 +377,91 @@ msgstr[1] ""
 msgid "Cancel"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:171
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:234
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:176
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:245
 msgid "ID"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:172
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:177
 msgid "Site"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:173
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:230
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:178
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:241
 msgid "Status"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:175
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:180
 msgid "Connected At"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:176
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:181
 msgid "Last Refresh"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:197
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:203
 msgid "Status Filter"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:201
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:207
 msgid "All Statuses"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:215
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:223
 msgid "Sort By"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:219
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:227
 msgid "Connection Date"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:226
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:234
 msgid "Site Name"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:241
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:254
 msgid "Order"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:245
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:258
 msgid "Descending"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:249
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:265
 msgid "Ascending"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:257
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:277
 msgid "Cleanup Days"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:275
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:291
 msgid "Cleanup Old Logs"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:294
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:310
 msgid "Delete old logs"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:295
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:311
 msgid "Deleting…"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:304
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:320
 msgid "Only the log history is deleted; existing connections keep working. This cannot be undone."
 msgstr ""
 
 #. translators: 1: current page number, 2: total number of pages
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:424
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:432
 #, js-format
 msgid "Page %1$d of %2$d"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:435
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:443
 msgid "Previous"
 msgstr ""
 
-#: src/Admin/components/connection-management/ConnectionManagementScreen.js:442
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:450
 msgid "Next"
 msgstr ""
 
@@ -500,8 +520,8 @@ msgstr ""
 
 #: src/Admin/connections/ConnectionsPage.js:87
 #: src/Admin/connections/ConnectionsPage.js:108
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:89
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:105
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:94
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:110
 msgid "Failed"
 msgstr ""
 
@@ -510,12 +530,12 @@ msgid "Disconnected"
 msgstr ""
 
 #: src/Admin/connections/ConnectionsPage.js:99
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:96
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:101
 msgid "Total Connections"
 msgstr ""
 
 #: src/Admin/connections/ConnectionsPage.js:103
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:100
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:105
 msgid "Successful"
 msgstr ""
 
@@ -563,6 +583,10 @@ msgid_plural "This deletes every Instagram connection log entry older than %d da
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:110
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:89
+msgid "Account choice pending"
+msgstr ""
+
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:115
 msgid "Unique Usernames"
 msgstr ""
