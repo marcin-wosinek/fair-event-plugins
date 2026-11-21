@@ -1,0 +1,111 @@
+/* The host page caps card content at 600px; the image lists use the full width. */
+.fair-events-manage-event .fair-events-images .components-card__body > * {
+	max-width: none;
+}
+
+.fair-events-images-toolbar,
+.fair-events-images-actions,
+.fair-events-images-heading,
+.fair-events-images-circle-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.fair-events-images-heading {
+	min-width: 0;
+}
+
+.fair-events-images-heading h3 {
+	margin: 0;
+	font-size: 14px;
+	overflow-wrap: anywhere;
+}
+
+.fair-events-images-badge {
+	padding: 2px 8px;
+	border-radius: 12px;
+	background: #f0f0f1;
+	font-size: 12px;
+	white-space: nowrap;
+}
+
+.fair-events-images-status,
+.fair-events-images-hint,
+.fair-events-images-empty {
+	margin: 0;
+	color: #50575e;
+}
+
+.fair-events-images-card .fair-events-images-hint,
+.fair-events-images-card .components-notice {
+	margin: 12px 0 0;
+}
+
+.fair-events-images-card.has-error {
+	border-left: 4px solid #d63638;
+}
+
+.fair-events-images-editor {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	margin-top: 12px;
+}
+
+.fair-events-images-preview {
+	/* Sized to the image (inline width and aspect ratio), so circle percentages match it. */
+	position: relative;
+	flex: 0 0 auto;
+	width: 480px;
+	max-width: 100%;
+	align-self: flex-start;
+	line-height: 0;
+	overflow: hidden;
+	user-select: none;
+}
+
+.fair-events-images-preview img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	background: #f0f0f1;
+}
+
+.fair-events-images-circle {
+	position: absolute;
+	box-sizing: border-box;
+	transform: translate(-50%, -50%);
+	border: 2px solid #fff;
+	border-radius: 50%;
+	box-shadow:
+		0 0 0 2px #2271b1,
+		0 0 0 9999px rgba(0, 0, 0, 0.35);
+	cursor: move;
+}
+
+.fair-events-images-handle {
+	position: absolute;
+	top: 50%;
+	right: 0;
+	width: 24px;
+	height: 24px;
+	transform: translate(50%, -50%);
+	border: 2px solid #fff;
+	border-radius: 50%;
+	background: #2271b1;
+	cursor: ew-resize;
+}
+
+.fair-events-images-sliders {
+	flex: 1 1 220px;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.fair-events-images-circle-actions {
+	margin-top: 12px;
+}
