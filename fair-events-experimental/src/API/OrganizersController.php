@@ -29,6 +29,8 @@ defined( 'WPINC' ) || die;
  */
 class OrganizersController extends WP_REST_Controller {
 
+	use ManageOptionsPermissions;
+
 	/**
 	 * Namespace for the REST API.
 	 *
@@ -109,58 +111,10 @@ class OrganizersController extends WP_REST_Controller {
 	/**
 	 * Only administrators manage organizers: responses carry private addresses.
 	 *
-	 * @return true|WP_Error
+	 * @return string
 	 */
-	private function check_manage_permission() {
-		if ( current_user_can( 'manage_options' ) ) {
-			return true;
-		}
-
-		return new WP_Error(
-			'rest_forbidden',
-			__( 'You do not have permission to manage organizers.', 'fair-events-experimental' ),
-			array( 'status' => rest_authorization_required_code() )
-		);
-	}
-
-	/**
-	 * Check permission to list organizers.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return true|WP_Error
-	 */
-	public function get_items_permissions_check( $request ) {
-		return $this->check_manage_permission();
-	}
-
-	/**
-	 * Check permission to read an organizer.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return true|WP_Error
-	 */
-	public function get_item_permissions_check( $request ) {
-		return $this->check_manage_permission();
-	}
-
-	/**
-	 * Check permission to create an organizer.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return true|WP_Error
-	 */
-	public function create_item_permissions_check( $request ) {
-		return $this->check_manage_permission();
-	}
-
-	/**
-	 * Check permission to update an organizer.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return true|WP_Error
-	 */
-	public function update_item_permissions_check( $request ) {
-		return $this->check_manage_permission();
+	protected function manage_permission_message() {
+		return __( 'You do not have permission to manage organizers.', 'fair-events-experimental' );
 	}
 
 	/**

@@ -1,0 +1,24 @@
+.fair-events-team-member-form__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+	gap: 16px 24px;
+}
+
+.fair-events-team-member-form__error {
+	color: #cc1818;
+}
+
+.fair-events-team-members__events {
+	margin: 0 0 8px;
+	padding-left: 20px;
+	list-style: disc;
+	overflow-wrap: anywhere;
+}
+
+.fair-events-team-members__event-meta {
+	color: #757575;
+}
+
+.fair-events-team-members__linked h2 {
+	margin: 8px 0;
+}
