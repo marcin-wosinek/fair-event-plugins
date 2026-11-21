@@ -3,7 +3,7 @@
  * Admin Pages for Fair Events Experimental
  *
  * Registers the experimental admin pages (compare events, sources,
- * organizers, Meta, Instagram and WhatsApp) as submenus under the fair-events-calendar
+ * organizers, team members, Meta, Instagram and WhatsApp) as submenus under the fair-events-calendar
  * menu. The experimental
  * settings live in an Experimental tab of the fair-events Settings page; the
  * former standalone settings slug only redirects there.
@@ -45,6 +45,8 @@ class AdminPages {
 		// After Fair Events' own menu reorder (priority 999).
 		add_action( 'admin_menu', array( $this, 'place_compare_events_before_sources' ), 1000 );
 		add_action( 'admin_menu', array( $this, 'place_organizers_before_settings' ), 1000 );
+		// After Organizers, so the two stay in that order before Settings.
+		add_action( 'admin_menu', array( $this, 'place_team_members_before_settings' ), 1001 );
 		add_action( 'admin_init', array( $this, 'redirect_legacy_organizer_tab' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_action( 'fair_events_settings_enqueue_assets', array( $this, 'enqueue_settings_tab_assets' ) );
@@ -144,6 +146,19 @@ class AdminPages {
 			);
 		}
 
+		// Team members page — `team-members` bundle. Not registered while the
+		// bundle is off, so its URL is refused like any unknown page.
+		if ( \FairEventsExperimental\Core\Plugin::team_members_available() ) {
+			$this->page_hooks['fair-events-team-members'] = add_submenu_page(
+				$parent,
+				__( 'Team members', 'fair-events-experimental' ),
+				__( 'Team members', 'fair-events-experimental' ),
+				'manage_options',
+				'fair-events-team-members',
+				array( $this, 'render_team_members_page' )
+			);
+		}
+
 		// WhatsApp page — `whatsapp` bundle. The access token lives in
 		// Settings → Connectors. Not registered while the bundle is off.
 		if ( \FairEventsExperimental\Core\Features::is_enabled( 'whatsapp' ) ) {
@@ -220,6 +235,37 @@ class AdminPages {
 		$items    = array_values( $items );
 		$settings = array_search( 'fair-events-settings', array_column( $items, 2 ), true );
 		array_splice( $items, $settings, 0, array( $organizers_item ) );
+
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Reordering this WordPress menu requires replacing its submenu array.
+		$submenu[ $parent ] = $items;
+	}
+
+	/**
+	 * Keep Team members immediately before Settings in the Events menu,
+	 * after Organizers when that page is registered too.
+	 *
+	 * @return void
+	 */
+	public function place_team_members_before_settings() {
+		global $submenu;
+
+		$parent = $this->get_menu_parent_slug();
+		if ( empty( $submenu[ $parent ] ) ) {
+			return;
+		}
+
+		$items = array_values( $submenu[ $parent ] );
+		$slugs = array_column( $items, 2 );
+		$team  = array_search( 'fair-events-team-members', $slugs, true );
+		if ( false === $team || ! in_array( 'fair-events-settings', $slugs, true ) ) {
+			return;
+		}
+
+		$team_item = $items[ $team ];
+		unset( $items[ $team ] );
+		$items    = array_values( $items );
+		$settings = array_search( 'fair-events-settings', array_column( $items, 2 ), true );
+		array_splice( $items, $settings, 0, array( $team_item ) );
 
 		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Reordering this WordPress menu requires replacing its submenu array.
 		$submenu[ $parent ] = $items;
@@ -388,6 +434,19 @@ class AdminPages {
 				wp_enqueue_style( 'fair-events-organizers', $exp_url . 'build/admin/organizers/style-index.css', array( 'wp-components' ), $asset_file['version'] );
 				break;
 
+			case 'fair-events-team-members':
+				$asset_file = include $exp_dir . 'build/admin/team-members/index.asset.php';
+				wp_enqueue_script( 'fair-events-team-members', $exp_url . 'build/admin/team-members/index.js', $asset_file['dependencies'], $asset_file['version'], true );
+				wp_localize_script(
+					'fair-events-team-members',
+					'fairEventsTeamMembersData',
+					array( 'manageEventUrl' => admin_url( 'admin.php?page=fair-events-manage-event' ) )
+				);
+				wp_set_script_translations( 'fair-events-team-members', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
+				// The list and shared admin table styles are bundled from fair-events-shared.
+				wp_enqueue_style( 'fair-events-team-members', $exp_url . 'build/admin/team-members/style-index.css', array( 'wp-components' ), $asset_file['version'] );
+				break;
+
 			case 'fair-events-whatsapp':
 				$asset_file = include $exp_dir . 'build/admin/whatsapp/index.asset.php';
 				wp_enqueue_script( 'fair-events-whatsapp', $exp_url . 'build/admin/whatsapp/index.js', $asset_file['dependencies'], $asset_file['version'], true );
@@ -486,6 +545,17 @@ class AdminPages {
 	public function render_organizers_page() {
 		?>
 		<div id="fair-events-organizers-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render team members page
+	 *
+	 * @return void
+	 */
+	public function render_team_members_page() {
+		?>
+		<div id="fair-events-team-members-root"></div>
 		<?php
 	}
 

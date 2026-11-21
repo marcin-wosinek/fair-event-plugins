@@ -31,6 +31,7 @@ import {
 /**
  * Internal dependencies
  */
+import useEditorView from '../components/useEditorView.js';
 import {
 	DEFAULT_ORGANIZER_ID,
 	createOrganizer,
@@ -114,9 +115,6 @@ export default function OrganizersPage() {
 	// Action waiting for the "discard unsaved changes" confirmation.
 	const [ pendingLeave, setPendingLeave ] = useState( null );
 	const savingRef = useRef( false );
-	const listHeadingRef = useRef( null );
-	const editorHeadingRef = useRef( null );
-	const focusTarget = useRef( null );
 
 	const load = useCallback( () => {
 		setLoadError( null );
@@ -140,35 +138,8 @@ export default function OrganizersPage() {
 		load();
 	}, [ load ] );
 
-	const isDirty =
-		!! editor &&
-		JSON.stringify( editor.draft ) !== JSON.stringify( editor.saved );
-
-	// Warn before leaving the page with unsaved edits.
-	useEffect( () => {
-		if ( ! isDirty ) {
-			return undefined;
-		}
-		const onBeforeUnload = ( event ) => {
-			event.preventDefault();
-			event.returnValue = '';
-		};
-		window.addEventListener( 'beforeunload', onBeforeUnload );
-		return () =>
-			window.removeEventListener( 'beforeunload', onBeforeUnload );
-	}, [ isDirty ] );
-
-	// Move focus to the heading of the view that just opened.
-	useEffect( () => {
-		const target =
-			'editor' === focusTarget.current
-				? editorHeadingRef.current
-				: listHeadingRef.current;
-		if ( focusTarget.current && target ) {
-			target.focus();
-		}
-		focusTarget.current = null;
-	}, [ editor ] );
+	const { isDirty, focusTarget, listHeadingRef, editorHeadingRef } =
+		useEditorView( editor );
 
 	const openEditor = ( record ) => {
 		const state = toFormState( record );

@@ -208,6 +208,24 @@ class EventCopyService {
 			}
 			$this->assert_checkpoint( 'configuration_cloning' );
 
+			/**
+			 * Filters whether companion plugins copied the data they keep
+			 * for the source event onto the copy.
+			 *
+			 * Runs before the copy is returned, whether or not the
+			 * companion's feature is enabled. Anything but `true` fails the
+			 * copy, which then removes the partial copy, firing
+			 * `fair_events_event_date_deleted` for the new event date.
+			 *
+			 * @param bool|\WP_Error $result               True so far.
+			 * @param int            $source_owner_id      Source single event or series master.
+			 * @param int            $destination_owner_id The copy's event date ID.
+			 */
+			if ( true !== apply_filters( 'fair_events_event_copy_extensions', true, (int) $master->id, (int) $new_event_date_id ) ) {
+				throw new \RuntimeException( 'extensions' );
+			}
+			$this->assert_checkpoint( 'extension_copying' );
+
 			return array(
 				'event_date_id' => (int) $new_event_date_id,
 				'post_id'       => (int) $new_post_id,
