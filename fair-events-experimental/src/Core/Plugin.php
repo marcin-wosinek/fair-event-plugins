@@ -66,6 +66,10 @@ class Plugin {
 		// Instagram\Ownership.
 		$this->load_instagram();
 
+		// Event and programme-item images with focal regions, behind the
+		// `event-images` bundle; see docs/event-images.md.
+		$this->load_event_images();
+
 		// Operator links to an event feed's weekly summary; see
 		// docs/weekly-summary.md.
 		\FairEventsExperimental\Frontend\WeeklySummaryPage::init();
@@ -408,6 +412,94 @@ class Plugin {
 			},
 			11
 		);
+	}
+
+	/**
+	 * Load event images while the `event-images` bundle is on: the table,
+	 * the REST routes and the Manage Event Images tab.
+	 *
+	 * Cleanup runs whenever the table exists, also with the bundle off, so
+	 * a deleted event or attachment never leaves links behind for when the
+	 * bundle comes back. Turning the bundle off keeps every saved link.
+	 *
+	 * @return void
+	 */
+	private function load_event_images() {
+		add_action(
+			'fair_events_event_date_deleted',
+			static function ( $event_date_id ) {
+				if ( \FairEventsExperimental\EventImages\Store::is_installed() ) {
+					\FairEventsExperimental\EventImages\Store::delete_for_owner( (int) $event_date_id );
+				}
+			}
+		);
+		add_action(
+			'delete_attachment',
+			static function ( $attachment_id ) {
+				if ( \FairEventsExperimental\EventImages\Store::is_installed() ) {
+					\FairEventsExperimental\EventImages\Store::delete_attachment( (int) $attachment_id );
+				}
+			}
+		);
+
+		if ( ! self::event_images_available() ) {
+			return;
+		}
+
+		add_action( 'init', array( \FairEventsExperimental\EventImages\Store::class, 'maybe_install' ), 5 );
+		add_action(
+			'rest_api_init',
+			static function () {
+				( new \FairEventsExperimental\API\EventImagesController() )->register_routes();
+			}
+		);
+
+		if ( is_admin() ) {
+			add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_images_assets' ) );
+		}
+	}
+
+	/**
+	 * Whether event images are available: the bundle is on and the active
+	 * Fair Events has the event dates they attach to.
+	 *
+	 * @return bool
+	 */
+	public static function event_images_available() {
+		return Features::is_enabled( 'event-images' )
+			&& class_exists( \FairEvents\Models\EventDates::class );
+	}
+
+	/**
+	 * Enqueue the Images tab on the fair-events manage-event page, with the
+	 * Media Library picker it opens.
+	 *
+	 * Blocking (not deferred), after `fair-events-manage-event`, so its
+	 * `addFilter()` call runs before the host bundle mounts.
+	 *
+	 * @return void
+	 */
+	public function enqueue_manage_event_images_assets() {
+		$asset_file = include FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR . 'build/admin/manage-event-images/index.asset.php';
+
+		wp_enqueue_media();
+
+		wp_enqueue_script(
+			'fair-events-experimental-manage-event-images',
+			FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/admin/manage-event-images/index.js',
+			array_merge( $asset_file['dependencies'], array( 'fair-events-manage-event' ) ),
+			$asset_file['version'],
+			true
+		);
+
+		wp_enqueue_style(
+			'fair-events-experimental-manage-event-images',
+			FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/admin/manage-event-images/index.css',
+			array( 'wp-components' ),
+			$asset_file['version']
+		);
+
+		wp_set_script_translations( 'fair-events-experimental-manage-event-images', 'fair-events-experimental', Features::script_translations_path() );
 	}
 
 	/**
