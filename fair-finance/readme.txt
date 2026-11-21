@@ -4,7 +4,7 @@ Tags: finance, budgeting, events
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.7.0
+Stable tag: 1.8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,12 @@ Fair Finance provides budgeting, financial entries, and reconciliation features 
 2. Activate the plugin through the **Plugins** screen in WordPress.
 
 == Changelog ==
+
+## 1.8.0
+
+### Minor Changes
+
+- 6c273c6: Add a “No tag” option to the Tag filter on the Entries page to find entries and split allocations that still need a tag.
 
 ## 1.7.0
 

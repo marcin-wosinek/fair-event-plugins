@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.8.0
+
+### Minor Changes
+
+- 6c273c6: Add a “No tag” option to the Tag filter on the Entries page to find entries and split allocations that still need a tag.
+
 ## 1.7.0
 
 ### Minor Changes
