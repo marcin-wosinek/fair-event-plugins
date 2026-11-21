@@ -368,6 +368,58 @@ Secondary worktrees follow the same steps; the ports in
 deletes the databases and images, and nothing about a version change needs
 it.
 
+### WordPress release
+
+`.wp-env.json` `core` pins the WordPress release both wp-env sites run, as
+`"WordPress/WordPress#<version>"` (#2393). CI and local runs test that exact
+release, and changing it changes the CI image cache key
+(`scripts/wp-env-images.mjs`), so a new pin is really tested. Check what a
+site runs with `npx wp-env run tests-cli wp core version` (or `cli`).
+
+The pin does not stop wp-env asking WordPress.org for the latest release:
+`@wordpress/env` 12.x resolves its built-in default `core: null` on every
+`wp-env start` and `wp-env run`, before the pin overrides it, so a dropped
+stable-check request can still fail a setup command. Removing that lookup is
+the open part of #2393.
+
+**Updating the pin.** The `Update WordPress pin` workflow
+(`.github/workflows/update-wordpress-pin.yml`) runs daily and compares the pin
+with the release WordPress.org's stable-check marks `latest`
+(`scripts/wordpress-pin.mjs`). On a newer stable release it pushes the new pin
+to the `automation/update-wordpress-pin` branch and opens a PR, or updates the
+open one, naming both versions and linking the announcement from the
+WordPress version history. An open PR that already proposes the latest
+release is left alone. A failed or ambiguous lookup fails the run before
+anything is written; the next day's run tries again. Start it by hand with
+`gh workflow run update-wordpress-pin.yml` to pick up an urgent release. Merge
+its PR like any dependency update, once the regular CI suites pass. Updating
+by hand works too: edit `core` and follow
+[Upgrading an existing local wp-env site](#upgrading-an-existing-local-wp-env-site).
+
+The workflow writes with a GitHub App installed only on this repository, with
+`Contents: write` and `Pull requests: write`, because pushes made with the
+default `GITHUB_TOKEN` don't start the PR's checks. It reads the app's client
+ID from the `WORDPRESS_PIN_APP_CLIENT_ID` repository variable and its private
+key from the `WORDPRESS_PIN_APP_PRIVATE_KEY` secret. Without them, a run that
+finds a newer release fails with an error naming both.
+
+**Trying another release locally.** Add `core` to `.wp-env.override.json`,
+next to any port overrides already there, then `npx wp-env start`:
+
+```json
+{
+	"port": 8890,
+	"testsPort": 8891,
+	"core": "WordPress/WordPress#7.1.4"
+}
+```
+
+For a one-off run, set `WP_ENV_CORE=WordPress/WordPress#<version>` instead.
+Use the same value for `wp-env start` and every later command against that
+site, test runs included, because each `wp-env` command reads the
+configuration again. Remove the override and run `npx wp-env start` to return
+to the pin.
+
 ### Native popup check
 
 `npm run validate:native-popups` scans the production JavaScript in

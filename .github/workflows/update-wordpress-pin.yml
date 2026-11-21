@@ -1,0 +1,146 @@
+# Keep the WordPress release pinned in .wp-env.json current (#2393). Once a
+# day, compare the pin with WordPress.org's latest stable release and open (or
+# update) a PR as soon as a newer one ships. The PR goes through the regular
+# CI checks and review. See TESTING.md § WordPress release.
+name: Update WordPress pin
+
+on:
+    schedule:
+        - cron: '17 5 * * *' # daily at 05:17 UTC
+    workflow_dispatch:
+
+# The default token only reads. Branch and PR writes use the updater GitHub
+# App's short-lived installation token, so the PR's checks start normally (a
+# GITHUB_TOKEN push would not trigger them).
+permissions:
+    contents: read
+    pull-requests: read
+
+# A manual run and the scheduled run must not race on the update branch.
+concurrency:
+    group: update-wordpress-pin
+    cancel-in-progress: false
+
+env:
+    BRANCH: automation/update-wordpress-pin
+
+jobs:
+    update:
+        name: Check for a newer WordPress release
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  ref: ${{ github.event.repository.default_branch }}
+                  persist-credentials: false
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: '24'
+
+            - name: Find the open update PR
+              id: open-pr
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  BASE: ${{ github.event.repository.default_branch }}
+              run: |
+                  number=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --base "$BASE" --state open --json number --jq '.[0].number // empty')
+                  remote_sha=$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)
+                  core=""
+                  if [ -n "$number" ]; then
+                    git fetch --no-tags --depth=1 origin "$BRANCH"
+                    core=$(git show FETCH_HEAD:.wp-env.json | jq -r '.core // empty' || true)
+                    # Branch content is data: keep it to one safe line.
+                    [[ "$core" =~ ^[A-Za-z0-9/#._-]*$ ]] || core=invalid
+                  fi
+                  {
+                    echo "number=$number"
+                    echo "core=$core"
+                    echo "remote-sha=$remote_sha"
+                  } >> "$GITHUB_OUTPUT"
+                  echo "Open update PR: ${number:-none} (core: ${core:-n/a})"
+
+            # Fails the run, before any write, when WordPress.org can't be
+            # reached or its answer is ambiguous. Tomorrow's run tries again.
+            - name: Compare the pin with the latest stable release
+              id: check
+              env:
+                  OPEN_PR_CORE: ${{ steps.open-pr.outputs.core }}
+              run: |
+                  set -o pipefail
+                  node scripts/wordpress-pin.mjs check --write \
+                    --body-file="$RUNNER_TEMP/pr-body.md" \
+                    --open-pr-core="$OPEN_PR_CORE" | tee -a "$GITHUB_OUTPUT"
+
+            - name: Require the updater app credentials
+              if: ${{ steps.check.outputs.action == 'create' || steps.check.outputs.action == 'update' }}
+              env:
+                  CLIENT_ID: ${{ vars.WORDPRESS_PIN_APP_CLIENT_ID }}
+                  HAS_KEY: ${{ secrets.WORDPRESS_PIN_APP_PRIVATE_KEY != '' }}
+                  LATEST: ${{ steps.check.outputs.latest }}
+              run: |
+                  if [ -z "$CLIENT_ID" ] || [ "$HAS_KEY" != 'true' ]; then
+                    echo "::error::WordPress $LATEST is available, but the WORDPRESS_PIN_APP_CLIENT_ID variable or WORDPRESS_PIN_APP_PRIVATE_KEY secret is missing (TESTING.md § WordPress release)."
+                    exit 1
+                  fi
+
+            - name: Create the updater token
+              id: app
+              if: ${{ steps.check.outputs.action == 'create' || steps.check.outputs.action == 'update' }}
+              uses: actions/create-github-app-token@v3
+              with:
+                  client-id: ${{ vars.WORDPRESS_PIN_APP_CLIENT_ID }}
+                  private-key: ${{ secrets.WORDPRESS_PIN_APP_PRIVATE_KEY }}
+                  permission-contents: write
+                  permission-pull-requests: write
+
+            - name: Push the update branch
+              if: ${{ steps.app.outcome == 'success' }}
+              env:
+                  GH_TOKEN: ${{ steps.app.outputs.token }}
+                  APP_SLUG: ${{ steps.app.outputs.app-slug }}
+                  LATEST: ${{ steps.check.outputs.latest }}
+                  REMOTE_SHA: ${{ steps.open-pr.outputs.remote-sha }}
+              run: |
+                  user_id=$(gh api "/users/${APP_SLUG}%5Bbot%5D" --jq .id)
+                  git config user.name "${APP_SLUG}[bot]"
+                  git config user.email "${user_id}+${APP_SLUG}[bot]@users.noreply.github.com"
+                  git switch -c "$BRANCH"
+                  git add .wp-env.json
+                  git commit -m "Update tested WordPress to $LATEST"
+                  # The branch belongs to this workflow; the lease refuses to
+                  # overwrite anything pushed to it since the lookup above.
+                  git push \
+                    --force-with-lease="refs/heads/$BRANCH:$REMOTE_SHA" \
+                    "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+                    "HEAD:refs/heads/$BRANCH"
+
+            - name: Open or update the PR
+              if: ${{ steps.app.outcome == 'success' }}
+              env:
+                  GH_TOKEN: ${{ steps.app.outputs.token }}
+                  ACTION: ${{ steps.check.outputs.action }}
+                  NUMBER: ${{ steps.open-pr.outputs.number }}
+                  LATEST: ${{ steps.check.outputs.latest }}
+                  BASE: ${{ github.event.repository.default_branch }}
+              run: |
+                  title="Update tested WordPress to $LATEST"
+                  if [ "$ACTION" = update ]; then
+                    url=$(gh api -X PATCH "repos/$GITHUB_REPOSITORY/pulls/$NUMBER" \
+                      -f title="$title" -F body=@"$RUNNER_TEMP/pr-body.md" --jq .html_url)
+                  else
+                    url=$(gh pr create --repo "$GITHUB_REPOSITORY" --base "$BASE" --head "$BRANCH" --title "$title" --body-file "$RUNNER_TEMP/pr-body.md")
+                  fi
+                  echo "Update PR: $url" >> "$GITHUB_STEP_SUMMARY"
+
+            - name: Summary
+              if: ${{ always() && steps.check.outputs.action != '' }}
+              env:
+                  CURRENT: ${{ steps.check.outputs.current }}
+                  LATEST: ${{ steps.check.outputs.latest }}
+                  ACTION: ${{ steps.check.outputs.action }}
+              run: |
+                  echo "Pinned: $CURRENT · latest stable: $LATEST · action: $ACTION" >> "$GITHUB_STEP_SUMMARY"
