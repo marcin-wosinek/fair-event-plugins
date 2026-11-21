@@ -27,6 +27,10 @@ const ITERATION_CONFIGURATION_GUARD = 'Never call `updateProjectV2Field`';
 
 const STATUS_TRANSITION_PROCEDURE = '## Project status transitions';
 
+const SONAR_REVIEW_PROCEDURE = '### SonarQube review';
+
+const SONAR_REVIEW_REFERENCE = '`TESTING.md` § SonarQube review';
+
 const STATUS_TRANSITIONS = {
 	'plan-ticket': 'Ready',
 	'reopen-ticket': 'Ready',
@@ -135,6 +139,22 @@ export function validateAgentWorkflows(root) {
 				`Missing verified ${status} status transition: ${skillPath}`
 			);
 		}
+	}
+
+	if (!read(root, 'TESTING.md').includes(SONAR_REVIEW_PROCEDURE)) {
+		errors.push('Missing SonarQube review procedure: TESTING.md');
+	}
+	const makePrPath = '.agents/skills/make-pr/SKILL.md';
+	if (
+		existsSync(path.join(root, makePrPath)) &&
+		!read(root, makePrPath).includes(SONAR_REVIEW_REFERENCE)
+	) {
+		errors.push(`Missing SonarQube review step: ${makePrPath}`);
+	}
+	if (!existsSync(path.join(root, 'scripts/sonar-review.mjs'))) {
+		errors.push(
+			'Missing SonarQube review helper: scripts/sonar-review.mjs'
+		);
 	}
 
 	const runnerPath = 'scripts/agent-hook.mjs';

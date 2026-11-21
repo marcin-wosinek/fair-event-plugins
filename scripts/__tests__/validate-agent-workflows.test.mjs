@@ -20,6 +20,7 @@ function fixture() {
 		'.codex',
 		'scripts',
 		'TICKETS.md',
+		'TESTING.md',
 	]) {
 		cpSync(relative, path.join(root, relative), { recursive: true });
 	}
@@ -156,6 +157,30 @@ test('detects a missing status transition procedure', () => {
 			/Missing project status transition procedure/
 		);
 	});
+});
+
+test('detects a missing SonarQube review step or procedure', () => {
+	for (const [relative, from, message] of [
+		[
+			'.agents/skills/make-pr/SKILL.md',
+			'`TESTING.md` § SonarQube review',
+			/Missing SonarQube review step/,
+		],
+		[
+			'TESTING.md',
+			'### SonarQube review',
+			/Missing SonarQube review procedure/,
+		],
+	]) {
+		withFixture((root) => {
+			const file = path.join(root, relative);
+			writeFileSync(
+				file,
+				readFileSync(file, 'utf8').replace(from, 'Sonar')
+			);
+			assert.match(validateAgentWorkflows(root).join('\n'), message);
+		});
+	}
 });
 
 test('detects a wrong hook platform or unsupported action', () => {
