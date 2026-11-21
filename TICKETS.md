@@ -170,6 +170,16 @@ issue and sets Status to Done only when its criteria are satisfied. Report
 any unverified transition separately; do not imply that an agent will keep
 monitoring after its session ends.
 
+A criterion requiring a fresh SonarQube analysis of `main` is pending
+acceptance like any other. The PR author owns it unless a named maintainer
+explicitly accepts the handoff on the ticket. Record any transfer there.
+The owner records the evidence from `TESTING.md` § SonarQube review: the
+analysis link, the analyzed SHA containing the merge, and an assessment
+against the criteria. Close only when that evidence satisfies them.
+Skipped, failed, unavailable, or timed-out analysis leaves the criterion
+pending. Findings that still need changes keep the ticket open and go
+through `reopen-ticket`.
+
 If merge automation prematurely closes a ticket with recorded pending
 acceptance, the workflow handling that ticket may reopen it and return it
 from Done to Testing after verifying the state. This is a narrow exception

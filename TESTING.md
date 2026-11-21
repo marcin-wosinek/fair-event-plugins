@@ -98,6 +98,69 @@ PR creation or merge does not complete pending acceptance checks. Record
 pending checks durably on the PR and linked ticket, and follow `TICKETS.md`
 § Acceptance after merge for project status and closure.
 
+### SonarQube review
+
+SonarQube Cloud analyzes every PR revision and `main`. Its GitHub check
+(`SonarCloud Code Analysis`) is tied to an exact commit and reports the
+quality gate; the read-only Cloud API supplies the findings. Review the
+**latest PR revision** after opening the PR and after every push:
+
+```bash
+node scripts/sonar-review.mjs pr <number>            # current PR head
+node scripts/sonar-review.mjs pr <number> --sha <sha> # recheck one revision
+node scripts/sonar-review.mjs main <merge-sha>        # after merge
+```
+
+The helper prints a JSON report. It also reports any Sonar-named Actions job
+for that commit, because a scanner failure is separate from a failed gate.
+Each run waits at most **15 minutes**, starting at its first check. Polling
+does not extend the limit, and each request is capped to the time remaining.
+A recheck run gets its own 15-minute limit. `SONAR_TOKEN` is read from the
+environment only when set, and is never printed. Do not paste tokens into
+commands, tickets, or PRs.
+
+| State             | Meaning and action                                                                                                            |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `passed`          | Gate passed for this exact SHA. Still review any listed issues or hotspots.                                                   |
+| `gate-failed`     | Analysis published for this SHA with a failed gate condition or findings. Review them as below.                               |
+| `pending-timeout` | **"analysis pending — wait limit reached."** Record the timeout as below.                                                     |
+| `skipped`         | The check or Actions job was skipped. Report it; this does not verify anything.                                               |
+| `failed`          | The scanner, job, or check failed before publishing usable results. Report the link; this does not verify anything.           |
+| `unavailable`     | No Sonar check suite or job exists for the SHA, or an evidence source returned 4xx. Report it; this does not verify anything. |
+| `superseded`      | The PR head moved during the wait. Review the new head; results for one SHA never verify another.                             |
+
+**Review loop.** Fix actionable issues, hotspots, and failed gate conditions
+introduced by the PR, including metrics such as duplication that have no
+issue annotation. Keep fixes within the ticket's scope. Do not suppress,
+mark as accepted, or restructure code only to obtain a passing result.
+Existing findings outside the PR's changes do not trigger unrelated changes.
+After a fix, rerun the affected local checks, push, and review the new SHA.
+List every finding or gate condition left open with its link and the reason
+(for example: false positive with an explanation, or out of scope with a
+follow-up ticket).
+
+**Report.** The PR testing handoff and final report list the full SHA
+reviewed, the state, the check or dashboard link, and the remaining
+findings. Read the PR head again before reporting; if it has moved, the
+review is incomplete.
+
+**Timeout.** A `pending-timeout` leaves Sonar verification **incomplete**.
+Record it on the ticket and in the PR completion report: the full target SHA,
+the analysis or check link if any, the last observed status (`lastStatus`),
+the expiry time (`expiredAt`), and the recheck owner. The PR author owns the
+recheck unless a named maintainer explicitly accepts it. The owner reruns
+the helper with `--sha`, reviews the findings, and records the outcome. A
+fix pushed afterwards needs its own review.
+
+**Default-branch criterion.** PR analysis never satisfies a ticket criterion
+that requires a `main` analysis. Record it as pending with its owner, and
+follow `TICKETS.md` § Acceptance after merge. After merge, the owner runs the
+`main` mode with the merge commit SHA (the squash commit for a squash merge).
+It accepts only an analysis of a `main` revision that contains that commit.
+Record the analysis link, analyzed SHA (`analyzedSha`), and an assessment
+against the ticket's criteria. The same 15-minute limit and timeout record
+apply.
+
 ## Unit and component tests
 
 Use `.test.js` for JavaScript logic that does not need a DOM. Use `.test.jsx`
