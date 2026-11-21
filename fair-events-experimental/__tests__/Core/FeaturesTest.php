@@ -78,6 +78,7 @@ class FeaturesTest extends TestCase {
 				'instagram'        => false,
 				'whatsapp'         => false,
 				'team-members'     => false,
+				'event-images'     => false,
 			),
 			$this->resolved()
 		);
@@ -203,7 +204,7 @@ class FeaturesTest extends TestCase {
 	public function test_snapshot_keeps_keys_and_state() {
 		$all = Features::all();
 
-		$this->assertSame( array( 'sources', 'ticketing', 'mailings', 'meta-conversions', 'organizers', 'instagram', 'whatsapp', 'team-members' ), array_keys( $all ) );
+		$this->assertSame( array( 'sources', 'ticketing', 'mailings', 'meta-conversions', 'organizers', 'instagram', 'whatsapp', 'team-members', 'event-images' ), array_keys( $all ) );
 		$entry = $all['meta-conversions'];
 		$this->assertSame( Features::registry()['meta-conversions']['label'], $entry['label'] );
 		$this->assertSame( false, $entry['default'] );

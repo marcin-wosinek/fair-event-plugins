@@ -4,7 +4,8 @@
  *
  * Manages the advanced bundles moved out of fair-events:
  * sources, ticketing extensions, mailings, Meta conversions, organizers,
- * the Instagram connection, the WhatsApp connection and team members.
+ * the Instagram connection, the WhatsApp connection, team members and
+ * event images.
  * Existing internal bundles default on; processing integrations that
  * require explicit consent and credentials, and multiple organizers, default
  * off.
@@ -95,6 +96,11 @@ class Features {
 				'description' => 'Keep a sitewide directory of team members in Fair Events → Team members and add them to events. Contact details stay private to administrators. Turning this off keeps every profile and event team.',
 				'default'     => false,
 			),
+			'event-images'     => array(
+				'label'       => 'Event images',
+				'description' => 'Ordered images for an event and its programme items, each with an optional circle marking what matters when the image is cropped. Turning this off hides the Images tab and its API and keeps every saved image link.',
+				'default'     => false,
+			),
 		);
 	}
 
@@ -160,6 +166,10 @@ class Features {
 			'team-members'     => array(
 				'label'       => __( 'Team members', 'fair-events-experimental' ),
 				'description' => __( 'Keep a sitewide directory of team members in Fair Events → Team members and add them to events. Contact details stay private to administrators. Turning this off keeps every profile and event team.', 'fair-events-experimental' ),
+			),
+			'event-images'     => array(
+				'label'       => __( 'Event images', 'fair-events-experimental' ),
+				'description' => __( 'Ordered images for an event and its programme items, each with an optional circle marking what matters when the image is cropped. Turning this off hides the Images tab and its API and keeps every saved image link.', 'fair-events-experimental' ),
 			),
 		);
 
