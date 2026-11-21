@@ -129,6 +129,9 @@ const MORE_FILTER_KEYS = [
 	'tag',
 ];
 
+// Tag filter value the API reserves for untagged entries.
+const UNTAGGED = 'none';
+
 const DEFAULT_FILTERS = {
 	date_from: '',
 	date_to: '',
@@ -1043,14 +1046,18 @@ const EntriesApp = () => {
 			__next40pxDefaultSize
 		/>
 	);
-	const tagControl = tags.length > 0 && (
+	// "No tag" is always offered, so the control shows even before any tag
+	// exists. The reserved value `none` selects untagged entries.
+	const tagOptions = [
+		{ label: __( 'All Tags', 'fair-finance' ), value: '' },
+		{ label: __( 'No tag', 'fair-finance' ), value: UNTAGGED },
+		...tags.map( ( tag ) => ( { label: tag, value: tag } ) ),
+	];
+	const tagControl = (
 		<SelectControl
 			label={ __( 'Tag', 'fair-finance' ) }
 			value={ filters.tag }
-			options={ [
-				{ label: __( 'All Tags', 'fair-finance' ), value: '' },
-				...tags.map( ( tag ) => ( { label: tag, value: tag } ) ),
-			] }
+			options={ tagOptions }
 			onChange={ ( value ) => handleFilterChange( 'tag', value ) }
 			__nextHasNoMarginBottom
 			__next40pxDefaultSize
@@ -1123,7 +1130,9 @@ const EntriesApp = () => {
 			sprintf(
 				/* translators: %s: tag */
 				__( 'Tag: %s', 'fair-finance' ),
-				filters.tag
+				filters.tag === UNTAGGED
+					? __( 'No tag', 'fair-finance' )
+					: filters.tag
 			)
 		);
 	}

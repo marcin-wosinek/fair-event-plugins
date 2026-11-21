@@ -180,3 +180,178 @@ it( 'names a budget deep link in the applied filters', async () => {
 	expect( await screen.findByText( 'Budget: Festival' ) ).toBeInTheDocument();
 	expect( listRequests().at( -1 ).get( 'budget_id' ) ).toBe( '2' );
 } );
+
+describe( 'No tag filter (#2385)', () => {
+	const openMoreFilters = () =>
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /^More filters/ } )
+		);
+
+	const tagOptionLabels = () =>
+		within( screen.getByRole( 'combobox', { name: 'Tag' } ) )
+			.getAllByRole( 'option' )
+			.map( ( option ) => option.textContent );
+
+	const chooseTag = ( value ) =>
+		act( async () =>
+			fireEvent.change( screen.getByRole( 'combobox', { name: 'Tag' } ), {
+				target: { value },
+			} )
+		);
+
+	it( 'offers No tag right after All Tags, before the named tags', async () => {
+		render( <EntriesApp /> );
+		await screen.findByText( 'Entry 101' );
+		openMoreFilters();
+
+		await waitFor( () =>
+			expect( tagOptionLabels() ).toEqual( [
+				'All Tags',
+				'No tag',
+				'Catering',
+			] )
+		);
+	} );
+
+	it( 'keeps the Tag filter when no named tags exist', async () => {
+		const base = apiFetch.getMockImplementation();
+		apiFetch.mockImplementation( ( options ) =>
+			options.path === '/fair-finance/v1/financial-entries/tags'
+				? Promise.resolve( [] )
+				: base( options )
+		);
+		render( <EntriesApp /> );
+		await screen.findByText( 'Entry 101' );
+		openMoreFilters();
+
+		expect( tagOptionLabels() ).toEqual( [ 'All Tags', 'No tag' ] );
+		await chooseTag( 'none' );
+		await waitFor( () =>
+			expect( listRequests().at( -1 ).get( 'tag' ) ).toBe( 'none' )
+		);
+	} );
+
+	it( 'combines No tag with other filters, resets the page and clears to All Tags', async () => {
+		render( <EntriesApp /> );
+		await screen.findByText( 'Entry 101' );
+
+		await act( async () =>
+			fireEvent.change(
+				screen.getByRole( 'combobox', { name: 'Budget' } ),
+				{ target: { value: '2' } }
+			)
+		);
+		const pages = screen.getByRole( 'navigation', {
+			name: 'Entry pages',
+		} );
+		await act( async () =>
+			fireEvent.click(
+				within( pages ).getByRole( 'button', { name: 'Next page' } )
+			)
+		);
+		await screen.findByText( 'Entry 201' );
+
+		openMoreFilters();
+		await chooseTag( 'none' );
+		await screen.findByText( 'Entry 101' );
+
+		expect( screen.getByText( 'Tag: No tag' ) ).toBeInTheDocument();
+		expect( screen.getByText( 'Budget: Festival' ) ).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'More filters (1 active)' } )
+		).toBeInTheDocument();
+		const request = listRequests().at( -1 );
+		expect( request.get( 'tag' ) ).toBe( 'none' );
+		expect( request.get( 'budget_id' ) ).toBe( '2' );
+		expect( request.get( 'page' ) ).toBe( '1' );
+		const totalsRequest = apiFetch.mock.calls
+			.map( ( [ { path } ] ) => path )
+			.filter( ( path ) => path.startsWith( `${ LIST }/totals?` ) )
+			.at( -1 );
+		expect(
+			new URLSearchParams( totalsRequest.split( '?' )[ 1 ] ).get( 'tag' )
+		).toBe( 'none' );
+
+		await chooseTag( '' );
+		expect( screen.queryByText( /^Tag:/ ) ).not.toBeInTheDocument();
+		expect( screen.getByText( 'Budget: Festival' ) ).toBeInTheDocument();
+		await waitFor( () =>
+			expect( listRequests().at( -1 ).has( 'tag' ) ).toBe( false )
+		);
+		expect( listRequests().at( -1 ).get( 'budget_id' ) ).toBe( '2' );
+	} );
+
+	it( 'lists only the untagged allocation of a mixed split', async () => {
+		const parent = {
+			...entry( 7 ),
+			amount: 100,
+			description: 'Festival invoice',
+			tag: null,
+		};
+		const venue = {
+			...entry( 8 ),
+			amount: 60,
+			description: 'Venue share',
+			tag: 'Venue',
+			parent_entry_id: 7,
+		};
+		const untagged = {
+			...entry( 9 ),
+			amount: 40,
+			description: 'Untagged share',
+			tag: null,
+			parent_entry_id: 7,
+		};
+		parent.children = [ venue, untagged ];
+		apiFetch.mockImplementation( ( { path } ) => {
+			const [ route, query = '' ] = path.split( '?' );
+			const tag = new URLSearchParams( query ).get( 'tag' );
+			if ( route === LIST ) {
+				return Promise.resolve(
+					tag === 'none'
+						? {
+								entries: [ { ...untagged, parent } ],
+								total: 1,
+								pages: 1,
+							}
+						: { entries: [ parent ], total: 1, pages: 1 }
+				);
+			}
+			if ( route === `${ LIST }/totals` ) {
+				const cost = tag === 'none' ? 40 : 100;
+				return Promise.resolve( {
+					total_cost: cost,
+					total_income: 0,
+					balance: -cost,
+				} );
+			}
+			if ( route === '/fair-finance/v1/financial-entries/tags' ) {
+				return Promise.resolve( [ 'Venue' ] );
+			}
+			if ( route.endsWith( '/unbudgeted-count' ) ) {
+				return Promise.resolve( { count: 0 } );
+			}
+			return Promise.resolve( [] );
+		} );
+
+		render( <EntriesApp /> );
+		await screen.findByText( 'Festival invoice' );
+		openMoreFilters();
+		await chooseTag( 'none' );
+		await screen.findByText( 'Untagged share' );
+
+		const table = screen.getByRole( 'table', {
+			name: 'Financial entries',
+		} );
+		const rows = within( table ).getAllByRole( 'row' ).slice( 1 );
+		expect( rows ).toHaveLength( 1 );
+		expect( within( rows[ 0 ] ).getByText( '€40.00' ) ).toBeInTheDocument();
+		expect(
+			screen.queryByText( 'Festival invoice' )
+		).not.toBeInTheDocument();
+		expect( screen.queryByText( 'Venue share' ) ).not.toBeInTheDocument();
+		expect( screen.getByText( '1 entry' ) ).toBeInTheDocument();
+		const costs = screen.getByText( 'Total Costs' ).previousSibling;
+		expect( costs ).toHaveTextContent( '€40.00' );
+	} );
+} );

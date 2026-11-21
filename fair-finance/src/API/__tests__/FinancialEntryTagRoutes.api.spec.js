@@ -329,3 +329,107 @@ test.describe( 'Split allocation tags (#2341)', () => {
 		} );
 	} );
 } );
+
+test.describe( 'No tag filter on a mixed split (#2385)', () => {
+	let api;
+	let parentId;
+	const STAMP = Date.now().toString( 36 );
+	// A date no other spec uses keeps these listings to our entry.
+	const DATE = '2033-06-07';
+	const VENUE = `venue-${ STAMP }`;
+	const headers = { Authorization: `Basic ${ adminAuth }` };
+	const API = '/wp-json/fair-finance/v1/financial-entries';
+	const RANGE = `date_from=${ DATE }&date_to=${ DATE }`;
+
+	const get = async ( path ) => {
+		const res = await api.get( path, { headers } );
+		expect( res.ok(), await res.text() ).toBeTruthy();
+		return res.json();
+	};
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+		const res = await api.post( API, {
+			headers,
+			data: {
+				amount: 100,
+				entry_type: 'cost',
+				entry_date: DATE,
+				description: `Mixed split ${ STAMP }`,
+			},
+		} );
+		expect( res.ok(), await res.text() ).toBeTruthy();
+		parentId = ( await res.json() ).id;
+
+		const splitRes = await api.post( `${ API }/${ parentId }/split`, {
+			headers,
+			data: {
+				allocations: [
+					{ amount: 60, tag: VENUE },
+					{ amount: 40, tag: null },
+				],
+			},
+		} );
+		expect( splitRes.status(), await splitRes.text() ).toBe( 201 );
+	} );
+
+	test.afterAll( async () => {
+		if ( parentId ) {
+			await api.delete( `${ API }/${ parentId }/split`, { headers } );
+			await api.delete( `${ API }/${ parentId }`, { headers } );
+		}
+		await api.dispose();
+	} );
+
+	test( 'tag=none lists and totals only the untagged allocation', async () => {
+		const untagged = await get( `${ API }?${ RANGE }&tag=none&per_page=1` );
+		expect( untagged.total ).toBe( 1 );
+		expect( untagged.pages ).toBe( 1 );
+		expect( untagged.entries ).toHaveLength( 1 );
+		expect( untagged.entries[ 0 ] ).toMatchObject( {
+			amount: 40,
+			tag: null,
+			parent_entry_id: parentId,
+		} );
+		// Parent metadata stays available for the split-edit action.
+		expect( untagged.entries[ 0 ].parent.id ).toBe( parentId );
+
+		const totals = await get( `${ API }/totals?${ RANGE }&tag=none` );
+		expect( totals.total_cost ).toBe( 40 );
+		expect( totals.total_income ).toBe( 0 );
+	} );
+
+	test( 'the named tag lists its allocation and no tag restores the parent row', async () => {
+		const named = await get(
+			`${ API }?${ RANGE }&tag=${ encodeURIComponent( VENUE ) }`
+		);
+		expect( named.total ).toBe( 1 );
+		expect( named.entries[ 0 ] ).toMatchObject( {
+			amount: 60,
+			tag: VENUE,
+			parent_entry_id: parentId,
+		} );
+		expect(
+			(
+				await get(
+					`${ API }/totals?${ RANGE }&tag=${ encodeURIComponent(
+						VENUE
+					) }`
+				)
+			).total_cost
+		).toBe( 60 );
+
+		const all = await get( `${ API }?${ RANGE }` );
+		expect( all.total ).toBe( 1 );
+		expect( all.entries[ 0 ] ).toMatchObject( {
+			id: parentId,
+			amount: 100,
+		} );
+		expect(
+			all.entries[ 0 ].children.map( ( child ) => child.amount ).sort()
+		).toEqual( [ 40, 60 ] );
+		expect( ( await get( `${ API }/totals?${ RANGE }` ) ).total_cost ).toBe(
+			100
+		);
+	} );
+} );
