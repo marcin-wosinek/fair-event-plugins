@@ -76,12 +76,12 @@
 .fair-events-images-circle {
 	position: absolute;
 	box-sizing: border-box;
-	transform: translate( -50%, -50% );
+	transform: translate(-50%, -50%);
 	border: 2px solid #fff;
 	border-radius: 50%;
 	box-shadow:
 		0 0 0 2px #2271b1,
-		0 0 0 9999px rgba( 0, 0, 0, 0.35 );
+		0 0 0 9999px rgba(0, 0, 0, 0.35);
 	cursor: move;
 }
 
@@ -91,7 +91,7 @@
 	right: 0;
 	width: 24px;
 	height: 24px;
-	transform: translate( 50%, -50% );
+	transform: translate(50%, -50%);
 	border: 2px solid #fff;
 	border-radius: 50%;
 	background: #2271b1;
