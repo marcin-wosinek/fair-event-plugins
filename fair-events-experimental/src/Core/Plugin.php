@@ -66,6 +66,10 @@ class Plugin {
 		// Instagram\Ownership.
 		$this->load_instagram();
 
+		// Sitewide team member directory and event teams; see
+		// load_team_members().
+		$this->load_team_members();
+
 		// Operator links to an event feed's weekly summary; see
 		// docs/weekly-summary.md.
 		\FairEventsExperimental\Frontend\WeeklySummaryPage::init();
@@ -110,6 +114,10 @@ class Plugin {
 			if ( self::event_organizers_available() ) {
 				add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_organizer_assets' ) );
 				add_action( 'fair_events_calendar_enqueue_assets', array( $this, 'enqueue_calendar_organizer_assets' ) );
+			}
+
+			if ( self::team_members_available() ) {
+				add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_team_members_assets' ) );
 			}
 		}
 	}
@@ -157,6 +165,17 @@ class Plugin {
 	public static function event_organizers_available() {
 		return self::organizers_available()
 			&& \FairEventsExperimental\Services\EventOrganizer::is_supported();
+	}
+
+	/**
+	 * Whether the team member directory is available: the `team-members`
+	 * bundle is on. Turning it off hides the directory and event teams and
+	 * keeps every profile and membership.
+	 *
+	 * @return bool
+	 */
+	public static function team_members_available() {
+		return Features::is_enabled( 'team-members' );
 	}
 
 	/**
@@ -215,6 +234,25 @@ class Plugin {
 	 */
 	public function enqueue_calendar_organizer_assets() {
 		$this->enqueue_organizer_script( 'calendar-organizer', 'fair-events-calendar' );
+	}
+
+	/**
+	 * Enqueue the team section of Manage Event's Event Details, for
+	 * administrators only: the directory is managed by administrators.
+	 *
+	 * @return void
+	 */
+	public function enqueue_manage_event_team_members_assets() {
+		$this->enqueue_organizer_script( 'manage-event-team-members', 'fair-events-manage-event' );
+		if ( wp_script_is( 'fair-events-experimental-manage-event-team-members', 'enqueued' ) ) {
+			wp_add_inline_script(
+				'fair-events-experimental-manage-event-team-members',
+				'window.fairEventsTeamMembersData = ' . wp_json_encode(
+					array( 'directoryUrl' => admin_url( 'admin.php?page=fair-events-team-members' ) )
+				) . ';',
+				'before'
+			);
+		}
 	}
 
 	/**
@@ -356,6 +394,34 @@ class Plugin {
 		}
 
 		\FairEventsExperimental\Instagram\Connection::boot();
+	}
+
+	/**
+	 * Load the team member directory (#2394).
+	 *
+	 * Event deletion and copies keep memberships in step whether or not the
+	 * `team-members` bundle is on, so nothing is left behind or lost while
+	 * it is off. The tables are installed, and the REST routes registered,
+	 * only while it is on; turning it off keeps every profile and
+	 * membership.
+	 *
+	 * @return void
+	 */
+	private function load_team_members() {
+		\FairEventsExperimental\Services\TeamMembership::register_lifecycle_hooks();
+
+		if ( ! self::team_members_available() ) {
+			return;
+		}
+
+		add_action( 'init', array( \FairEventsExperimental\Models\TeamMemberRepository::class, 'maybe_install' ), 5 );
+		add_action(
+			'rest_api_init',
+			static function () {
+				( new \FairEventsExperimental\API\TeamMembersController() )->register_routes();
+				( new \FairEventsExperimental\API\EventTeamMembersController() )->register_routes();
+			}
+		);
 	}
 
 	/**

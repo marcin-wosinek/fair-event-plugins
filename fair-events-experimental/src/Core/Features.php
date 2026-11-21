@@ -4,7 +4,7 @@
  *
  * Manages the advanced bundles moved out of fair-events:
  * sources, ticketing extensions, mailings, Meta conversions, organizers,
- * the Instagram connection and the WhatsApp connection.
+ * the Instagram connection, the WhatsApp connection and team members.
  * Existing internal bundles default on; processing integrations that
  * require explicit consent and credentials, and multiple organizers, default
  * off.
@@ -90,6 +90,11 @@ class Features {
 				'description' => 'Connect a WhatsApp Business account in Fair Events → WhatsApp and send test templates. Turning this off keeps the saved connection, credentials and delivery history.',
 				'default'     => false,
 			),
+			'team-members'     => array(
+				'label'       => 'Team members',
+				'description' => 'Keep a sitewide directory of team members in Fair Events → Team members and add them to events. Contact details stay private to administrators. Turning this off keeps every profile and event team.',
+				'default'     => false,
+			),
 		);
 	}
 
@@ -151,6 +156,10 @@ class Features {
 			'whatsapp'         => array(
 				'label'       => __( 'WhatsApp', 'fair-events-experimental' ),
 				'description' => __( 'Connect a WhatsApp Business account in Fair Events → WhatsApp and send test templates. Turning this off keeps the saved connection, credentials and delivery history.', 'fair-events-experimental' ),
+			),
+			'team-members'     => array(
+				'label'       => __( 'Team members', 'fair-events-experimental' ),
+				'description' => __( 'Keep a sitewide directory of team members in Fair Events → Team members and add them to events. Contact details stay private to administrators. Turning this off keeps every profile and event team.', 'fair-events-experimental' ),
 			),
 		);
 

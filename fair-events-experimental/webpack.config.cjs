@@ -45,6 +45,14 @@ module.exports = {
 			process.cwd(),
 			'src/Admin/manage-event-organizer/index.js'
 		),
+		'admin/team-members/index': path.resolve(
+			process.cwd(),
+			'src/Admin/team-members/index.js'
+		),
+		'admin/manage-event-team-members/index': path.resolve(
+			process.cwd(),
+			'src/Admin/manage-event-team-members/index.js'
+		),
 		'admin/calendar-organizer/index': path.resolve(
 			process.cwd(),
 			'src/Admin/calendar-organizer/index.js'
