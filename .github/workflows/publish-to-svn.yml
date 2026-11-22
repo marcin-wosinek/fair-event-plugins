@@ -30,12 +30,26 @@ jobs:
     publish:
         name: Publish ${{ inputs.plugin }} ${{ inputs.version }}
         runs-on: ubuntu-latest
+        # Shell steps read the inputs from these variables, never from
+        # `${{ }}` expressions inside a script, so a supplied value stays data.
+        env:
+            PLUGIN: ${{ inputs.plugin }}
+            VERSION: ${{ inputs.version }}
 
         steps:
-            - name: Validate version input
+            # Runs before checkout and every side effect. The messages never
+            # echo the raw value, so it cannot inject workflow commands.
+            - name: Validate inputs
               run: |
-                  if [[ ! "${{ inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-                      echo "::error::version '${{ inputs.version }}' is not valid semver (expected MAJOR.MINOR.PATCH)"
+                  case "$PLUGIN" in
+                      fair-events | fair-audience | fair-timetable | fair-payments-connector | fair-calendar-button) ;;
+                      *)
+                          echo "::error::The plugin input must be one of the workflow's listed plugins."
+                          exit 1
+                          ;;
+                  esac
+                  if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                      echo "::error::The version input must be MAJOR.MINOR.PATCH, for example 1.2.3."
                       exit 1
                   fi
 
@@ -67,15 +81,15 @@ jobs:
                   GH_TOKEN: ${{ github.token }}
               run: |
                   mkdir -p dist
-                  if gh release download "build-${{ inputs.version }}" \
+                  if gh release download "build-$VERSION" \
                       --repo "$GITHUB_REPOSITORY" \
-                      --pattern "${{ inputs.plugin }}.${{ inputs.version }}.zip" \
+                      --pattern "$PLUGIN.$VERSION.zip" \
                       --dir dist; then
                       echo "reuse=true" >> "$GITHUB_OUTPUT"
-                      echo "::notice::Reusing ${{ inputs.plugin }}.${{ inputs.version }}.zip from release build-${{ inputs.version }}."
+                      echo "::notice::Reusing $PLUGIN.$VERSION.zip from release build-$VERSION."
                   else
                       echo "reuse=false" >> "$GITHUB_OUTPUT"
-                      echo "::notice::No matching release asset; rebuilding ${{ inputs.plugin }} ${{ inputs.version }} from source."
+                      echo "::notice::No matching release asset; rebuilding $PLUGIN $VERSION from source."
                   fi
 
             - name: Setup PHP
@@ -120,30 +134,30 @@ jobs:
 
             - name: Build plugin assets
               if: ${{ steps.reuse.outputs.reuse != 'true' }}
-              run: npm run build -w ${{ inputs.plugin }}
+              run: npm run build -w "$PLUGIN"
 
             - name: Checkout WordPress.org SVN repo
-              run: npm run svn:checkout -w ${{ inputs.plugin }}
+              run: npm run svn:checkout -w "$PLUGIN"
 
             - name: Create SVN tag from dist archive
               env:
                   COMPOSER_HOME: ${{ runner.temp }}/wp-cli-composer
                   SVN_TAG_REUSE_ZIP: ${{ steps.reuse.outputs.reuse == 'true' && '1' || '0' }}
-              run: npm run svn:tag:${{ inputs.plugin }}
+              run: npm run "svn:tag:$PLUGIN"
 
             # Guards both the reuse and rebuild branches against shipping a
             # ZIP whose entry point requires a file the archive doesn't
             # contain (e.g. a missing vendor/ from a swallowed composer
             # failure). See #1434.
             - name: Verify dist archive includes composer dependencies and block docs
-              run: node scripts/verify-dist-archive.cjs ${{ inputs.plugin }} dist/${{ inputs.plugin }}.${{ inputs.version }}.zip
+              run: node scripts/verify-dist-archive.cjs "$PLUGIN" "dist/$PLUGIN.$VERSION.zip"
 
             # Rebuild path: refresh trunk + assets from source. Reuse path: trunk
             # is already populated from the extracted build by svn:tag, so only
             # the wordpress.org assets (banners/screenshots) need copying.
             - name: Refresh trunk and assets
               if: ${{ steps.reuse.outputs.reuse != 'true' }}
-              run: npm run svn:copy -w ${{ inputs.plugin }}
+              run: npm run svn:copy -w "$PLUGIN"
 
             - name: Refresh assets
               if: ${{ steps.reuse.outputs.reuse == 'true' }}
@@ -156,7 +170,7 @@ jobs:
             - name: Stage SVN changes
               working-directory: ${{ inputs.plugin }}/svn
               run: |
-                  svn add --force trunk assets "tags/${{ inputs.version }}"
+                  svn add --force trunk assets "tags/$VERSION"
                   echo "=== svn status ==="
                   svn status
 
@@ -168,7 +182,7 @@ jobs:
                   SVN_PASS: ${{ secrets.WPORG_SVN_PASSWORD }}
               run: |
                   svn ci \
-                      -m "Release ${{ inputs.plugin }} ${{ inputs.version }}" \
+                      -m "Release $PLUGIN $VERSION" \
                       --username "$SVN_USER" \
                       --password "$SVN_PASS" \
                       --non-interactive \

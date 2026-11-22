@@ -35,13 +35,18 @@ jobs:
         steps:
             - name: Check AUTO_DEPLOY_ON_RELEASE
               id: gate
+              env:
+                  IS_MANUAL_DEPLOY: ${{ inputs.is_manual_deploy }}
+                  IS_CLEAN_VERSION: ${{ inputs.is_clean_version }}
+                  AUTO_DEPLOY_ON_RELEASE: ${{ vars.AUTO_DEPLOY_ON_RELEASE }}
+                  TARGET_ENVIRONMENT: ${{ inputs.environment }}
               run: |
-                  if [ "${{ inputs.is_manual_deploy }}" = "true" ]; then
+                  if [ "$IS_MANUAL_DEPLOY" = "true" ]; then
                     echo "should_deploy=true" >> "$GITHUB_OUTPUT"
                     echo "Manual deploy — skipping AUTO_DEPLOY_ON_RELEASE gate"
-                  elif [ "${{ inputs.is_clean_version }}" = "true" ] && [ "${{ vars.AUTO_DEPLOY_ON_RELEASE }}" != "true" ]; then
+                  elif [ "$IS_CLEAN_VERSION" = "true" ] && [ "$AUTO_DEPLOY_ON_RELEASE" != "true" ]; then
                     echo "should_deploy=false" >> "$GITHUB_OUTPUT"
-                    echo "Skipping: AUTO_DEPLOY_ON_RELEASE is not set to 'true' for ${{ inputs.environment }}"
+                    echo "Skipping: AUTO_DEPLOY_ON_RELEASE is not set to 'true' for $TARGET_ENVIRONMENT"
                   else
                     echo "should_deploy=true" >> "$GITHUB_OUTPUT"
                   fi
@@ -52,12 +57,25 @@ jobs:
         if: needs.check.outputs.should_deploy == 'true'
         runs-on: ubuntu-latest
         environment: ${{ inputs.environment }}
+        # Shell steps read inputs and configuration from these variables,
+        # never from `${{ }}` expressions inside a script.
+        env:
+            RELEASE_TAG: ${{ inputs.release_tag }}
+            TARGET_ENVIRONMENT: ${{ inputs.environment }}
+            SSH_PORT: ${{ vars.SSH_PORT }}
+            SSH_USER: ${{ vars.SSH_USER }}
+            SSH_HOST: ${{ vars.SSH_HOST }}
+            WORDPRESS_PLUGINS_PATH: ${{ vars.WORDPRESS_PLUGINS_PATH }}
 
         steps:
             - name: Download release assets
               run: |
+                  if [[ ! "$RELEASE_TAG" =~ ^build-[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+-g[0-9a-f]+)?$ ]]; then
+                    echo "::error::The release_tag input must be build-X.Y.Z or build-X.Y.Z-N-gHASH."
+                    exit 1
+                  fi
                   mkdir -p dist
-                  gh release download "${{ inputs.release_tag }}" \
+                  gh release download "$RELEASE_TAG" \
                     --repo "$GITHUB_REPOSITORY" \
                     --pattern "*.zip" \
                     --dir ./dist
@@ -91,21 +109,22 @@ jobs:
                   ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
             - name: Add SSH host key
+              env:
+                  SSH_KNOWN_HOSTS: ${{ vars.SSH_KNOWN_HOSTS }}
               run: |
                   mkdir -p ~/.ssh
-                  echo "${{ vars.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+                  printf '%s\n' "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
 
             - name: Deploy plugins via rsync
               id: rsync
+              env:
+                  PLUGINS_TO_DEPLOY: ${{ vars.PLUGINS_TO_DEPLOY }}
               run: |
                   MAX_ATTEMPTS=2
-                  SSH_OPTS="-p ${{ vars.SSH_PORT }} -o ConnectTimeout=15 -o ServerAliveInterval=30 -o ServerAliveCountMax=3"
-
-                  # Get plugins to deploy from environment variable
-                  PLUGINS_TO_DEPLOY="${{ vars.PLUGINS_TO_DEPLOY }}"
+                  SSH_OPTS="-p $SSH_PORT -o ConnectTimeout=15 -o ServerAliveInterval=30 -o ServerAliveCountMax=3"
 
                   if [ -z "$PLUGINS_TO_DEPLOY" ]; then
-                    echo "ERROR: PLUGINS_TO_DEPLOY variable not set for environment ${{ inputs.environment }}"
+                    echo "ERROR: PLUGINS_TO_DEPLOY variable not set for environment $TARGET_ENVIRONMENT"
                     exit 1
                   fi
 
@@ -117,7 +136,7 @@ jobs:
                   fi
 
                   echo "Deploying plugins: $PLUGINS"
-                  echo "Release: ${{ inputs.release_tag }}"
+                  echo "Release: $RELEASE_TAG"
                   echo ""
 
                   # Deploy each plugin from extracted directory
@@ -134,7 +153,7 @@ jobs:
                         if timeout 300 rsync -avz --delete \
                           -e "ssh $SSH_OPTS" \
                           "extracted-plugins/$plugin/" \
-                          "${{ vars.SSH_USER }}@${{ vars.SSH_HOST }}:${{ vars.WORDPRESS_PLUGINS_PATH }}/$plugin/"; then
+                          "$SSH_USER@$SSH_HOST:$WORDPRESS_PLUGINS_PATH/$plugin/"; then
                           echo "✓ $plugin deployed successfully"
                           break
                         fi
@@ -163,21 +182,25 @@ jobs:
 
                   echo "========================================="
                   echo "Deployment Summary:"
-                  echo "  Release: ${{ inputs.release_tag }}"
+                  echo "  Release: $RELEASE_TAG"
                   echo "  Deployed: $DEPLOYED_COUNT plugin(s)"
                   echo "  Skipped: $SKIPPED_COUNT plugin(s)"
-                  echo "  Target: ${{ vars.SSH_HOST }}"
+                  echo "  Target: $SSH_HOST"
                   echo "========================================="
 
             - name: Reactivate plugins via WP-CLI
+              env:
+                  DEPLOYED_PLUGINS: ${{ steps.rsync.outputs.deployed_plugins }}
               run: |
-                  SSH_OPTS="-p ${{ vars.SSH_PORT }} -o ConnectTimeout=15 -o ServerAliveInterval=30 -o ServerAliveCountMax=3"
-                  REMOTE="${{ vars.SSH_USER }}@${{ vars.SSH_HOST }}"
-                  WP_PATH="${{ vars.WORDPRESS_PLUGINS_PATH }}/../.."
+                  SSH_OPTS=(-p "$SSH_PORT" -o ConnectTimeout=15 -o ServerAliveInterval=30 -o ServerAliveCountMax=3)
+                  REMOTE="$SSH_USER@$SSH_HOST"
+                  WP_PATH="$WORDPRESS_PLUGINS_PATH/../.."
 
-                  for plugin in ${{ steps.rsync.outputs.deployed_plugins }}; do
+                  for plugin in $DEPLOYED_PLUGINS; do
                     echo "Reactivating $plugin..."
-                    if ssh $SSH_OPTS "$REMOTE" "cd $WP_PATH && wp plugin deactivate $plugin && wp plugin activate $plugin"; then
+                    # The remote shell parses this command, so quote each value.
+                    REMOTE_COMMAND=$(printf 'cd %q && wp plugin deactivate %q && wp plugin activate %q' "$WP_PATH" "$plugin" "$plugin")
+                    if ssh "${SSH_OPTS[@]}" "$REMOTE" "$REMOTE_COMMAND"; then
                       echo "✓ $plugin reactivated"
                     else
                       echo "⚠ Failed to reactivate $plugin (plugin may not have been active)"
@@ -205,7 +228,7 @@ jobs:
               run: |
                   SCRIPT=release-source/scripts/verify-oauth-proxy.mjs
                   if [ ! -f "$SCRIPT" ]; then
-                    echo "::warning title=OAuth proxy not checked::Release ${{ inputs.release_tag }} predates the OAuth proxy check (#2290). Check $PROXY_URL/wp-json/fair-platform/v1/health by hand."
+                    echo "::warning title=OAuth proxy not checked::Release $RELEASE_TAG predates the OAuth proxy check (#2290). Check $PROXY_URL/wp-json/fair-platform/v1/health by hand."
                     exit 0
                   fi
 
@@ -213,7 +236,7 @@ jobs:
                     {
                       echo "## OAuth proxy is not answering"
                       echo ""
-                      echo "The deploy of \`${{ inputs.release_tag }}\` finished, but $PROXY_URL is not serving the Mollie OAuth proxy, so connected sites can't refresh their Mollie tokens."
+                      echo "The deploy of \`$RELEASE_TAG\` finished, but $PROXY_URL is not serving the Mollie OAuth proxy, so connected sites can't refresh their Mollie tokens."
                       echo "See DEPLOYMENT.md § OAuth proxy monitoring for the likely causes and fixes."
                     } >> "$GITHUB_STEP_SUMMARY"
                     exit 1

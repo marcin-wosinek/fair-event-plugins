@@ -104,8 +104,10 @@ jobs:
                   restore-keys: ${{ runner.os }}-playwright-
 
             - name: Install Playwright browser
+              env:
+                  PLAYWRIGHT_CACHE_HIT: ${{ steps.playwright-cache.outputs.cache-hit }}
               run: |
-                  if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+                  if [ "$PLAYWRIGHT_CACHE_HIT" = "true" ]; then
                       npx playwright install-deps chromium
                   else
                       npx playwright install --with-deps chromium
@@ -127,13 +129,22 @@ jobs:
                   node --test scripts/__tests__/pr-assets.test.mjs
                   node --test scripts/__tests__/wp-env-images.test.mjs
 
+            # The inputs reach the runner as single arguments, never as shell
+            # syntax; scripts/performance-runner.mjs validates them and exits
+            # non-zero on a bad value, so the history publish below is skipped.
             - name: Run performance audit
+              env:
+                  SAMPLES: ${{ inputs.samples }}
+                  SCENARIO: ${{ inputs.scenario }}
               run: |
-                  ARGS="--samples=${{ inputs.samples }} --out=performance-report.md --json-out=performance-report.json"
-                  if [ -n "${{ inputs.scenario }}" ]; then
-                      ARGS="$ARGS --scenario=${{ inputs.scenario }}"
+                  args=(--out=performance-report.md --json-out=performance-report.json)
+                  if [ -n "$SAMPLES" ]; then
+                      args+=("--samples=$SAMPLES")
                   fi
-                  npm run performance -- $ARGS
+                  if [ -n "$SCENARIO" ]; then
+                      args+=("--scenario=$SCENARIO")
+                  fi
+                  npm run performance -- "${args[@]}"
 
             - name: Add report to job summary
               if: always()
@@ -147,7 +158,7 @@ jobs:
                   GH_TOKEN: ${{ github.token }}
               run: |
                   if [ -f performance-report.json ]; then
-                      node scripts/performance-history.mjs performance-report.json "${{ github.run_id }}" >> "$GITHUB_STEP_SUMMARY"
+                      node scripts/performance-history.mjs performance-report.json "$GITHUB_RUN_ID" >> "$GITHUB_STEP_SUMMARY"
                   fi
 
             - name: Upload performance report
