@@ -293,4 +293,37 @@ class TelegramProviderTest extends TestCase {
 		$this->assertSame( 'Just text', $body['text'] );
 		$this->assertArrayNotHasKey( 'entities', $body );
 	}
+
+	/** HTML alerts are sent with parse_mode HTML, as given (#2448). */
+	public function test_send_html_posts_telegram_html() {
+		$html   = "<b>New ticket sale</b>\n<b>La\u{00A0}Mutable</b>\n1 × &lt;b&gt;VIP&lt;/b&gt;";
+		$result = ( new TelegramProvider() )->send_html( '-1001234567890', $html );
+
+		$this->assertSame( 'sent', $result['state'] );
+		$body = json_decode( $GLOBALS['_fair_test_remote_post_requests'][0]['args']['body'], true );
+		$this->assertSame( '-1001234567890', $body['chat_id'] );
+		$this->assertSame( 'HTML', $body['parse_mode'] );
+		$this->assertSame( $html, $body['text'] );
+		$this->assertArrayNotHasKey( 'entities', $body );
+		$this->assertTrue( $body['link_preview_options']['is_disabled'] );
+	}
+
+	/** HTML alerts map refusals and credential problems like other sends. */
+	public function test_send_html_maps_failures() {
+		$GLOBALS['_fair_test_remote_post_response'] = self::response(
+			400,
+			array(
+				'ok'          => false,
+				'description' => "Bad Request: can't parse entities",
+			)
+		);
+		$this->assertSame( 'http_400', ( new TelegramProvider() )->send_html( '@fair_channel', '<b>' )['code'] );
+
+		$GLOBALS['_fair_test_options']              = array();
+		$GLOBALS['_fair_test_remote_post_requests'] = array();
+		$provider                                   = new TelegramProvider();
+		$this->assertSame( 'missing_token', $provider->credential_problem()['code'] );
+		$this->assertSame( 'failed', $provider->send_html( '@fair_channel', 'Text' )['state'] );
+		$this->assertSame( array(), $GLOBALS['_fair_test_remote_post_requests'] );
+	}
 }

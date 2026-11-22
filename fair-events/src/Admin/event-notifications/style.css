@@ -275,3 +275,20 @@
 		flex: 1 1 auto;
 	}
 }
+
+.fair-events-notifications__sale-alert-organizer {
+	border-top: 1px solid #dcdcde;
+	margin-top: 16px;
+	overflow-wrap: anywhere;
+}
+
+.fair-events-notifications__sale-alert-organizer
+	.fair-events-notifications__fields {
+	align-items: start;
+}
+
+.fair-events-notifications__sale-alert-organizer
+	.has-error
+	.components-base-control__help {
+	color: #b32d2e;
+}

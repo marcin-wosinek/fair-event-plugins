@@ -7,10 +7,12 @@
  * `pre_http_request` keeps the real request building and response handling
  * in play while nothing reaches the network.
  *
- * Each request's chat ID, text and formatting entities are appended to the
- * `fair_e2e_telegram_requests` option; the bot token in the URL is never
- * stored. Every chat is accepted except `@e2e_missing_chat`, which gets
- * Telegram's "chat not found" error so specs can exercise a failure.
+ * Each request's chat ID, text, formatting entities and parse mode (when
+ * one is set) are appended to the `fair_e2e_telegram_requests` option;
+ * the bot token in the URL is never stored. Every chat is accepted except
+ * `@e2e_missing_chat`, which gets Telegram's "chat not found" error so
+ * specs can exercise a failure, and `@e2e_timeout_chat`, whose request
+ * times out after being logged.
  *
  * A bot token whose bot ID is 401401401 is answered with Telegram's
  * "Unauthorized" error, like a revoked token. The log entry is marked
@@ -39,6 +41,9 @@ add_filter(
 			'text'     => is_array( $body ) ? (string) ( $body['text'] ?? '' ) : '',
 			'entities' => is_array( $body ) ? (array) ( $body['entities'] ?? array() ) : array(),
 		);
+		if ( is_array( $body ) && isset( $body['parse_mode'] ) ) {
+			$entry['parse_mode'] = (string) $body['parse_mode'];
+		}
 		if ( $rejected ) {
 			$entry['rejected'] = true;
 		}
@@ -62,6 +67,12 @@ add_filter(
 				'cookies'  => array(),
 				'filename' => null,
 			);
+		}
+
+		// Telegram may have received the request before the connection
+		// dropped, as with a timeout waiting for its answer.
+		if ( '@e2e_timeout_chat' === $chat_id ) {
+			return new WP_Error( 'http_request_failed', 'cURL error 28: Operation timed out' );
 		}
 
 		$missing = '@e2e_missing_chat' === $chat_id;

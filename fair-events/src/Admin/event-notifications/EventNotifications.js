@@ -21,6 +21,7 @@ import AddNotification, { ADD_KIND_ID } from './AddNotification.js';
 import ConfigurationView from './ConfigurationView.js';
 import HistoryView from './HistoryView.js';
 import NotificationList from './NotificationList.js';
+import SaleAlertsSection from './SaleAlertsSection.js';
 import { DraftsContext, useDraftStore } from './drafts.js';
 import { linkTo, useLocationState } from './navigation.js';
 import {
@@ -386,6 +387,7 @@ export default function EventNotifications( { sourcesUrl } ) {
 					onAdd={ goToAdd }
 				/>
 				<AddNotification types={ data.types } onAdded={ onAdded } />
+				<SaleAlertsSection />
 				<p className="description">
 					{ __(
 						'Sends run in the site’s timezone and can be a few minutes late on low-traffic sites.',
