@@ -10,7 +10,8 @@
  * For each branch this asserts:
  *   1. The expected admin pages mount (or stop mounting) their React root.
  *   2. The expected REST routes register (or 404 with `rest_no_route`).
- *   3. The Settings → Features tab is reachable in both branches.
+ *   3. An old Settings → Features bookmark opens General, which holds the
+ *      Ticketing setting, in both branches.
  *   4. The retired migration tools (#1674) stay unavailable in both branches,
  *      even with a stale `migration: true` left in the stored option.
  *
@@ -172,6 +173,26 @@ async function routeIsRegistered(request, path, method = 'GET') {
 	return body?.code !== 'rest_no_route';
 }
 
+/**
+ * Open the retired Features tab URL and expect General, with the Ticketing
+ * card and no Features tab.
+ *
+ * @param {import('@playwright/test').Page} page Playwright page.
+ */
+async function expectFeaturesBookmarkOpensGeneral(page) {
+	await loginAsAdmin(page);
+	await page.goto(
+		'/wp-admin/admin.php?page=fair-events-settings&tab=features'
+	);
+	await expect(
+		page.getByRole('tab', { name: 'General', selected: true })
+	).toBeVisible();
+	await expect(page.getByRole('tab', { name: 'Features' })).toHaveCount(0);
+	await expect(
+		page.getByRole('heading', { name: 'Ticketing', exact: true })
+	).toBeVisible();
+}
+
 test.describe('Fair Events — simplified public build (no bundles set)', () => {
 	test.beforeAll(() => {
 		setExperimentalFeatures({
@@ -234,13 +255,10 @@ test.describe('Fair Events — simplified public build (no bundles set)', () => 
 		await expectRetiredToolsUnavailable(page, request);
 	});
 
-	test('Settings page exposes the Features tab', async ({ page }) => {
-		await loginAsAdmin(page);
-		await page.goto('/wp-admin/admin.php?page=fair-events-settings');
-		await expect(
-			page.getByRole('tab', { name: 'Features' }),
-			'Features tab should be reachable in every build'
-		).toBeVisible();
+	test('an old Features bookmark opens General with Ticketing', async ({
+		page,
+	}) => {
+		await expectFeaturesBookmarkOpensGeneral(page);
 	});
 });
 
@@ -304,10 +322,10 @@ test.describe('Fair Events — full internal build (all bundles on)', () => {
 		).toHaveCount(0);
 	});
 
-	test('Settings page still exposes the Features tab', async ({ page }) => {
-		await loginAsAdmin(page);
-		await page.goto('/wp-admin/admin.php?page=fair-events-settings');
-		await expect(page.getByRole('tab', { name: 'Features' })).toBeVisible();
+	test('an old Features bookmark still opens General with Ticketing', async ({
+		page,
+	}) => {
+		await expectFeaturesBookmarkOpensGeneral(page);
 	});
 });
 

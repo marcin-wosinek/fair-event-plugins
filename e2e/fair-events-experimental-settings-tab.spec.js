@@ -171,8 +171,8 @@ test.describe('Experimental settings tab', () => {
 				page.getByRole('tab', { name: 'Experimental' })
 			).toHaveCount(0);
 
-			await page.getByRole('tab', { name: 'Features' }).click();
-			await expect(page).toHaveURL(/tab=features/);
+			await page.getByRole('tab', { name: 'Organizer' }).click();
+			await expect(page).toHaveURL(/tab=organizer/);
 		} finally {
 			wpCli('plugin activate fair-events-experimental');
 		}

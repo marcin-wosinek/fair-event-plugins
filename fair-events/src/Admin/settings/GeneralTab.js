@@ -21,11 +21,13 @@ import apiFetch from '@wordpress/api-fetch';
  */
 import { loadGeneralSettings, saveSettings } from './settings-api.js';
 import CopyUrlButton from '../components/CopyUrlButton.js';
+import TicketingCard from './TicketingCard.js';
 
 /**
  * General Tab Component
  *
- * Displays event URL slug, enabled post types, and Events API settings.
+ * Displays event URL slug, enabled post types, Events API, branding, and
+ * the Ticketing setting. Ticketing saves on its own, outside the form.
  *
  * @param {Object}   props          Props
  * @param {Function} props.onNotice Handler for displaying notices
@@ -155,172 +157,186 @@ export default function GeneralTab( { onNotice } ) {
 	}
 
 	return (
-		<form
-			onSubmit={ ( e ) => {
-				e.preventDefault();
-				handleSave();
-			} }
-		>
-			<VStack spacing={ 4 } style={ { marginTop: '16px' } }>
-				<Card>
-					<CardHeader>
-						<h2>{ __( 'Event URL Slug', 'fair-events' ) }</h2>
-					</CardHeader>
-					<CardBody>
-						<TextControl
-							label={ __( 'Event URL Slug', 'fair-events' ) }
-							hideLabelFromVision
-							help={ __(
-								'The URL slug used for event permalinks (e.g., /fair-events/event-name)',
-								'fair-events'
-							) }
-							value={ slug }
-							onChange={ ( value ) => setSlug( value ) }
-							disabled={ isSaving }
-						/>
-					</CardBody>
-				</Card>
-
-				<Card>
-					<CardHeader>
-						<h2>{ __( 'Enabled Post Types', 'fair-events' ) }</h2>
-					</CardHeader>
-					<CardBody>
-						<p className="description">
-							{ __(
-								'Select which post types can have event data (dates, location).',
-								'fair-events'
-							) }
-						</p>
-
-						<ToggleControl
-							label={ __(
-								'Use the Events post type',
-								'fair-events'
-							) }
-							checked={ registerPostType }
-							onChange={ ( value ) =>
-								setRegisterPostType( value )
-							}
-							help={ __(
-								'Register the dedicated Events post type, whose entries are the event pages describing your events. Turn off to attach event data only to the post types selected below.',
-								'fair-events'
-							) }
-							disabled={ isSaving }
-						/>
-
-						{ availablePostTypes.map( ( postType ) => (
-							<CheckboxControl
-								key={ postType.slug }
-								label={ postType.name }
-								checked={ enabledPostTypes.includes(
-									postType.slug
-								) }
-								onChange={ ( isChecked ) =>
-									handlePostTypeToggle(
-										postType.slug,
-										isChecked
-									)
-								}
-								disabled={ isSaving }
-							/>
-						) ) }
-					</CardBody>
-				</Card>
-
-				<Card>
-					<CardHeader>
-						<h2>{ __( 'Events API', 'fair-events' ) }</h2>
-					</CardHeader>
-					<CardBody>
-						<p className="description">
-							{ __(
-								'Share your events with other Fair Events sites using the public JSON API.',
-								'fair-events'
-							) }
-						</p>
-
-						<p>
-							<strong>
-								{ __( 'Events API URL:', 'fair-events' ) }
-							</strong>
-							<br />
-							<code>
-								{ window.fairEventsSettingsData?.eventsApiUrl }
-							</code>
-						</p>
-
-						<p>
-							<CopyUrlButton
-								url={
-									window.fairEventsSettingsData?.eventsApiUrl
-								}
-								label={ __( 'Copy API URL', 'fair-events' ) }
-								tooltip={ __(
-									'Copy Events API URL to clipboard',
+		<VStack spacing={ 4 } style={ { marginTop: '16px' } }>
+			<form
+				onSubmit={ ( e ) => {
+					e.preventDefault();
+					handleSave();
+				} }
+			>
+				<VStack spacing={ 4 }>
+					<Card>
+						<CardHeader>
+							<h2>{ __( 'Event URL Slug', 'fair-events' ) }</h2>
+						</CardHeader>
+						<CardBody>
+							<TextControl
+								label={ __( 'Event URL Slug', 'fair-events' ) }
+								hideLabelFromVision
+								help={ __(
+									'The URL slug used for event permalinks (e.g., /fair-events/event-name)',
 									'fair-events'
 								) }
-							/>{ ' ' }
-							<ExternalLink
-								href={
-									window.fairEventsSettingsData?.eventsApiUrl
+								value={ slug }
+								onChange={ ( value ) => setSlug( value ) }
+								disabled={ isSaving }
+							/>
+						</CardBody>
+					</Card>
+
+					<Card>
+						<CardHeader>
+							<h2>
+								{ __( 'Enabled Post Types', 'fair-events' ) }
+							</h2>
+						</CardHeader>
+						<CardBody>
+							<p className="description">
+								{ __(
+									'Select which post types can have event data (dates, location).',
+									'fair-events'
+								) }
+							</p>
+
+							<ToggleControl
+								label={ __(
+									'Use the Events post type',
+									'fair-events'
+								) }
+								checked={ registerPostType }
+								onChange={ ( value ) =>
+									setRegisterPostType( value )
 								}
-							>
-								{ __( 'Open Events API', 'fair-events' ) }
-							</ExternalLink>
-						</p>
+								help={ __(
+									'Register the dedicated Events post type, whose entries are the event pages describing your events. Turn off to attach event data only to the post types selected below.',
+									'fair-events'
+								) }
+								disabled={ isSaving }
+							/>
 
-						<p className="description">
-							{ __(
-								'Optional parameters: start_date, end_date (Y-m-d format), categories (comma-separated slugs), per_page, page.',
-								'fair-events'
-							) }
-						</p>
-					</CardBody>
-				</Card>
+							{ availablePostTypes.map( ( postType ) => (
+								<CheckboxControl
+									key={ postType.slug }
+									label={ postType.name }
+									checked={ enabledPostTypes.includes(
+										postType.slug
+									) }
+									onChange={ ( isChecked ) =>
+										handlePostTypeToggle(
+											postType.slug,
+											isChecked
+										)
+									}
+									disabled={ isSaving }
+								/>
+							) ) }
+						</CardBody>
+					</Card>
 
-				<Card>
-					<CardHeader>
-						<h2>{ __( 'Branding', 'fair-events' ) }</h2>
-					</CardHeader>
-					<CardBody>
-						<ToggleControl
-							label={ __(
-								"Show 'Powered by Fair Event Plugins'",
-								'fair-events'
-							) }
-							checked={ poweredByBranding }
-							onChange={ ( value ) =>
-								setPoweredByBranding( value )
-							}
-							help={ __(
-								'Adds a subtle attribution line under public signup forms and at the bottom of participant emails. Off by default.',
-								'fair-events'
-							) }
+					<Card>
+						<CardHeader>
+							<h2>{ __( 'Events API', 'fair-events' ) }</h2>
+						</CardHeader>
+						<CardBody>
+							<p className="description">
+								{ __(
+									'Share your events with other Fair Events sites using the public JSON API.',
+									'fair-events'
+								) }
+							</p>
+
+							<p>
+								<strong>
+									{ __( 'Events API URL:', 'fair-events' ) }
+								</strong>
+								<br />
+								<code>
+									{
+										window.fairEventsSettingsData
+											?.eventsApiUrl
+									}
+								</code>
+							</p>
+
+							<p>
+								<CopyUrlButton
+									url={
+										window.fairEventsSettingsData
+											?.eventsApiUrl
+									}
+									label={ __(
+										'Copy API URL',
+										'fair-events'
+									) }
+									tooltip={ __(
+										'Copy Events API URL to clipboard',
+										'fair-events'
+									) }
+								/>{ ' ' }
+								<ExternalLink
+									href={
+										window.fairEventsSettingsData
+											?.eventsApiUrl
+									}
+								>
+									{ __( 'Open Events API', 'fair-events' ) }
+								</ExternalLink>
+							</p>
+
+							<p className="description">
+								{ __(
+									'Optional parameters: start_date, end_date (Y-m-d format), categories (comma-separated slugs), per_page, page.',
+									'fair-events'
+								) }
+							</p>
+						</CardBody>
+					</Card>
+
+					<Card>
+						<CardHeader>
+							<h2>{ __( 'Branding', 'fair-events' ) }</h2>
+						</CardHeader>
+						<CardBody>
+							<ToggleControl
+								label={ __(
+									"Show 'Powered by Fair Event Plugins'",
+									'fair-events'
+								) }
+								checked={ poweredByBranding }
+								onChange={ ( value ) =>
+									setPoweredByBranding( value )
+								}
+								help={ __(
+									'Adds a subtle attribution line under public signup forms and at the bottom of participant emails. Off by default.',
+									'fair-events'
+								) }
+								disabled={ isSaving }
+							/>
+							<p className="description">
+								{ __(
+									'The Events Calendar and Events Week View blocks follow the "Week Starts On" setting under Settings → General.',
+									'fair-events'
+								) }
+							</p>
+						</CardBody>
+					</Card>
+
+					<div>
+						<Button
+							variant="primary"
+							type="submit"
+							isBusy={ isSaving }
 							disabled={ isSaving }
-						/>
-						<p className="description">
-							{ __(
-								'The Events Calendar and Events Week View blocks follow the "Week Starts On" setting under Settings → General.',
-								'fair-events'
-							) }
-						</p>
-					</CardBody>
-				</Card>
+						>
+							{ isSaving
+								? __( 'Saving...', 'fair-events' )
+								: __( 'Save Settings', 'fair-events' ) }
+						</Button>
+					</div>
+				</VStack>
+			</form>
 
-				<div>
-					<Button
-						variant="primary"
-						type="submit"
-						isBusy={ isSaving }
-						disabled={ isSaving }
-					>
-						{ isSaving
-							? __( 'Saving...', 'fair-events' )
-							: __( 'Save Settings', 'fair-events' ) }
-					</Button>
-				</div>
-			</VStack>
-		</form>
+			<TicketingCard />
+		</VStack>
 	);
 }
