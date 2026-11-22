@@ -396,12 +396,30 @@ its PR like any dependency update, once the regular CI suites pass. Updating
 by hand works too: edit `core` and follow
 [Upgrading an existing local wp-env site](#upgrading-an-existing-local-wp-env-site).
 
-The workflow writes with a GitHub App installed only on this repository, with
-`Contents: write` and `Pull requests: write`, because pushes made with the
-default `GITHUB_TOKEN` don't start the PR's checks. It reads the app's client
-ID from the `WORDPRESS_PIN_APP_CLIENT_ID` repository variable and its private
-key from the `WORDPRESS_PIN_APP_PRIVATE_KEY` secret. Without them, a run that
-finds a newer release fails with an error naming both.
+The workflow writes with a fine-grained personal access token, because pushes
+and PRs made with the default `GITHUB_TOKEN` don't start the PR's checks. The
+default token stays read-only, and only the branch-push and PR steps see the
+PAT. A run that finds the pin current needs no PAT; one that finds a newer
+release fails with an error naming the secret before it writes anything.
+
+**Setting up the token.** A maintainer creates the PAT and keeps it current:
+
+1. Under GitHub **Settings → Developer settings → Fine-grained tokens**,
+   generate a token with **Only select repositories** set to
+   `marcin-wosinek/fair-event-plugins`, and repository permissions
+   **Contents: Read and write** and **Pull requests: Read and write**
+   (Metadata: Read is added automatically). Grant nothing else.
+2. Pick an expiration (at most a year) and note the date.
+3. Save it as the `WORDPRESS_PIN_PAT` repository Actions secret
+   (`gh secret set WORDPRESS_PIN_PAT`).
+4. Before it expires, generate a replacement the same way, overwrite the
+   secret, then delete the old token. An expired or revoked token makes the
+   push step fail when a newer release appears.
+
+After setting or rotating the secret, start the workflow by hand. When a newer
+release is out, check that it opens one PR whose checks start automatically,
+that a repeat run leaves that PR alone, and that a later release updates the
+same PR.
 
 **Trying another release locally.** Add `core` to `.wp-env.override.json`,
 next to any port overrides already there, then `npx wp-env start`:
