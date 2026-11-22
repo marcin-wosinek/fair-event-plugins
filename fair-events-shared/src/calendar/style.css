@@ -309,6 +309,40 @@ a.fair-events-calendar-event:visited {
 	text-align: center;
 }
 
+/*
+ * Past events disclosure. CalendarGrid renders it only in the mobile agenda,
+ * so it needs no grid-mode rules.
+ */
+.fair-events-calendar-past {
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	background: #f6f7f7;
+}
+
+.fair-events-calendar-past-summary {
+	padding: 10px 12px;
+	font-size: 14px;
+	font-weight: 600;
+	color: #1d2327;
+	cursor: pointer;
+}
+
+.fair-events-calendar-past-summary:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
+
+.fair-events-calendar-past[open] .fair-events-calendar-past-summary {
+	border-bottom: 1px solid #c3c4c7;
+}
+
+.fair-events-calendar-past-days {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 12px;
+}
+
 /* Responsive */
 @media screen and (max-width: 782px) {
 	.fair-events-calendar-day {
@@ -330,7 +364,8 @@ a.fair-events-calendar-event:visited {
 /*
  * Mobile: header stacks, grid collapses into an agenda list of day cards. A
  * filtered month with no matches keeps the dated grid (.is-grid-forced), so
- * the agenda rules skip it.
+ * the agenda rules skip it. Keep the query in sync with AGENDA_MEDIA_QUERY in
+ * useAgendaLayout.js.
  */
 @media screen and (max-width: 600px) {
 	.fair-events-calendar-header {

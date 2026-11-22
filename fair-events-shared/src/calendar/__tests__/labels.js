@@ -9,5 +9,6 @@ export const labels = {
 	untitled: '(untitled event)',
 	openDestination: 'Open link destination',
 	noEvents: 'No events this month.',
+	pastEvents: 'Past events',
 	more: ( count ) => `+${ count } more`,
 };
