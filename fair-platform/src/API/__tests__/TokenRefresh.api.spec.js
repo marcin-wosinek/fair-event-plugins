@@ -13,46 +13,8 @@
  * connection tables before seeding.
  */
 import { test, expect, request } from '@playwright/test';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 
-const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
-const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
-const ADMIN_PASSWORD =
-	process.env.WP_ADMIN_PASSWORD || process.env.WP_ADMIN_PASS || 'password';
-const admin = {
-	Authorization:
-		'Basic ' +
-		Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASSWORD }` ).toString(
-			'base64'
-		),
-};
-
-// Non-blocking, so idle keep-alive sockets are not closed under a long
-// synchronous fixture run ("socket hang up").
-async function fixture( action, data = {} ) {
-	const { stdout } = await promisify( execFile )(
-		'npx',
-		[
-			'wp-env',
-			'run',
-			'tests-cli',
-			'wp',
-			'eval-file',
-			'wp-content/mu-plugins/scripts/platform-connections.php',
-			action,
-			JSON.stringify( data ),
-		],
-		{ cwd: new URL( '../../../../', import.meta.url ), encoding: 'utf8' }
-	);
-	const match = stdout.match( /E2E_PLATFORM_CONNECTIONS:(.*)$/m );
-	if ( ! match ) {
-		throw new Error(
-			`Expected platform connections output, got:\n${ stdout }`
-		);
-	}
-	return JSON.parse( match[ 1 ] );
-}
+import { BASE_URL, admin, fixture } from './platform-connections-fixture.js';
 
 const fingerprint = async ( token ) =>
 	( await fixture( 'fingerprint', { token } ) ).fingerprint;
