@@ -85,7 +85,8 @@ Closes #557
     criteria are verified; use `Refs #NNN` when acceptance remains pending.
 -   Include the testing handoff from
     [TESTING.md § Verification planning and handoff](./TESTING.md#verification-planning-and-handoff)
-    in the Test plan, scaling the detail to the change.
+    in the Test plan for other PR workflows. For `make-pr`, post the handoff
+    on the source issue and use the PR Test plan for verification evidence.
 -   No emoji footer, no tool attribution.
 
 ## Responsive-UI tickets (`responsive-ui` label)

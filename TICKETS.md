@@ -157,8 +157,10 @@ unchanged, and the sprint is preserved.
 ## Acceptance after merge
 
 When required acceptance checks remain unverified, record them with their
-owner and reason on the linked ticket and in the PR testing handoff (see
-`TESTING.md` § Verification planning and handoff). Use `Refs #N` rather than
+owner and reason on the linked ticket. The `make-pr` testing handoff comment
+serves as that record. When the handoff goes in the PR description, also
+record the pending checks there. See `TESTING.md` § Verification planning and
+handoff. Use `Refs #N` rather than
 an auto-closing reference until the ticket's acceptance criteria are verified.
 Optional manual checks that add no evidence do not hold up closure.
 

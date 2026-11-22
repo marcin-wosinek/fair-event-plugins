@@ -73,8 +73,9 @@ it before changing code and add regression coverage where appropriate.
 
 ### Testing handoff
 
-Include a concise testing handoff in the PR description and final completion
-report. Link to detailed evidence rather than repeating long logs:
+Include a concise testing handoff in the final completion report. For
+`make-pr`, post the handoff as a comment on the source issue with a link to
+the PR. For other PR workflows, include it in the PR description. Link to detailed evidence rather than repeating long logs:
 
 - **Where:** page URL or exact navigation to the affected behavior.
 - **Build:** tested commit SHA and environment; deployed version only if
@@ -95,8 +96,8 @@ the maintainer to repeat checks already completed without a specific reason.
 Do not claim deployment or acceptance based solely on passing local tests.
 
 PR creation or merge does not complete pending acceptance checks. Record
-pending checks durably on the PR and linked ticket, and follow `TICKETS.md`
-§ Acceptance after merge for project status and closure.
+pending checks in the testing handoff and follow `TICKETS.md` § Acceptance
+after merge for project status and closure.
 
 ### SonarQube review
 
@@ -139,7 +140,7 @@ List every finding or gate condition left open with its link and the reason
 (for example: false positive with an explanation, or out of scope with a
 follow-up ticket).
 
-**Report.** The PR testing handoff and final report list the full SHA
+**Report.** The testing handoff and final report list the full SHA
 reviewed, the state, the check or dashboard link, and the remaining
 findings. Read the PR head again before reporting; if it has moved, the
 review is incomplete.
