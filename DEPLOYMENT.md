@@ -293,9 +293,11 @@ The `.github/workflows/publish-to-svn.yml` workflow publishes a tagged release o
 
 Manual only — **Actions → Publish to WordPress.org SVN → Run workflow**. Inputs:
 
-- `plugin` — one of `fair-events`, `fair-audience`, `fair-timetable`.
-- `version` — semver string (e.g. `1.2.3`). Validated against `^[0-9]+\.[0-9]+\.[0-9]+$`; the workflow fails fast on anything else.
+- `plugin` — one of `fair-events`, `fair-audience`, `fair-timetable`, `fair-payments-connector`, `fair-calendar-button`.
+- `version` — semver string (e.g. `1.2.3`). Validated against `^[0-9]+\.[0-9]+\.[0-9]+$`.
 - `dry_run` — defaults to `true`. When `true`, the workflow performs every step except the final `svn ci` and prints `svn status` so you can confirm the staged changes.
+
+The first step validates both values, before checkout or any other side effect, and fails on anything else. Later steps read the inputs from environment variables, never from expressions inside a script, so a supplied value is never run as shell syntax.
 
 The workflow checks out the matching git tag (`<plugin>@<version>`) so the build matches the released commit, not whatever is on `main`.
 
