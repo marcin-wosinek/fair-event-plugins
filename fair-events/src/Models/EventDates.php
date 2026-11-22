@@ -2186,6 +2186,116 @@ class EventDates {
 	}
 
 	/**
+	 * Get an event date by ID, telling a missing row apart from a failed read.
+	 *
+	 * Unlike get_by_id(), a failed query is an error rather than "not found",
+	 * and a generated occurrence must resolve its series master: a missing
+	 * or unreadable master is an error instead of leaving inherited fields
+	 * unresolved. For reads that must not turn source failures into unknown
+	 * values (campaign facts, #2420).
+	 *
+	 * @param int $id Event date ID.
+	 * @return EventDates|null|\WP_Error Event date, null when no row exists, or an error.
+	 */
+	public static function get_by_id_checked( $id ) {
+		$result = self::fetch_row_checked( $id );
+		if ( ! is_object( $result ) || $result instanceof \WP_Error ) {
+			return $result;
+		}
+
+		if ( 'generated' === ( $result->occurrence_type ?? null ) ) {
+			$master_id = (int) ( $result->master_id ?? 0 );
+			$master    = $master_id ? self::fetch_row_checked( $master_id ) : null;
+
+			if ( $master instanceof \WP_Error ) {
+				return $master;
+			}
+
+			if ( ! $master ) {
+				return new \WP_Error(
+					'fair_events_series_master_missing',
+					__( 'The series of this event date could not be found.', 'fair-events' ),
+					array( 'status' => 500 )
+				);
+			}
+
+			self::$master_cache[ $master_id ] = self::hydrate( $master );
+		}
+
+		return self::hydrate( $result );
+	}
+
+	/**
+	 * Read one raw event-date row, reporting a failed query as an error.
+	 *
+	 * @param int $id Event date ID.
+	 * @return object|null|\WP_Error Row, null when missing, or an error.
+	 */
+	private static function fetch_row_checked( $id ) {
+		global $wpdb;
+
+		$result = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE id = %d LIMIT 1',
+				$wpdb->prefix . 'fair_event_dates',
+				$id
+			)
+		);
+
+		if ( ! empty( $wpdb->last_error ) ) {
+			return new \WP_Error(
+				'fair_events_source_unavailable',
+				__( 'Event data could not be read.', 'fair-events' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		return $result ? $result : null;
+	}
+
+	/**
+	 * This event's own page URL (see get_event_page_url()), telling "no
+	 * linked page" apart from a failed read or a linked page that no longer
+	 * resolves.
+	 *
+	 * @return string|null|\WP_Error The page URL, null when no post is linked, or an error.
+	 */
+	public function get_event_page_url_checked() {
+		global $wpdb;
+
+		$post_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				'SELECT post_id FROM %i WHERE event_date_id = %d',
+				$wpdb->prefix . 'fair_event_date_posts',
+				$this->get_link_owner_id()
+			)
+		);
+
+		if ( ! empty( $wpdb->last_error ) ) {
+			return new \WP_Error(
+				'fair_events_source_unavailable',
+				__( 'Event data could not be read.', 'fair-events' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		if ( empty( $post_ids ) ) {
+			return null;
+		}
+
+		$url = get_permalink( (int) $post_ids[0] );
+		if ( ! $url ) {
+			return new \WP_Error(
+				'fair_events_linked_page_missing',
+				__( 'The page linked to this event could not be found.', 'fair-events' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		return $this->with_occurrence_arg( $url );
+	}
+
+	/**
 	 * Creation times already looked up in this request, by event date ID.
 	 *
 	 * @var array<int, int>
