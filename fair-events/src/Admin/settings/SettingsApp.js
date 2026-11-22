@@ -10,13 +10,12 @@ import { applyFilters } from '@wordpress/hooks';
  * Internal dependencies
  */
 import GeneralTab from './GeneralTab.js';
-import FeaturesTab from './FeaturesTab.js';
 import OrganizerTab from './OrganizerTab.js';
 
 /**
  * Settings App Component
  *
- * Main settings page with General, Features and Organizer tabs. Extensions
+ * Main settings page with General and Organizer tabs. Extensions
  * add tabs through the `fairEvents.settings.tabs` filter; each descriptor is
  * `{ name, title, order, render: ( { onNotice } ) => JSX }`.
  *
@@ -32,12 +31,6 @@ export default function SettingsApp() {
 				title: __( 'General', 'fair-events' ),
 				order: 10,
 				render: ( props ) => <GeneralTab { ...props } />,
-			},
-			{
-				name: 'features',
-				title: __( 'Features', 'fair-events' ),
-				order: 20,
-				render: ( props ) => <FeaturesTab { ...props } />,
 			},
 			{
 				name: 'organizer',
@@ -58,6 +51,7 @@ export default function SettingsApp() {
 		[ tabDescriptors ]
 	);
 
+	// Unknown tabs, including the retired `features` tab, open General.
 	const initialTab = useMemo( () => {
 		const urlTab = new URLSearchParams( window.location.search ).get(
 			'tab'

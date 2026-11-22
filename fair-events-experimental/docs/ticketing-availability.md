@@ -3,7 +3,7 @@
 Fair Events and Fair Events Experimental each have a `ticketing` setting. They
 control different things:
 
--   **Fair Events → Features → Ticketing** (core, option
+-   **Fair Events → Settings → General → Ticketing** (core, option
     `fair_events_features`, constant `FAIR_EVENTS_FEATURE_TICKETING`) is the
     one decision for base ticket configuration: ticket types, sale periods,
     prices, the Prices and List tabs, and the workshop schedule.

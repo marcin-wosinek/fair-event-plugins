@@ -82,3 +82,33 @@ export function loadAttachmentUrl( attachmentId ) {
 		.then( ( media ) => media.source_url || '' )
 		.catch( () => '' );
 }
+
+/**
+ * Load the stored Ticketing value from the `fair_events_features` option.
+ *
+ * @return {Promise<boolean|null>} Stored value, or null when none is saved.
+ */
+export function loadStoredTicketing() {
+	return apiFetch( { path: '/wp/v2/settings' } ).then( ( settings ) => {
+		const stored = settings.fair_events_features?.ticketing;
+		return typeof stored === 'boolean' ? stored : null;
+	} );
+}
+
+/**
+ * Save only the Ticketing key of the `fair_events_features` option. The
+ * server-side sanitizer keeps every key left out of the payload.
+ *
+ * @param {boolean} enabled Whether ticketing is enabled.
+ * @return {Promise<boolean|null>} Value stored after the save, or null when the response omits it.
+ */
+export function saveTicketing( enabled ) {
+	return apiFetch( {
+		path: '/wp/v2/settings',
+		method: 'POST',
+		data: { fair_events_features: { ticketing: enabled } },
+	} ).then( ( settings ) => {
+		const stored = settings?.fair_events_features?.ticketing;
+		return typeof stored === 'boolean' ? stored : null;
+	} );
+}

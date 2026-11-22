@@ -762,10 +762,9 @@ class AdminPages {
 			'fairEventsSettingsData',
 			array(
 				'eventsApiUrl' => rest_url( 'fair-events/v1/events' ),
-				// Feature registry (labels/descriptions/forced state) for the
-				// Features tab; resolved enabled state comes via the stored
-				// option once toggles are saved, but the registry itself is
-				// PHP-owned.
+				// Feature registry (labels/descriptions/resolved and forced
+				// state) for the Ticketing card on the General tab; the stored
+				// value comes from /wp/v2/settings.
 				'features'     => \FairEvents\Core\Features::all(),
 			)
 		);

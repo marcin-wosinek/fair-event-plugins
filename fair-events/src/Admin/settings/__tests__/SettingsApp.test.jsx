@@ -7,7 +7,6 @@ import { addFilter, removeAllFilters } from '@wordpress/hooks';
 import SettingsApp from '../SettingsApp.js';
 
 jest.mock( '../GeneralTab.js', () => () => <div>General content</div> );
-jest.mock( '../FeaturesTab.js', () => () => <div>Features content</div> );
 jest.mock( '../OrganizerTab.js', () => () => <div>Organizer content</div> );
 
 function setUrl( search ) {
@@ -55,7 +54,7 @@ test( 'shows only the core tabs when no extension registers one', async () => {
 	const tabNames = screen
 		.getAllByRole( 'tab' )
 		.map( ( tab ) => tab.textContent );
-	expect( tabNames ).toEqual( [ 'General', 'Features', 'Organizer' ] );
+	expect( tabNames ).toEqual( [ 'General', 'Organizer' ] );
 	expect( screen.getByText( 'General content' ) ).toBeInTheDocument();
 } );
 
@@ -67,6 +66,27 @@ test( 'falls back to General for an unknown ?tab= value', async () => {
 	expect( screen.getByText( 'General content' ) ).toBeInTheDocument();
 } );
 
+test( 'opens General for an old Features bookmark', async () => {
+	setUrl( '?page=fair-events-settings&tab=features' );
+
+	await renderApp();
+
+	expect( screen.queryByRole( 'tab', { name: 'Features' } ) ).toBeNull();
+	expect( screen.getByRole( 'tab', { name: 'General' } ) ).toHaveAttribute(
+		'aria-selected',
+		'true'
+	);
+	expect( screen.getByText( 'General content' ) ).toBeInTheDocument();
+} );
+
+test( 'opens the Organizer tab from its deep link', async () => {
+	setUrl( '?page=fair-events-settings&tab=organizer' );
+
+	await renderApp();
+
+	expect( screen.getByText( 'Organizer content' ) ).toBeInTheDocument();
+} );
+
 test( 'appends a filtered tab after the core tabs', async () => {
 	registerExtraTab();
 
@@ -75,12 +95,7 @@ test( 'appends a filtered tab after the core tabs', async () => {
 	const tabNames = screen
 		.getAllByRole( 'tab' )
 		.map( ( tab ) => tab.textContent );
-	expect( tabNames ).toEqual( [
-		'General',
-		'Features',
-		'Organizer',
-		'Experimental',
-	] );
+	expect( tabNames ).toEqual( [ 'General', 'Organizer', 'Experimental' ] );
 } );
 
 test( 'selects a filtered tab from ?tab= and passes onNotice', async () => {
