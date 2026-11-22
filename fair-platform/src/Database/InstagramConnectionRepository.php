@@ -32,6 +32,15 @@ class InstagramConnectionRepository extends AbstractConnectionRepository {
 	}
 
 	/**
+	 * Instagram account columns.
+	 *
+	 * @return string[]
+	 */
+	protected function get_listed_columns() {
+		return array( 'instagram_user_id', 'instagram_username' );
+	}
+
+	/**
 	 * Log a connection attempt
 	 *
 	 * @param array $data Connection data.

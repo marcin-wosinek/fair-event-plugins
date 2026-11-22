@@ -115,4 +115,41 @@ class MollieOAuthTest extends TestCase {
 			MollieOAuth::error_return_url( array( 'client_state' => 'x' ), 'access_denied', 'Cancelled' )
 		);
 	}
+
+	/** The fingerprint is keyed and stable, and never contains the token. */
+	public function test_refresh_token_fingerprint_is_keyed_and_hides_the_token() {
+		$fingerprint = MollieOAuth::refresh_token_fingerprint( 'refresh_abc', 'key-1' );
+
+		$this->assertMatchesRegularExpression( '/^[0-9a-f]{64}$/', $fingerprint );
+		$this->assertSame( $fingerprint, MollieOAuth::refresh_token_fingerprint( 'refresh_abc', 'key-1' ) );
+		$this->assertNotSame( $fingerprint, MollieOAuth::refresh_token_fingerprint( 'refresh_abc', 'key-2' ) );
+		$this->assertNotSame( $fingerprint, MollieOAuth::refresh_token_fingerprint( 'refresh_abd', 'key-1' ) );
+		$this->assertNotSame( hash( 'sha256', 'refresh_abc' ), $fingerprint );
+		$this->assertStringNotContainsString( 'refresh_abc', $fingerprint );
+	}
+
+	/** Without a token or a key there is nothing to bind. */
+	public function test_refresh_token_fingerprint_needs_a_token_and_a_key() {
+		$this->assertNull( MollieOAuth::refresh_token_fingerprint( '', 'key-1' ) );
+		$this->assertNull( MollieOAuth::refresh_token_fingerprint( null, 'key-1' ) );
+		$this->assertNull( MollieOAuth::refresh_token_fingerprint( array( 'x' ), 'key-1' ) );
+		$this->assertNull( MollieOAuth::refresh_token_fingerprint( 'refresh_abc', '' ) );
+	}
+
+	/** Only a different, non-empty rotated token moves the binding. */
+	public function test_rotated_fingerprint_only_for_a_new_refresh_token() {
+		$body = array( 'access_token' => 'access_new' );
+
+		$this->assertNull( MollieOAuth::rotated_refresh_token_fingerprint( $body, 'refresh_old', 'key-1' ) );
+		$this->assertNull(
+			MollieOAuth::rotated_refresh_token_fingerprint( $body + array( 'refresh_token' => '' ), 'refresh_old', 'key-1' )
+		);
+		$this->assertNull(
+			MollieOAuth::rotated_refresh_token_fingerprint( $body + array( 'refresh_token' => 'refresh_old' ), 'refresh_old', 'key-1' )
+		);
+		$this->assertSame(
+			MollieOAuth::refresh_token_fingerprint( 'refresh_new', 'key-1' ),
+			MollieOAuth::rotated_refresh_token_fingerprint( $body + array( 'refresh_token' => 'refresh_new' ), 'refresh_old', 'key-1' )
+		);
+	}
 }

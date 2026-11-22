@@ -609,7 +609,9 @@ test.describe.serial( 'Connection administration API', () => {
 		} );
 	}
 
-	test( 'repository filters by site and records token refreshes per table', async () => {
+	// Token refreshes are recorded by the real /oauth/refresh flow; see
+	// TokenRefresh.api.spec.js (#2380).
+	test( 'repository filters by site', async () => {
 		await seed();
 
 		const ordinary = await fixture( 'site-filter', {
@@ -628,44 +630,5 @@ test.describe.serial( 'Connection administration API', () => {
 		expect( instagram.items.map( ( item ) => item.site_name ) ).toEqual( [
 			'Alpha',
 		] );
-
-		expect(
-			await fixture( 'token-refresh', {
-				type: 'ordinary',
-				siteId: 'site-a',
-			} )
-		).toEqual( { updated: true } );
-		expect(
-			await fixture( 'token-refresh', {
-				type: 'ordinary',
-				siteId: 'unknown-site',
-			} )
-		).toEqual( { updated: false } );
-
-		const rows = await fixture( 'rows' );
-		for ( const row of rows.ordinary ) {
-			if ( row.site_id === 'site-a' ) {
-				expect( row.last_token_refresh ).not.toBeNull();
-			} else {
-				expect( row.last_token_refresh ).toBeNull();
-			}
-		}
-		for ( const row of rows.instagram ) {
-			expect( row.last_token_refresh ).toBeNull();
-		}
-
-		expect(
-			await fixture( 'token-refresh', {
-				type: 'instagram',
-				siteId: 'site-b',
-			} )
-		).toEqual( { updated: true } );
-		const afterInstagram = await fixture( 'rows' );
-		expect(
-			afterInstagram.instagram.map( ( row ) =>
-				row.last_token_refresh === null ? row.site_id : 'refreshed'
-			)
-		).toEqual( [ 'site-a', 'refreshed', 'site-c' ] );
-		expect( afterInstagram.ordinary ).toEqual( rows.ordinary );
 	} );
 } );

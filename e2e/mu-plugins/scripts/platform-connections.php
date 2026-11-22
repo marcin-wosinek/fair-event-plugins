@@ -9,11 +9,17 @@
  *   seed           {ordinary: [row], instagram: [row]}  Empty both
  *                  connection tables, then log each row through its
  *                  repository. A row's `daysAgo` sets `connected_at`
- *                  relative to the database clock. Prints the insert IDs.
+ *                  relative to the database clock; an ordinary row's
+ *                  `refreshToken` binds it as profile completion would, and
+ *                  `refreshedDaysAgo` sets `last_token_refresh` (negative is
+ *                  in the future). Prints the insert IDs.
  *   rows           {}  Every row of both tables, by ID.
  *   site-filter    {type, siteId}  The repository listing for one site.
- *   token-refresh  {type, siteId}  Record a token refresh for one site;
- *                  prints the repository's return value.
+ *   fingerprint    {token}  The fingerprint the platform stores for a
+ *                  refresh token.
+ *   profile-session {siteId, siteName, siteUrl, refreshToken}  Store a
+ *                  Mollie profile selection session as the OAuth callback
+ *                  would; prints its session token and anonymous nonce.
  *   clear          {}  Empty both connection tables.
  *
  * `type` is `ordinary` or `instagram`. The tables hold only OAuth proxy
@@ -29,6 +35,7 @@ defined( 'ABSPATH' ) || exit;
 
 use FairPlatform\Database\ConnectionRepository;
 use FairPlatform\Database\InstagramConnectionRepository;
+use FairPlatform\OAuth\MollieOAuth;
 
 global $wpdb;
 
@@ -70,7 +77,16 @@ switch ( $fixture_action ) {
 			$repository              = $fixture_repository( $fixture_type );
 			foreach ( $data[ $fixture_type ] ?? array() as $row ) {
 				$days = (int) ( $row['daysAgo'] ?? 0 );
-				unset( $row['daysAgo'] );
+				if ( isset( $row['refreshToken'] ) ) {
+					$row['refresh_token_fingerprint'] = MollieOAuth::refresh_token_fingerprint( (string) $row['refreshToken'], wp_salt( 'auth' ) );
+				}
+				if ( isset( $row['refreshedDaysAgo'] ) ) {
+					$row['last_token_refresh'] = gmdate(
+						'Y-m-d H:i:s',
+						strtotime( $now . ' UTC' ) - (int) $row['refreshedDaysAgo'] * DAY_IN_SECONDS
+					);
+				}
+				unset( $row['daysAgo'], $row['refreshToken'], $row['refreshedDaysAgo'] );
 				$row['connected_at'] = gmdate(
 					'Y-m-d H:i:s',
 					strtotime( $now . ' UTC' ) - $days * DAY_IN_SECONDS
@@ -99,11 +115,39 @@ switch ( $fixture_action ) {
 		);
 		break;
 
-	case 'token-refresh':
+	case 'fingerprint':
 		$result = array(
-			'updated' => $fixture_repository( (string) $data['type'] )->update_token_refresh(
-				(string) $data['siteId']
+			'fingerprint' => MollieOAuth::refresh_token_fingerprint( (string) $data['token'], wp_salt( 'auth' ) ),
+		);
+		break;
+
+	case 'profile-session':
+		$session_token = bin2hex( random_bytes( 32 ) );
+		set_transient(
+			"mollie_profile_selection_{$session_token}",
+			array(
+				'access_token'      => 'access_e2e_platform_initial',
+				'refresh_token'     => (string) $data['refreshToken'],
+				'expires_in'        => 3600,
+				'scope'             => 'payments.read',
+				'organization_id'   => 'org_e2e_refresh',
+				'organization_name' => 'E2E Organization',
+				'testmode'          => 1,
+				'site_data'         => array(
+					'site_id'      => (string) $data['siteId'],
+					'site_name'    => (string) ( $data['siteName'] ?? '' ),
+					'site_url'     => (string) ( $data['siteUrl'] ?? '' ),
+					'return_url'   => 'https://client.example.test/wp-admin/admin.php?page=fair-payments-connector-settings',
+					'client_state' => 'client-state-e2e',
+				),
+				'timestamp'         => time(),
 			),
+			600
+		);
+		// WP-CLI runs as no user, like the anonymous profile selection POST.
+		$result = array(
+			'session_token' => $session_token,
+			'nonce'         => wp_create_nonce( 'profile_selection_' . $session_token ),
 		);
 		break;
 

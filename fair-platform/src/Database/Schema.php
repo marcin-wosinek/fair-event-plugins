@@ -18,7 +18,7 @@ class Schema {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.1.0';
+	const DB_VERSION = '1.2.0';
 
 	/**
 	 * Create database tables
@@ -45,11 +45,13 @@ class Schema {
 			profile_created BOOLEAN DEFAULT 0,
 			connected_at DATETIME NOT NULL,
 			last_token_refresh DATETIME,
+			refresh_token_fingerprint CHAR(64) NULL,
 			ip_address VARCHAR(45),
 			user_agent TEXT,
 			PRIMARY KEY  (id),
 			KEY idx_site_id (site_id),
 			KEY idx_organization (mollie_organization_id),
+			KEY idx_refresh_token_fingerprint (refresh_token_fingerprint),
 			KEY idx_status (status),
 			KEY idx_connected_at (connected_at)
 		) {$charset_collate};";
