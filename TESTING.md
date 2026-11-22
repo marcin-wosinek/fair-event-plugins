@@ -377,11 +377,26 @@ release, and changing it changes the CI image cache key
 (`scripts/wp-env-images.mjs`), so a new pin is really tested. Check what a
 site runs with `npx wp-env run tests-cli wp core version` (or `cli`).
 
-The pin does not stop wp-env asking WordPress.org for the latest release:
-`@wordpress/env` 12.x resolves its built-in default `core: null` on every
-`wp-env start` and `wp-env run`, before the pin overrides it, so a dropped
-stable-check request can still fail a setup command. Removing that lookup is
-the open part of #2393.
+**No WordPress.org lookup.** `@wordpress/env` 12.x resolves its built-in
+default `core: null` on every `wp-env start` and `wp-env run`, before the pin
+overrides it, which costs a stable-check request that a dropped connection
+turns into a failed setup command. The test runners (`scripts/api-test-runner.mjs`,
+so `test:api:local` and `test:e2e:local` too, and
+`scripts/performance-runner.mjs`) preload `scripts/wp-env-pinned-core.cjs`
+through `NODE_OPTIONS` for every child process they start. It acts only
+inside the wp-env process, so the `wp-env` commands specs and helpers start
+are covered, while npm, npx and Playwright are untouched. It replaces wp-env's
+latest-release lookup with the pinned version when the effective root `core`
+(`WP_ENV_CORE`, then `.wp-env.override.json`, then `.wp-env.json`) is an exact
+`WordPress/WordPress#<version>`. Without an exact pin, wp-env keeps its own
+lookup. CI image preparation (`createBuildPlan()` in
+`scripts/wp-env-image-adapter.cjs`) installs the same patch in-process. A bare
+`npx wp-env …` in a terminal still makes the lookup; add the shim yourself
+with `NODE_OPTIONS=--require=./scripts/wp-env-pinned-core.cjs` if you need it.
+The shim supports the same wp-env major as the image adapter and fails with
+`UnsupportedWpEnvError` when that changes, so a wp-env major upgrade must
+update both. Delete it once wp-env resolves `core` only after merging the
+configuration.
 
 **Updating the pin.** The `Update WordPress pin` workflow
 (`.github/workflows/update-wordpress-pin.yml`) runs daily and compares the pin
