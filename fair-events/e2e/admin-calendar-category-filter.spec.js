@@ -1,8 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { timingFields } from '../../e2e/support/event-timing.js';
-
-const WP_ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
-const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
+import {
+	CALENDAR_PATH,
+	apiFetch,
+	calendarFixtures,
+	openCalendar,
+	searchParam,
+} from './support/admin-calendar.js';
 
 /**
  * Verifies the admin calendar's category filter (#1850): selecting and
@@ -11,36 +14,6 @@ const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
  * actions keep working on a filtered view.
  */
 
-async function login( page ) {
-	await page.goto( '/wp-admin' );
-	if ( page.url().includes( 'wp-login.php' ) ) {
-		await page.fill( '#user_login', WP_ADMIN_USER );
-		await page.fill( '#user_pass', WP_ADMIN_PASS );
-		await page.click( '#wp-submit' );
-	}
-	await page.waitForSelector( '#wpadminbar' );
-}
-
-async function apiFetch( page, options ) {
-	const result = await page.evaluate( async ( opts ) => {
-		try {
-			// eslint-disable-next-line no-undef
-			return { ok: true, data: await wp.apiFetch( opts ) };
-		} catch ( error ) {
-			return { ok: false, error: error?.message };
-		}
-	}, options );
-	if ( ! result.ok ) {
-		throw new Error( result.error );
-	}
-	return result.data;
-}
-
-function searchParam( page, name ) {
-	return new URL( page.url() ).searchParams.get( name );
-}
-
-const CALENDAR_PATH = '/wp-admin/admin.php?page=fair-events-calendar';
 // A month far from any fixture data other specs create.
 const MONTH = '2036-03';
 const NEXT_MONTH = '2036-04';
@@ -51,24 +24,21 @@ test.describe( 'Admin calendar — category filter', () => {
 	} ) => {
 		test.setTimeout( 90_000 );
 
-		await login( page );
-		await page.goto( CALENDAR_PATH );
-		await page.waitForFunction( () => window.wp?.apiFetch );
+		await openCalendar( page );
 
 		const suffix = Date.now();
-		const created = { categories: [], eventDates: [] };
+		const fixtures = calendarFixtures( page );
 
 		try {
-			for ( const name of [ 'Music', 'Sports', 'Empty' ] ) {
-				created.categories.push(
-					await apiFetch( page, {
-						path: '/wp/v2/categories',
-						method: 'POST',
-						data: { name: `${ name } filter ${ suffix }` },
-					} )
-				);
-			}
-			const [ music, sports, empty ] = created.categories;
+			const music = await fixtures.createCategory(
+				`Music filter ${ suffix }`
+			);
+			const sports = await fixtures.createCategory(
+				`Sports filter ${ suffix }`
+			);
+			const empty = await fixtures.createCategory(
+				`Empty filter ${ suffix }`
+			);
 
 			const eventFixtures = [
 				[ `Concert ${ suffix }`, '05', [ music.id ] ],
@@ -78,20 +48,11 @@ test.describe( 'Admin calendar — category filter', () => {
 				[ `April concert ${ suffix }`, '04', [ music.id ], NEXT_MONTH ],
 			];
 			for ( const [ title, day, categoryIds, month ] of eventFixtures ) {
-				created.eventDates.push(
-					await apiFetch( page, {
-						path: '/fair-events/v1/event-dates',
-						method: 'POST',
-						data: {
-							title,
-							...timingFields(
-								`${ month || MONTH }-${ day } 10:00:00`,
-								`${ month || MONTH }-${ day } 12:00:00`
-							),
-							link_type: 'none',
-							categories: categoryIds,
-						},
-					} )
+				await fixtures.createEventDate(
+					title,
+					`${ month || MONTH }-${ day } 10:00:00`,
+					`${ month || MONTH }-${ day } 12:00:00`,
+					categoryIds
 				);
 			}
 
@@ -199,9 +160,6 @@ test.describe( 'Admin calendar — category filter', () => {
 				path: `/wp/v2/categories/${ empty.id }?force=true`,
 				method: 'DELETE',
 			} );
-			created.categories = created.categories.filter(
-				( category ) => category.id !== empty.id
-			);
 			await page.goto(
 				`${ CALENDAR_PATH }&month=${ MONTH }&category=${ empty.id }`
 			);
@@ -212,18 +170,8 @@ test.describe( 'Admin calendar — category filter', () => {
 				.toBeNull();
 			expect( searchParam( page, 'month' ) ).toBe( MONTH );
 		} finally {
-			for ( const eventDate of created.eventDates ) {
-				await apiFetch( page, {
-					path: `/fair-events/v1/event-dates/${ eventDate.id }`,
-					method: 'DELETE',
-				} ).catch( () => {} );
-			}
-			for ( const category of created.categories ) {
-				await apiFetch( page, {
-					path: `/wp/v2/categories/${ category.id }?force=true`,
-					method: 'DELETE',
-				} ).catch( () => {} );
-			}
+			// Already-deleted fixtures (the Empty category) are skipped.
+			await fixtures.cleanup();
 		}
 	} );
 } );
