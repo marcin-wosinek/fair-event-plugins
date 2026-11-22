@@ -7,8 +7,6 @@
 
 namespace FairEvents\Notifications;
 
-use FairEvents\Core\Cron;
-
 defined( 'WPINC' ) || die;
 
 /**
@@ -93,23 +91,17 @@ class BulkEmailDispatcher {
 	public static function init() {
 		add_action( self::HOOK, array( self::class, 'handle' ), 10, 2 );
 
-		$active = BulkEmailAdapter::ACTIVE === ( new BulkEmailAdapter() )->availability();
+		$active   = BulkEmailAdapter::ACTIVE === ( new BulkEmailAdapter() )->availability();
+		$schedule = self::schedule();
 		foreach ( Configurations::all( Configurations::BULK_EMAIL ) as $configuration ) {
 			$id = $configuration['id'];
 			if ( ! $active ) {
 				if ( get_option( Configurations::option( $id, 'next_run' ), null ) ) {
-					self::unschedule( $id );
+					$schedule->unschedule( $id );
 				}
 				continue;
 			}
-			$settings = BulkEmailSettings::stored( $id );
-			if ( $settings['enabled'] && ! self::next_run( $id ) ) {
-				// Always the next future moment: a send missed while a plugin was
-				// inactive or being migrated is never replayed.
-				self::schedule_next( $id, $settings, self::now() );
-				// This request may have listed a configuration deleted meanwhile.
-				ScheduledSends::drop_if_deleted( self::HOOK, $id, Configurations::BULK_EMAIL );
-			}
+			$schedule->ensure( $id, BulkEmailSettings::stored( $id ) );
 		}
 	}
 
@@ -121,23 +113,15 @@ class BulkEmailDispatcher {
 	 * @return void
 	 */
 	public static function handle( $send_week, $config_id = '' ) {
-		$config_id = '' === (string) $config_id ? Configurations::legacy_id( Configurations::BULK_EMAIL ) : (string) $config_id;
+		$schedule  = self::schedule();
+		$config_id = $schedule->config_id( $config_id );
 		if ( ! Configurations::exists( $config_id, Configurations::BULK_EMAIL ) ) {
 			return;
 		}
 		$settings = BulkEmailSettings::get( $config_id );
 		$now      = self::now();
 
-		// Schedule the following send first, so a failure below never stops
-		// the weekly cycle.
-		if ( $settings['enabled'] ) {
-			self::schedule_next( $config_id, $settings, $now );
-		}
-		// A deletion that finished after the check above must not leave the
-		// following send queued, nor start this one. From here on the send
-		// runs to the end and records its outcome even if the notification is
-		// deleted meanwhile.
-		if ( ScheduledSends::drop_if_deleted( self::HOOK, $config_id, Configurations::BULK_EMAIL ) ) {
+		if ( ! $schedule->advance( $config_id, $settings, $now ) ) {
 			return;
 		}
 
@@ -152,17 +136,7 @@ class BulkEmailDispatcher {
 	 * @return void
 	 */
 	public static function reschedule( $config_id, array $settings ) {
-		$next = self::next_run( $config_id );
-		if ( $settings['enabled'] && $next && $next['timestamp'] <= time() ) {
-			// A due send is waiting for WP-Cron. Keep it: when it runs, it schedules the
-			// following send from the new settings.
-			return;
-		}
-
-		self::unschedule( $config_id );
-		if ( $settings['enabled'] ) {
-			self::schedule_next( $config_id, $settings, self::now() );
-		}
+		self::schedule()->reschedule( $config_id, $settings );
 	}
 
 	/**
@@ -172,8 +146,7 @@ class BulkEmailDispatcher {
 	 * @return void
 	 */
 	public static function unschedule( $config_id ) {
-		ScheduledSends::clear( self::HOOK, $config_id );
-		delete_option( Configurations::option( $config_id, 'next_run' ) );
+		self::schedule()->unschedule( $config_id );
 	}
 
 	/**
@@ -182,10 +155,7 @@ class BulkEmailDispatcher {
 	 * @return void
 	 */
 	public static function unschedule_all() {
-		wp_unschedule_hook( self::HOOK );
-		foreach ( Configurations::all( Configurations::BULK_EMAIL ) as $configuration ) {
-			delete_option( Configurations::option( $configuration['id'], 'next_run' ) );
-		}
+		self::schedule()->unschedule_all();
 	}
 
 	/**
@@ -195,18 +165,7 @@ class BulkEmailDispatcher {
 	 * @return array{timestamp: int, send_week: string}|null
 	 */
 	public static function next_run( $config_id ) {
-		$next = get_option( Configurations::option( $config_id, 'next_run' ), null );
-		if ( ! is_array( $next ) || empty( $next['send_week'] ) ) {
-			return null;
-		}
-		$timestamp = wp_next_scheduled( self::HOOK, array( $next['send_week'], $config_id ) );
-
-		return $timestamp
-			? array(
-				'timestamp' => (int) $timestamp,
-				'send_week' => (string) $next['send_week'],
-			)
-			: null;
+		return self::schedule()->next_run( $config_id );
 	}
 
 	/**
@@ -216,7 +175,7 @@ class BulkEmailDispatcher {
 	 * @return string
 	 */
 	public static function last_sent_week( $config_id ) {
-		return (string) get_option( Configurations::option( $config_id, 'last_sent_week' ), '' );
+		return WeeklySendSchedule::last_sent_week( $config_id );
 	}
 
 	/**
@@ -228,41 +187,16 @@ class BulkEmailDispatcher {
 	 * @return \DateTimeImmutable
 	 */
 	public static function next_due( array $settings, \DateTimeImmutable $after, $last_sent ) {
-		$due = WeekSchedule::next_due( $after, $settings['day_of_week'], $settings['time_of_day'] );
-		if ( '' !== $last_sent && self::iso_week( $due ) === $last_sent ) {
-			$due = WeekSchedule::next_due( $due, $settings['day_of_week'], $settings['time_of_day'] );
-		}
-
-		return $due;
+		return WeeklySendSchedule::next_due( $settings, $after, $last_sent );
 	}
 
 	/**
-	 * Schedule a configuration's first send after a moment.
+	 * The type's send schedule.
 	 *
-	 * @param string             $config_id Configuration ID.
-	 * @param array              $settings  Its settings.
-	 * @param \DateTimeImmutable $after     Reference moment, in the site timezone.
-	 * @return bool Whether the send is scheduled. On failure no next send is
-	 *              recorded, so the next request's {@see self::init()} tries again.
+	 * @return WeeklySendSchedule
 	 */
-	private static function schedule_next( $config_id, array $settings, \DateTimeImmutable $after ) {
-		$due  = self::next_due( $settings, $after, self::last_sent_week( $config_id ) );
-		$week = self::iso_week( $due );
-		$args = array( $week, $config_id );
-
-		if ( true !== Cron::ensure_single( $due->getTimestamp(), self::HOOK, $args ) ) {
-			delete_option( Configurations::option( $config_id, 'next_run' ) );
-			return false;
-		}
-		update_option(
-			Configurations::option( $config_id, 'next_run' ),
-			array(
-				'timestamp' => $due->getTimestamp(),
-				'send_week' => $week,
-			),
-			false
-		);
-		return true;
+	private static function schedule() {
+		return new WeeklySendSchedule( self::HOOK, Configurations::BULK_EMAIL );
 	}
 
 	/**
@@ -300,7 +234,7 @@ class BulkEmailDispatcher {
 			return null;
 		}
 		$recorder->claimed();
-		update_option( Configurations::option( $config_id, 'last_sent_week' ), $send_week, false );
+		WeeklySendSchedule::mark_sent( $config_id, $send_week );
 
 		$result = array(
 			'state'   => 'uncertain',
@@ -400,7 +334,7 @@ class BulkEmailDispatcher {
 	 * @return string
 	 */
 	public static function iso_week( \DateTimeInterface $moment ) {
-		return $moment->format( 'o' ) . '-W' . $moment->format( 'W' );
+		return WeeklySendSchedule::iso_week( $moment );
 	}
 
 	/**
@@ -410,13 +344,7 @@ class BulkEmailDispatcher {
 	 * @return string|null 'Y-m-d', or null for an invalid identifier.
 	 */
 	public static function week_start( $iso_week ) {
-		if ( ! preg_match( '/^(\d{4})-W(\d{2})$/', (string) $iso_week, $matches ) || (int) $matches[2] < 1 || (int) $matches[2] > 53 ) {
-			return null;
-		}
-
-		return ( new \DateTimeImmutable( 'now', new \DateTimeZone( 'UTC' ) ) )
-			->setISODate( (int) $matches[1], (int) $matches[2] )
-			->format( 'Y-m-d' );
+		return WeeklySendSchedule::week_start( $iso_week );
 	}
 
 	/**
@@ -468,7 +396,7 @@ class BulkEmailDispatcher {
 	 * @return \DateTimeImmutable
 	 */
 	public static function now() {
-		return new \DateTimeImmutable( 'now', wp_timezone() );
+		return WeeklySendSchedule::now();
 	}
 
 	/**
