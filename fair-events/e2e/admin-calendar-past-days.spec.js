@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { timingFields } from '../../e2e/support/event-timing.js';
-
-const WP_ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
-const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
+import {
+	CALENDAR_PATH,
+	calendarFixtures,
+	openCalendar,
+	searchParam,
+} from './support/admin-calendar.js';
 
 /**
  * Verifies the mobile admin calendar's collapsed past days (#2446): earlier
@@ -18,36 +20,6 @@ const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
 
 test.use( { timezoneId: 'America/Los_Angeles' } );
 
-async function login( page ) {
-	await page.goto( '/wp-admin' );
-	if ( page.url().includes( 'wp-login.php' ) ) {
-		await page.fill( '#user_login', WP_ADMIN_USER );
-		await page.fill( '#user_pass', WP_ADMIN_PASS );
-		await page.click( '#wp-submit' );
-	}
-	await page.waitForSelector( '#wpadminbar' );
-}
-
-async function apiFetch( page, options ) {
-	const result = await page.evaluate( async ( opts ) => {
-		try {
-			// eslint-disable-next-line no-undef
-			return { ok: true, data: await wp.apiFetch( opts ) };
-		} catch ( error ) {
-			return { ok: false, error: error?.message };
-		}
-	}, options );
-	if ( ! result.ok ) {
-		throw new Error( result.error );
-	}
-	return result.data;
-}
-
-function searchParam( page, name ) {
-	return new URL( page.url() ).searchParams.get( name );
-}
-
-const CALENDAR_PATH = '/wp-admin/admin.php?page=fair-events-calendar';
 // A month far from any fixture data other specs create.
 const MONTH = '2038-09';
 const NEXT_MONTH = '2038-10';
@@ -62,24 +34,18 @@ test.describe( 'Admin calendar — collapsed past days on mobile', () => {
 
 		await page.clock.setFixedTime( NOW );
 		await page.setViewportSize( { width: 375, height: 812 } );
-		await login( page );
-		await page.goto( CALENDAR_PATH );
-		await page.waitForFunction( () => window.wp?.apiFetch );
+		await openCalendar( page );
 
 		const suffix = Date.now();
-		const created = { categories: [], eventDates: [] };
+		const fixtures = calendarFixtures( page );
 
 		try {
-			for ( const name of [ 'Music', 'Sports' ] ) {
-				created.categories.push(
-					await apiFetch( page, {
-						path: '/wp/v2/categories',
-						method: 'POST',
-						data: { name: `${ name } past ${ suffix }` },
-					} )
-				);
-			}
-			const [ music, sports ] = created.categories;
+			const music = await fixtures.createCategory(
+				`Music past ${ suffix }`
+			);
+			const sports = await fixtures.createCategory(
+				`Sports past ${ suffix }`
+			);
 
 			const eventFixtures = [
 				[ `First ${ suffix }`, `${ MONTH }-01 10:00:00`, [ music.id ] ],
@@ -101,17 +67,11 @@ test.describe( 'Admin calendar — collapsed past days on mobile', () => {
 				[ `October ${ suffix }`, `${ NEXT_MONTH }-02 10:00:00`, [] ],
 			];
 			for ( const [ title, start, categoryIds ] of eventFixtures ) {
-				created.eventDates.push(
-					await apiFetch( page, {
-						path: '/fair-events/v1/event-dates',
-						method: 'POST',
-						data: {
-							title,
-							...timingFields( start ),
-							link_type: 'none',
-							categories: categoryIds,
-						},
-					} )
+				await fixtures.createEventDate(
+					title,
+					start,
+					null,
+					categoryIds
 				);
 			}
 
@@ -211,18 +171,7 @@ test.describe( 'Admin calendar — collapsed past days on mobile', () => {
 			await expect( summary ).toBeVisible();
 			await expect( eventText( `First ${ suffix }` ) ).toBeHidden();
 		} finally {
-			for ( const eventDate of created.eventDates ) {
-				await apiFetch( page, {
-					path: `/fair-events/v1/event-dates/${ eventDate.id }`,
-					method: 'DELETE',
-				} ).catch( () => {} );
-			}
-			for ( const category of created.categories ) {
-				await apiFetch( page, {
-					path: `/wp/v2/categories/${ category.id }?force=true`,
-					method: 'DELETE',
-				} ).catch( () => {} );
-			}
+			await fixtures.cleanup();
 		}
 	} );
 } );
