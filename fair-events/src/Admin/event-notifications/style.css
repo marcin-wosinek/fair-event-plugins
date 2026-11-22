@@ -292,3 +292,13 @@
 	.components-base-control__help {
 	color: #b32d2e;
 }
+
+/* Outcomes are sentences: let them wrap instead of overflowing on phones. */
+.fair-events-notifications__sale-alerts .fair-admin-table__status {
+	align-items: baseline;
+	white-space: normal;
+}
+
+.fair-events-notifications__sale-alerts .components-notice {
+	margin: 0 0 12px;
+}
