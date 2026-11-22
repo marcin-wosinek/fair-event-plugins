@@ -18,7 +18,11 @@ import { fileURLToPath } from 'node:url';
 
 import { chromium } from '@playwright/test';
 
-import { createProcessExecutor, resolveTestsPort } from './api-test-runner.mjs';
+import {
+	createProcessExecutor,
+	resolveTestsPort,
+	runnerEnvironment,
+} from './api-test-runner.mjs';
 import { preparedStartEnvironment } from './wp-env-images.mjs';
 
 const SIGNAL_EXIT_CODES = { SIGINT: 130, SIGTERM: 143 };
@@ -1404,11 +1408,10 @@ async function main() {
 	const plugins = await loadPluginCatalog(rootDirectory);
 	const matrix = buildComparisonMatrix(plugins);
 	const baseUrl = `http://localhost:${await resolveTestsPort(rootDirectory)}`;
-	const executor = createProcessExecutor({
-		cwd: rootDirectory,
-		env: { ...process.env, CI: '1' },
-	});
-	const startEnvironment = () => preparedStartEnvironment(process.env);
+	const env = runnerEnvironment(process.env, { CI: '1' });
+	const executor = createProcessExecutor({ cwd: rootDirectory, env });
+	// From `env`, so the image adapter joins the shim in NODE_OPTIONS.
+	const startEnvironment = () => preparedStartEnvironment(env);
 
 	if (options.eventsListScaling) {
 		const outcome = await runEventsListScaling({

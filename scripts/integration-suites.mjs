@@ -51,6 +51,8 @@ const SHARED = [
 	'scripts/wp-env-images.mjs',
 	'scripts/wp-env-image-adapter.cjs',
 	'scripts/__tests__/wp-env-images.test.mjs',
+	'scripts/wp-env-pinned-core.cjs',
+	'scripts/__tests__/wp-env-pinned-core.test.mjs',
 	'.github/actions/prepare-wp-env/**',
 	'scripts/php-diagnostics.mjs',
 	'scripts/__tests__/php-diagnostics.test.mjs',

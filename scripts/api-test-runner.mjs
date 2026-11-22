@@ -2,6 +2,7 @@
 /* eslint-disable no-console */
 
 import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
 import {
 	access,
 	appendFile,
@@ -36,6 +37,26 @@ import {
 import { preparedStartEnvironment } from './wp-env-images.mjs';
 
 export { parseShard };
+
+const { withPinnedCoreNodeOptions } = createRequire(import.meta.url)(
+	'./wp-env-pinned-core.cjs'
+);
+
+/**
+ * The environment every child process of a runner gets: the given variables
+ * plus the pinned-core preload in NODE_OPTIONS, so each `wp-env` command a
+ * runner, spec or helper starts skips the WordPress.org latest-release
+ * lookup when the configuration pins an exact release (#2393).
+ *
+ * @param {Object} baseEnv Environment to start from (process.env).
+ * @param {Object} [extra] Variables to add or override.
+ * @return {Object} The child-process environment.
+ */
+export function runnerEnvironment(baseEnv, extra = {}) {
+	const env = { ...baseEnv, ...extra };
+	env.NODE_OPTIONS = withPinnedCoreNodeOptions(env.NODE_OPTIONS);
+	return env;
+}
 
 const SIGNAL_EXIT_CODES = { SIGINT: 130, SIGTERM: 143 };
 const ROOT_DIRECTORY = fileURLToPath(new URL('..', import.meta.url)).replace(
@@ -864,14 +885,13 @@ async function main() {
 	const rootDirectory = ROOT_DIRECTORY;
 	const workspaceConfig = await loadWorkspaces(rootDirectory);
 	const testsPort = await resolveTestsPort(rootDirectory);
-	const env = {
-		...process.env,
+	const env = runnerEnvironment(process.env, {
 		CI: '1',
 		WP_BASE_URL: `http://localhost:${testsPort}`,
 		WP_ADMIN_USER: 'admin',
 		WP_ADMIN_PASS: 'password',
 		WP_ADMIN_PASSWORD: 'password',
-	};
+	});
 	if (options.resultsDir) {
 		options.resultsDir = resolve(rootDirectory, options.resultsDir);
 		await mkdir(options.resultsDir, { recursive: true });
@@ -881,7 +901,8 @@ async function main() {
 		options,
 		executor: createProcessExecutor({ cwd: rootDirectory, env }),
 		workspaceConfig,
-		startEnvironment: () => preparedStartEnvironment(process.env),
+		// From `env`, so the image adapter joins the shim in NODE_OPTIONS.
+		startEnvironment: () => preparedStartEnvironment(env),
 		diagnostics: {
 			baseUrl: env.WP_BASE_URL,
 			writeReport: async ({ report, summary, logs }) => {

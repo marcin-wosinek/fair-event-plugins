@@ -6,11 +6,15 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 import {
+	createProcessExecutor,
 	formatTimings,
 	parseArguments,
 	resolveTestsPort,
 	runApiTests,
+	runnerEnvironment,
 } from '../api-test-runner.mjs';
+import { ADAPTER_PATH, preparedStartEnvironment } from '../wp-env-images.mjs';
+import { SHIM_PATH } from '../wp-env-pinned-core.cjs';
 import { playwrightArguments } from '../workspace-e2e-runner.mjs';
 
 const workspaceConfig = {
@@ -972,4 +976,47 @@ test('a failed environment preparation starts nothing and runs no tests', async 
 			'Environment preparation failed during build: curl: (55). No tests were run.'
 		)
 	);
+});
+
+test('every runner child process gets the pinned-core shim, keeping NODE_OPTIONS', async () => {
+	const shim = `--require=${SHIM_PATH}`;
+	const env = runnerEnvironment(
+		{ PATH: process.env.PATH, NODE_OPTIONS: '--max-old-space-size=4096' },
+		{ CI: '1' }
+	);
+	assert.equal(env.CI, '1');
+	assert.equal(env.NODE_OPTIONS, `--max-old-space-size=4096 ${shim}`);
+	assert.equal(runnerEnvironment(env).NODE_OPTIONS, env.NODE_OPTIONS);
+
+	// Plain steps and steps with their own variables both inherit it.
+	const executor = createProcessExecutor({ cwd: process.cwd(), env });
+	const print = [
+		'-e',
+		'process.stdout.write(process.env.NODE_OPTIONS ?? "")',
+	];
+	for (const options of [
+		{ capture: true },
+		{ capture: true, env: { PLAYWRIGHT_JSON_OUTPUT_FILE: 'x.json' } },
+	]) {
+		const result = await executor.run(process.execPath, print, options);
+		assert.equal(result.code, 0);
+		assert.equal(result.stdout, env.NODE_OPTIONS);
+	}
+
+	// In CI, the prepared start loads the image adapter alongside the shim.
+	const directory = await mkdtemp(join(tmpdir(), 'runner-env-'));
+	try {
+		const resultPath = join(directory, 'result.json');
+		await writeFile(resultPath, JSON.stringify({ status: 'ready' }));
+		const prepared = await preparedStartEnvironment({
+			...env,
+			FAIR_WP_ENV_PREPARED: resultPath,
+		});
+		assert.equal(
+			prepared.env.NODE_OPTIONS,
+			`--max-old-space-size=4096 ${shim} --require=${ADAPTER_PATH}`
+		);
+	} finally {
+		await rm(directory, { recursive: true, force: true });
+	}
 });

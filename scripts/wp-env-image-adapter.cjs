@@ -40,9 +40,12 @@ const DOCKERFILES = {
 };
 
 class UnsupportedWpEnvError extends Error {
-	constructor(message) {
+	constructor(
+		message,
+		adapter = 'CI image adapter (scripts/wp-env-image-adapter.cjs)'
+	) {
 		super(
-			`${message} The CI image adapter (scripts/wp-env-image-adapter.cjs) supports @wordpress/env ${SUPPORTED_MAJOR_VERSIONS.join(
+			`${message} The ${adapter} supports @wordpress/env ${SUPPORTED_MAJOR_VERSIONS.join(
 				', '
 			)}.x; update it for the installed version.`
 		);
@@ -95,6 +98,9 @@ function locateWpEnv(root) {
 			directory,
 			'lib/runtime/docker/docker-config.js'
 		),
+		// Used by scripts/wp-env-pinned-core.cjs.
+		wordpress: path.join(directory, 'lib/wordpress.js'),
+		parseConfig: path.join(directory, 'lib/config/parse-config.js'),
 	};
 	for (const [name, file] of Object.entries(modules)) {
 		if (!fs.existsSync(file)) {
@@ -246,6 +252,13 @@ const QUIET_SPINNER = {
  */
 async function createBuildPlan(root, resolveFrom = root) {
 	const wpEnv = locateWpEnv(resolveFrom);
+	// Before wp-env's config module loads, so an exact pin skips the
+	// WordPress.org latest-release lookup (#2393). Required here because the
+	// shim requires this module.
+	require('./wp-env-pinned-core.cjs').installPinnedCore({
+		root,
+		resolveFrom,
+	});
 	const { loadConfig } = require(wpEnv.modules.config);
 	const buildDockerComposeConfig = require(wpEnv.modules.buildCompose);
 	const dockerConfig = require(wpEnv.modules.dockerConfig);
