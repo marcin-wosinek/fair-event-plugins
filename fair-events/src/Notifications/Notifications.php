@@ -59,6 +59,7 @@ class Notifications {
 				( new \FairEvents\API\EventNotificationsController() )->register_routes();
 				( new \FairEvents\API\NotificationHistoryController() )->register_routes();
 				( new \FairEvents\API\SalesSummaryController() )->register_routes();
+				( new \FairEvents\API\SaleAlertsController() )->register_routes();
 			}
 		);
 
@@ -97,6 +98,10 @@ class Notifications {
 		// configuration records to migrate.
 		SalesSummaryDispatcher::init();
 
+		// Ticket sale alerts (#2448) are sent by this plugin alone, with the
+		// Telegram connector's bot token, and start off.
+		SaleAlertDispatcher::init();
+
 		// Whatever channels are on: history is kept for every type.
 		add_action( self::HISTORY_CLEANUP_HOOK, array( self::class, 'clean_up_history' ) );
 		Cron::ensure_recurring( self::HISTORY_CLEANUP_HOOK, 'daily', time() + HOUR_IN_SECONDS );
@@ -127,6 +132,7 @@ class Notifications {
 		IndividualEmailDispatcher::unschedule_all();
 		InstagramDispatcher::unschedule_all();
 		SalesSummaryDispatcher::unschedule_all();
+		SaleAlertDispatcher::unschedule_all();
 		wp_unschedule_hook( self::HISTORY_CLEANUP_HOOK );
 	}
 }

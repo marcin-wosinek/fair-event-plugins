@@ -20,6 +20,7 @@ import EventNotifications, { mergeRead } from '../EventNotifications.js';
 import { tokenStatus } from '../TelegramChannel.js';
 import { dayStartUtc } from '../historyFormat.js';
 import { TelegramMessage } from '../TelegramPreview.js';
+import { SALE_ALERTS_PATH } from '../SaleAlertsSection.js';
 
 jest.mock( '@wordpress/api-fetch' );
 
@@ -206,6 +207,29 @@ function delivery( overrides = {} ) {
 }
 
 /**
+ * Ticket sale alerts as a site that never turned them on reads them.
+ *
+ * @return {Object} Sale alerts payload.
+ */
+function saleAlertsPayload() {
+	return {
+		enabled: false,
+		organizers: [
+			{
+				id: 'default',
+				name: 'Fair Site',
+				sitewide: true,
+				settings: { enabled: false, chat_id: '' },
+			},
+		],
+		organizer_resolution_available: false,
+		credential_problem: '',
+		connectors_url: '/wp-admin/options-connectors.php',
+		recent: [],
+	};
+}
+
+/**
  * Answers each request by its method and path without the query: a
  * handler receives the request, and `query( options )` reads its query.
  * History routes are read without parsing; unhandled ones are empty.
@@ -228,6 +252,10 @@ function mockApi( initial, handlers = {} ) {
 		}
 		if ( false === options.parse ) {
 			return historyResponse( [] );
+		}
+		// The ticket sale alerts section reads its own settings.
+		if ( SALE_ALERTS_PATH === path ) {
+			return Promise.resolve( saleAlertsPayload() );
 		}
 		return Promise.resolve( initial );
 	} );
@@ -759,8 +787,8 @@ describe( 'EventNotifications', () => {
 	} );
 
 	it( 'reports a failed load and loads again on request', async () => {
+		mockApi( payload() );
 		apiFetch.mockRejectedValueOnce( { message: 'Sorry, not allowed.' } );
-		apiFetch.mockResolvedValue( payload() );
 		render( <EventNotifications sourcesUrl={ null } /> );
 
 		// The notice text is also announced through the a11y speak region.

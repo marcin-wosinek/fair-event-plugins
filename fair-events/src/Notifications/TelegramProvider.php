@@ -105,6 +105,45 @@ class TelegramProvider implements Provider {
 			$payload['entities'] = array_values( $message['entities'] );
 		}
 
+		return $this->post( $payload );
+	}
+
+	/**
+	 * Send one message formatted as Telegram HTML (parse_mode HTML). The
+	 * caller escapes every dynamic value; only the tags it writes itself
+	 * are markup.
+	 *
+	 * @param string $destination Chat ID or @channel username.
+	 * @param string $html        Telegram HTML.
+	 * @return array{state: string, code: string, message: string}
+	 */
+	public function send_html( $destination, $html ) {
+		return $this->post(
+			array(
+				'chat_id'              => $destination,
+				'text'                 => (string) $html,
+				'parse_mode'           => 'HTML',
+				'link_preview_options' => array( 'is_disabled' => true ),
+			)
+		);
+	}
+
+	/**
+	 * Why the credential in use can't send, if it can't.
+	 *
+	 * @return array{code: string, message: string}|null
+	 */
+	public function credential_problem() {
+		return $this->problem();
+	}
+
+	/**
+	 * Post a sendMessage payload and map Telegram's answer.
+	 *
+	 * @param array $payload sendMessage parameters.
+	 * @return array{state: string, code: string, message: string}
+	 */
+	private function post( array $payload ) {
 		// A missing or malformed token never reaches Telegram.
 		$problem = $this->problem();
 		if ( $problem ) {
