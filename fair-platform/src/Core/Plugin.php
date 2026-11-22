@@ -1043,11 +1043,17 @@ class Plugin {
 		$this->log_connection_attempt(
 			$site_data,
 			array(
-				'organization_id' => $session_data['organization_id'] ?? '',
-				'profile_id'      => $profile_id,
-				'testmode'        => $session_data['testmode'] ?? 0,
-				'scope'           => $session_data['scope'] ?? '',
-				'profile_created' => false,
+				'organization_id'           => $session_data['organization_id'] ?? '',
+				'profile_id'                => $profile_id,
+				'testmode'                  => $session_data['testmode'] ?? 0,
+				'scope'                     => $session_data['scope'] ?? '',
+				'profile_created'           => false,
+				// Binds this row to the credential the site receives, so its
+				// later refreshes are recorded here and nowhere else.
+				'refresh_token_fingerprint' => MollieOAuth::refresh_token_fingerprint(
+					$session_data['refresh_token'] ?? '',
+					$this->refresh_fingerprint_key()
+				),
 			),
 			'connected'
 		);
@@ -1197,6 +1203,8 @@ class Plugin {
 			);
 		}
 
+		$this->record_token_refresh( $refresh_token, $body );
+
 		// Return new access token, with the scope and rotated refresh token
 		// when Mollie supplied them.
 		wp_send_json_success(
@@ -1204,6 +1212,49 @@ class Plugin {
 				'data' => MollieOAuth::refresh_response_data( $body ),
 			)
 		);
+	}
+
+	/**
+	 * Server secret keying refresh token fingerprints.
+	 *
+	 * @return string
+	 */
+	private function refresh_fingerprint_key() {
+		return wp_salt( 'auth' );
+	}
+
+	/**
+	 * Record a successful Mollie exchange on the connection log row bound
+	 * to the refresh token, moving the binding to a rotated token.
+	 *
+	 * The exchange has already succeeded, so a logging failure must never
+	 * stop the site from receiving its new credential. Diagnostics name
+	 * neither the token nor its fingerprint.
+	 *
+	 * @param string $refresh_token Refresh token the site sent.
+	 * @param array  $body          Decoded, successful Mollie token response.
+	 * @return void
+	 */
+	private function record_token_refresh( $refresh_token, $body ) {
+		global $wpdb;
+
+		$suppressed = $wpdb->suppress_errors( true );
+		try {
+			$key         = $this->refresh_fingerprint_key();
+			$fingerprint = MollieOAuth::refresh_token_fingerprint( $refresh_token, $key );
+			if ( null !== $fingerprint ) {
+				( new ConnectionRepository() )->record_token_refresh(
+					$fingerprint,
+					MollieOAuth::rotated_refresh_token_fingerprint( $body, $refresh_token, $key ),
+					current_time( 'mysql' )
+				);
+			}
+		} catch ( \Throwable $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- operator diagnostic naming only the exception class.
+			error_log( 'Fair Platform could not record a Mollie token refresh in the connection logs: ' . get_class( $e ) );
+		} finally {
+			$wpdb->suppress_errors( $suppressed );
+		}
 	}
 
 	/**
@@ -1494,16 +1545,17 @@ class Plugin {
 		$repository = new ConnectionRepository();
 
 		$log_data = array(
-			'site_id'                => $site_data['site_id'] ?? '',
-			'site_name'              => $site_data['site_name'] ?? '',
-			'site_url'               => $site_data['site_url'] ?? '',
-			'mollie_organization_id' => $mollie_data['organization_id'] ?? '',
-			'mollie_profile_id'      => $mollie_data['profile_id'] ?? '',
-			'status'                 => $status,
-			'error_code'             => $error_code,
-			'error_message'          => $error_message,
-			'scope_granted'          => $mollie_data['scope'] ?? '',
-			'profile_created'        => $mollie_data['profile_created'] ?? false,
+			'site_id'                   => $site_data['site_id'] ?? '',
+			'site_name'                 => $site_data['site_name'] ?? '',
+			'site_url'                  => $site_data['site_url'] ?? '',
+			'mollie_organization_id'    => $mollie_data['organization_id'] ?? '',
+			'mollie_profile_id'         => $mollie_data['profile_id'] ?? '',
+			'status'                    => $status,
+			'error_code'                => $error_code,
+			'error_message'             => $error_message,
+			'scope_granted'             => $mollie_data['scope'] ?? '',
+			'profile_created'           => $mollie_data['profile_created'] ?? false,
+			'refresh_token_fingerprint' => $mollie_data['refresh_token_fingerprint'] ?? null,
 		);
 
 		$repository->log_connection( $log_data );

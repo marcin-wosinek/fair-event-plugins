@@ -10,7 +10,7 @@ namespace FairPlatform\Database;
 defined( 'ABSPATH' ) || die;
 
 /**
- * Listing, statistics, token refresh and cleanup for one connection log
+ * Listing, statistics and cleanup for one connection log
  * table. Each concrete repository names its table and its own statistics,
  * and keeps its own insertion defaults.
  */
@@ -19,6 +19,24 @@ abstract class AbstractConnectionRepository {
 	 * Columns a listing may be ordered by.
 	 */
 	private const ALLOWED_ORDERBY = array( 'id', 'site_name', 'status', 'connected_at' );
+
+	/**
+	 * Columns every connection log lists.
+	 */
+	private const SHARED_COLUMNS = array(
+		'id',
+		'site_id',
+		'site_name',
+		'site_url',
+		'status',
+		'error_code',
+		'error_message',
+		'scope_granted',
+		'connected_at',
+		'last_token_refresh',
+		'ip_address',
+		'user_agent',
+	);
 
 	/**
 	 * Table name
@@ -59,6 +77,15 @@ abstract class AbstractConnectionRepository {
 	 * @return array<string, string>
 	 */
 	abstract protected function get_distinct_statistics();
+
+	/**
+	 * Provider-specific columns a listing returns after the shared ones.
+	 * Columns left out, such as credential fingerprints, never leave the
+	 * repository.
+	 *
+	 * @return string[]
+	 */
+	abstract protected function get_listed_columns();
 
 	/**
 	 * Log a connection attempt
@@ -105,10 +132,13 @@ abstract class AbstractConnectionRepository {
 
 		$where_sql = implode( ' AND ', $where );
 
+		$columns    = array_merge( self::SHARED_COLUMNS, $this->get_listed_columns() );
+		$select_sql = implode( ', ', array_fill( 0, count( $columns ), '%i' ) );
+
 		$orderby = in_array( $args['orderby'], self::ALLOWED_ORDERBY, true ) ? $args['orderby'] : 'connected_at';
 		$order   = strtoupper( $args['order'] ) === 'ASC' ? 'ASC' : 'DESC';
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $where_sql holds fixed fragments with placeholders, $order is ASC or DESC.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $select_sql and $where_sql hold fixed fragments with placeholders, $order is ASC or DESC.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$total = $wpdb->get_var(
 			$wpdb->prepare(
@@ -120,11 +150,12 @@ abstract class AbstractConnectionRepository {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$items = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM %i
+				"SELECT {$select_sql} FROM %i
 				WHERE {$where_sql}
 				ORDER BY %i {$order}
 				LIMIT %d OFFSET %d",
 				array_merge(
+					$columns,
 					array( $this->table_name ),
 					$values,
 					array( $orderby, $args['per_page'], $offset )
@@ -140,25 +171,6 @@ abstract class AbstractConnectionRepository {
 			'page'        => $args['page'],
 			'per_page'    => $args['per_page'],
 			'total_pages' => ceil( $total / $args['per_page'] ),
-		);
-	}
-
-	/**
-	 * Update last token refresh timestamp
-	 *
-	 * @param string $site_id Site ID.
-	 * @return bool
-	 */
-	public function update_token_refresh( $site_id ) {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (bool) $wpdb->update(
-			$this->table_name,
-			array( 'last_token_refresh' => current_time( 'mysql' ) ),
-			array( 'site_id' => $site_id ),
-			array( '%s' ),
-			array( '%s' )
 		);
 	}
 

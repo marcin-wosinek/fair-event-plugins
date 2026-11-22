@@ -11,8 +11,9 @@ defined( 'ABSPATH' ) || die;
 
 /**
  * Side-effect-free pieces of the Mollie OAuth flow: which permissions are
- * requested, what a refresh hands back to the site, and where an
- * authorization error may be returned to.
+ * requested, what a refresh hands back to the site, how a refresh token
+ * is fingerprinted for the connection logs, and where an authorization
+ * error may be returned to.
  */
 class MollieOAuth {
 
@@ -76,6 +77,43 @@ class MollieOAuth {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Keyed fingerprint binding a refresh token to its connection log row.
+	 *
+	 * The token itself is never stored; without the server key the
+	 * fingerprint cannot be matched against a guessed or leaked token.
+	 *
+	 * @param mixed  $refresh_token Refresh token.
+	 * @param string $key           Server secret.
+	 * @return string|null 64 hex characters, or null without a usable token or key.
+	 */
+	public static function refresh_token_fingerprint( $refresh_token, $key ) {
+		if ( ! is_string( $refresh_token ) || '' === $refresh_token || ! is_string( $key ) || '' === $key ) {
+			return null;
+		}
+
+		return hash_hmac( 'sha256', $refresh_token, $key );
+	}
+
+	/**
+	 * The fingerprint a successful refresh leaves bound to the connection:
+	 * the rotated token's when Mollie issued a different one, otherwise null
+	 * so the existing binding is kept.
+	 *
+	 * @param array  $body          Decoded Mollie token response.
+	 * @param string $refresh_token Refresh token the site sent.
+	 * @param string $key           Server secret.
+	 * @return string|null
+	 */
+	public static function rotated_refresh_token_fingerprint( $body, $refresh_token, $key ) {
+		$data = self::refresh_response_data( $body );
+		if ( ! isset( $data['refresh_token'] ) || $data['refresh_token'] === $refresh_token ) {
+			return null;
+		}
+
+		return self::refresh_token_fingerprint( $data['refresh_token'], $key );
 	}
 
 	/**
