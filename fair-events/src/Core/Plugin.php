@@ -254,6 +254,16 @@ class Plugin {
 			);
 		}
 
+		// Campaign facts — registers `/fair-events/v1/event-dates/{id}/campaign-facts`,
+		// the occurrence and venue facts of an Event Content Studio snapshot.
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\CampaignFactsController();
+				$controller->register_routes();
+			}
+		);
+
 		// GetTickets controller — registers the public ticket purchase endpoint.
 		add_action(
 			'rest_api_init',

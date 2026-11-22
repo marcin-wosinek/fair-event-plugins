@@ -1541,6 +1541,77 @@ tab fair-events-experimental registers on Manage Event.
 -   **Lifecycle.** Entries are deleted with their event date, and copied by
     `EventTicketConfigurationCopier` with shifted dates and remapped options.
 
+### Campaign facts
+
+`GET fair-events/v1/event-dates/{id}/campaign-facts` (`edit_posts`; 401
+anonymous, 403 without the capability) returns the occurrence and venue
+facts of an Event Content Studio campaign-facts v1 snapshot (#2420). The
+reader is `FairEvents\Services\CampaignFacts::read()`, reusable by the
+complete snapshot read (#2424). Field names and meanings follow the
+[v1 mapping](https://github.com/marcin-wosinek/event-content-studio/blob/main/docs/campaign-facts.md):
+
+```json
+{
+	"eventDateId": 140,
+	"event": {
+		"title": "Rock & Roll",
+		"contentLanguage": null,
+		"status": "active",
+		"publicationStatus": "publish",
+		"attendanceMode": "in_person",
+		"timing": {
+			"timezone": "Europe/Madrid",
+			"allDay": false,
+			"startDate": "2026-12-20",
+			"endDate": "2026-12-20",
+			"startTime": "14:30:00",
+			"endTime": null
+		},
+		"venueId": "venue:7",
+		"urls": {
+			"event": "https://example.org/minifesti/?event_date=2026-12-20",
+			"booking": null
+		}
+	},
+	"venues": [
+		{
+			"id": "venue:7",
+			"sourceId": 7,
+			"name": "Example venue",
+			"address": null,
+			"coordinates": { "latitude": 39.4699, "longitude": -0.3763 },
+			"websiteUrl": null,
+			"instagramHandle": "example.venue",
+			"facebookPageUrl": null
+		}
+	]
+}
+```
+
+-   **Sources.** The selected occurrence's status and timing; title, venue,
+    attendance mode and publication status resolved through the series
+    master. The title is `get_display_title()` decoded to plain text. A
+    stored null attendance mode reads as `in_person`. `timezone` is
+    `wp_timezone_string()` (an IANA name or a `±HH:MM` offset).
+    `urls.event` is `get_event_page_url()`: the linked page, with
+    `?event_date=` for a generated occurrence, or null without one.
+-   **Always null for now.** `contentLanguage` and `urls.booking` have no
+    authoritative source and are never inferred.
+-   **Never exported.** The joining link, the external display URL and the
+    occurrence's free-text address.
+-   **Venues.** Zero or one entry, the one `venueId` references. Blank
+    optional fields are null, a leading `@` is removed from the Instagram
+    handle, and `coordinates` is null unless both stored values are numbers
+    in range (zero is valid).
+-   **Errors, never unknown values.** 404 `rest_event_date_not_found` for a
+    missing occurrence; 500 `fair_events_source_unavailable` for a failed
+    query, `fair_events_series_master_missing`, `fair_events_venue_missing`
+    or `fair_events_linked_page_missing` for a broken reference; 422 for a
+    required fact held in an unusable form (an empty title or venue name, an
+    unknown status or attendance mode, inconsistent timing, or a missing or
+    unresolvable timezone). The `*_checked` reads on `EventDates` and
+    `Venue` tell a missing row apart from a failed query.
+
 ## Related Documentation
 
 -   [REST_API_USAGE.md](./REST_API_USAGE.md) - Frontend implementation guide

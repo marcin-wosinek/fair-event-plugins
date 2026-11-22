@@ -123,6 +123,34 @@ class Venue {
 	}
 
 	/**
+	 * Get a venue by ID, telling a missing venue apart from a failed read.
+	 *
+	 * @param int $id Venue ID.
+	 * @return Venue|null|\WP_Error Venue, null when no venue exists, or an error.
+	 */
+	public static function get_by_id_checked( $id ) {
+		global $wpdb;
+
+		$result = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE id = %d LIMIT 1',
+				self::get_table_name(),
+				$id
+			)
+		);
+
+		if ( ! empty( $wpdb->last_error ) ) {
+			return new \WP_Error(
+				'fair_events_source_unavailable',
+				__( 'Venue data could not be read.', 'fair-events' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		return $result ? self::hydrate( $result ) : null;
+	}
+
+	/**
 	 * Get many venues by ID with one query.
 	 *
 	 * @param int[] $ids Venue IDs.
