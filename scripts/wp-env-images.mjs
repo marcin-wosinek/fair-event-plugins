@@ -53,6 +53,7 @@ export const KEY_FILES = [
 	'package-lock.json',
 	'scripts/wp-env-images.mjs',
 	'scripts/wp-env-image-adapter.cjs',
+	'scripts/wp-env-locate.cjs',
 	'.github/actions/prepare-wp-env/action.yml',
 ];
 

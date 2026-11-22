@@ -50,6 +50,7 @@ const SHARED = [
 	'scripts/__tests__/integration-suites.test.mjs',
 	'scripts/wp-env-images.mjs',
 	'scripts/wp-env-image-adapter.cjs',
+	'scripts/wp-env-locate.cjs',
 	'scripts/__tests__/wp-env-images.test.mjs',
 	'scripts/wp-env-pinned-core.cjs',
 	'scripts/__tests__/wp-env-pinned-core.test.mjs',

@@ -8,13 +8,15 @@ import test from 'node:test';
 
 const require = createRequire(import.meta.url);
 const shim = require('../wp-env-pinned-core.cjs');
-const { UnsupportedWpEnvError } = require('../wp-env-image-adapter.cjs');
+const adapter = require('../wp-env-image-adapter.cjs');
+const { UnsupportedWpEnvError } = require('../wp-env-locate.cjs');
 
 const PIN = 'WordPress/WordPress#7.1.5';
 
 // A stand-in for @wordpress/env 12.x: the same module layout, a lookup that
 // records every "network" call, and a parse-config that imports the lookup
-// when it loads, as the real one does.
+// when it loads, as the real one does. As in the real one, the Compose
+// generator imports the config module, which imports parse-config.
 const FAKE_MODULES = {
 	'lib/wordpress.js': `'use strict';
 globalThis.lookups = 0;
@@ -28,9 +30,12 @@ module.exports = {
 	'lib/config/parse-config.js': `'use strict';
 const { getLatestWordPressVersion } = require('../wordpress');
 module.exports = { parseCoreSource: () => getLatestWordPressVersion() };`,
-	'lib/config/index.js': 'module.exports = {};',
-	'lib/runtime/docker/build-docker-compose-config.js':
-		'module.exports = () => ({});',
+	'lib/config/index.js': `'use strict';
+require('./parse-config.js');
+module.exports = {};`,
+	'lib/runtime/docker/build-docker-compose-config.js': `'use strict';
+require('../../config');
+module.exports = () => ({});`,
 	'lib/runtime/docker/docker-config.js': 'module.exports = {};',
 	'bin/wp-env': `'use strict';
 const { parseCoreSource } = require('../lib/config/parse-config.js');
@@ -169,6 +174,39 @@ test('preloaded into wp-env, the lookup returns the pin without the network', as
 				),
 				{ version: '9.9.9', lookups: 1 }
 			);
+		},
+		{ files: { '.wp-env.json': { core: PIN } } }
+	);
+});
+
+test('preloaded together with the image adapter, the shim still applies', async () => {
+	await withFakeRoot(
+		async ({ root, wpEnv }) => {
+			// The CI start: the shim first, then the image adapter with a
+			// manifest, whose install loads wp-env's config (#2393).
+			const manifest = join(root, 'manifest.json');
+			await writeFile(
+				manifest,
+				JSON.stringify({ key: 'test', wpEnvVersion: '12.1.0' })
+			);
+			const output = execFileSync(
+				process.execPath,
+				[join(wpEnv, 'bin/wp-env')],
+				{
+					cwd: root,
+					env: {
+						PATH: process.env.PATH,
+						[adapter.MANIFEST_ENV]: manifest,
+						NODE_OPTIONS: `${shim.withPinnedCoreNodeOptions()} --require=${require.resolve('../wp-env-image-adapter.cjs')}`,
+					},
+					encoding: 'utf8',
+					stdio: ['ignore', 'pipe', 'pipe'],
+				}
+			);
+			assert.deepEqual(JSON.parse(output), {
+				version: '7.1.5',
+				lookups: 0,
+			});
 		},
 		{ files: { '.wp-env.json': { core: PIN } } }
 	);

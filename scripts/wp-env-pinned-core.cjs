@@ -31,10 +31,9 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const {
-	locateWpEnv,
-	UnsupportedWpEnvError,
-} = require('./wp-env-image-adapter.cjs');
+// Not wp-env-image-adapter.cjs: that module installs itself when required, and
+// loading wp-env's config there before this shim runs defeats it (#2393).
+const { locateWpEnv, UnsupportedWpEnvError } = require('./wp-env-locate.cjs');
 
 const ADAPTER = 'pinned-core shim (scripts/wp-env-pinned-core.cjs)';
 const EXACT_PIN = /^WordPress\/WordPress#(\d+\.\d+(?:\.\d+)?)$/;
