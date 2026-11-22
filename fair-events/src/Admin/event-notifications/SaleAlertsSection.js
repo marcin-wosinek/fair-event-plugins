@@ -232,7 +232,7 @@ export default function SaleAlertsSection() {
 
 	if ( ! payload || ! draft ) {
 		return (
-			<Card className="fair-events-notifications__channel">
+			<Card className="fair-events-notifications__channel fair-events-notifications__sale-alerts">
 				{ header }
 				<CardBody>
 					{ loadError ? (
@@ -342,7 +342,7 @@ export default function SaleAlertsSection() {
 	const dateFormat = getSettings().formats.datetime;
 
 	return (
-		<Card className="fair-events-notifications__channel">
+		<Card className="fair-events-notifications__channel fair-events-notifications__sale-alerts">
 			{ header }
 			<CardBody>
 				<p style={ { marginTop: 0 } }>
