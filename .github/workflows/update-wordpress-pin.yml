@@ -9,9 +9,9 @@ on:
         - cron: '17 5 * * *' # daily at 05:17 UTC
     workflow_dispatch:
 
-# The default token only reads. Branch and PR writes use the updater GitHub
-# App's short-lived installation token, so the PR's checks start normally (a
-# GITHUB_TOKEN push would not trigger them).
+# The default token only reads. Branch and PR writes use the fine-grained
+# WORDPRESS_PIN_PAT secret, so the PR's checks start normally (a GITHUB_TOKEN
+# push would not trigger them).
 permissions:
     contents: read
     pull-requests: read
@@ -75,53 +75,45 @@ jobs:
                     --body-file="$RUNNER_TEMP/pr-body.md" \
                     --open-pr-core="$OPEN_PR_CORE" | tee -a "$GITHUB_OUTPUT"
 
-            - name: Require the updater app credentials
+            - name: Require the updater token
+              id: token
               if: ${{ steps.check.outputs.action == 'create' || steps.check.outputs.action == 'update' }}
               env:
-                  CLIENT_ID: ${{ vars.WORDPRESS_PIN_APP_CLIENT_ID }}
-                  HAS_KEY: ${{ secrets.WORDPRESS_PIN_APP_PRIVATE_KEY != '' }}
+                  HAS_PAT: ${{ secrets.WORDPRESS_PIN_PAT != '' }}
                   LATEST: ${{ steps.check.outputs.latest }}
               run: |
-                  if [ -z "$CLIENT_ID" ] || [ "$HAS_KEY" != 'true' ]; then
-                    echo "::error::WordPress $LATEST is available, but the WORDPRESS_PIN_APP_CLIENT_ID variable or WORDPRESS_PIN_APP_PRIVATE_KEY secret is missing (TESTING.md § WordPress release)."
+                  if [ "$HAS_PAT" != 'true' ]; then
+                    echo "::error::WordPress $LATEST is available, but the WORDPRESS_PIN_PAT secret is missing (TESTING.md § WordPress release)."
                     exit 1
                   fi
 
-            - name: Create the updater token
-              id: app
-              if: ${{ steps.check.outputs.action == 'create' || steps.check.outputs.action == 'update' }}
-              uses: actions/create-github-app-token@v3
-              with:
-                  client-id: ${{ vars.WORDPRESS_PIN_APP_CLIENT_ID }}
-                  private-key: ${{ secrets.WORDPRESS_PIN_APP_PRIVATE_KEY }}
-                  permission-contents: write
-                  permission-pull-requests: write
-
             - name: Push the update branch
-              if: ${{ steps.app.outcome == 'success' }}
+              if: ${{ steps.token.outcome == 'success' }}
               env:
-                  GH_TOKEN: ${{ steps.app.outputs.token }}
-                  APP_SLUG: ${{ steps.app.outputs.app-slug }}
+                  PAT: ${{ secrets.WORDPRESS_PIN_PAT }}
                   LATEST: ${{ steps.check.outputs.latest }}
                   REMOTE_SHA: ${{ steps.open-pr.outputs.remote-sha }}
               run: |
-                  user_id=$(gh api "/users/${APP_SLUG}%5Bbot%5D" --jq .id)
-                  git config user.name "${APP_SLUG}[bot]"
-                  git config user.email "${user_id}+${APP_SLUG}[bot]@users.noreply.github.com"
+                  git config user.name 'github-actions[bot]'
+                  git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
                   git switch -c "$BRANCH"
                   git add .wp-env.json
                   git commit -m "Update tested WordPress to $LATEST"
+                  # Pass the token as a one-off auth header so it never lands
+                  # in a remote URL, the git config or the logs.
+                  basic=$(printf 'x-access-token:%s' "$PAT" | base64 -w0)
+                  echo "::add-mask::$basic"
                   # The branch belongs to this workflow; the lease refuses to
                   # overwrite anything pushed to it since the lookup above.
-                  git push \
+                  git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $basic" push \
                     --force-with-lease="refs/heads/$BRANCH:$REMOTE_SHA" \
-                    "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+                    "https://github.com/${GITHUB_REPOSITORY}.git" \
                     "HEAD:refs/heads/$BRANCH"
 
             - name: Open or update the PR
-              if: ${{ steps.app.outcome == 'success' }}
+              if: ${{ steps.token.outcome == 'success' }}
               env:
-                  GH_TOKEN: ${{ steps.app.outputs.token }}
+                  GH_TOKEN: ${{ secrets.WORDPRESS_PIN_PAT }}
                   ACTION: ${{ steps.check.outputs.action }}
                   NUMBER: ${{ steps.open-pr.outputs.number }}
                   LATEST: ${{ steps.check.outputs.latest }}
