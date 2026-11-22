@@ -20,6 +20,7 @@ export function getCalendarLabels() {
 		untitled: __( '(untitled event)', 'fair-events' ),
 		openDestination: __( 'Open link destination', 'fair-events' ),
 		noEvents: __( 'No events this month.', 'fair-events' ),
+		pastEvents: __( 'Past events', 'fair-events' ),
 		more: ( count ) =>
 			sprintf(
 				/* translators: %d: number of additional events */

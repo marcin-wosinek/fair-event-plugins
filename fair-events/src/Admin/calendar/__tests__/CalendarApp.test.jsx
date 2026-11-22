@@ -457,3 +457,129 @@ it( 'refreshes the filtered view after creating an event', async () => {
 		screen.getAllByText( /Event "Created" created\./ ).length
 	).toBeGreaterThan( 0 );
 } );
+
+describe( 'past days on the mobile agenda (#2446)', () => {
+	let originalMatchMedia;
+
+	function novemberEvent( title, day, time = '10:00:00' ) {
+		return {
+			...makeEvent( title, day, 11 ),
+			start: `2026-11-${ String( day ).padStart( 2, '0' ) }T${ time }`,
+		};
+	}
+
+	function pastDisclosure() {
+		return document.querySelector( 'details.fair-events-calendar-past' );
+	}
+
+	function pastSummary() {
+		return screen.getByText( 'Past events', { selector: 'summary' } );
+	}
+
+	beforeEach( () => {
+		// Fake only the clock; promises and waitFor keep real timers.
+		jest.useFakeTimers( {
+			now: new Date( 2026, 10, 22, 12, 0 ),
+			doNotFake: [
+				'setTimeout',
+				'clearTimeout',
+				'setInterval',
+				'clearInterval',
+				'setImmediate',
+				'clearImmediate',
+				'queueMicrotask',
+				'nextTick',
+				'requestAnimationFrame',
+				'cancelAnimationFrame',
+			],
+		} );
+		originalMatchMedia = window.matchMedia;
+		window.matchMedia = jest.fn( ( query ) => ( {
+			matches: true,
+			media: query,
+			addEventListener: () => {},
+			removeEventListener: () => {},
+		} ) );
+		setUrl( '?page=fair-events-calendar&month=2026-11' );
+		eventsBySlug = {
+			'': [
+				novemberEvent( 'Past concert', 3 ),
+				novemberEvent( 'Past match', 10 ),
+				novemberEvent( 'Morning run', 22, '07:30:00' ),
+				novemberEvent( 'Upcoming concert', 25 ),
+			],
+			music: [
+				novemberEvent( 'Past concert', 3 ),
+				novemberEvent( 'Upcoming concert', 25 ),
+			],
+			sports: [ novemberEvent( 'Upcoming match', 24 ) ],
+		};
+	} );
+
+	afterEach( () => {
+		window.matchMedia = originalMatchMedia;
+	} );
+
+	it( 'collapses past days of the current month and keeps today visible', async () => {
+		await renderApp();
+
+		const details = pastDisclosure();
+		expect( details ).not.toHaveAttribute( 'open' );
+		expect( details ).toHaveTextContent( 'Past concert' );
+		expect( details ).toHaveTextContent( 'Past match' );
+		expect( details ).not.toHaveTextContent( 'Morning run' );
+		expect( details ).not.toHaveTextContent( 'Upcoming concert' );
+		expect( screen.getByText( 'Morning run' ) ).toBeVisible();
+
+		fireEvent.click( pastSummary() );
+		expect( details ).toHaveAttribute( 'open' );
+		fireEvent.click( pastSummary() );
+		expect( details ).not.toHaveAttribute( 'open' );
+	} );
+
+	it( 'regroups and collapses again after a category change', async () => {
+		await renderApp();
+		fireEvent.click( pastSummary() );
+		expect( pastDisclosure() ).toHaveAttribute( 'open' );
+
+		fireEvent.change( categorySelect(), { target: { value: '3' } } );
+		await waitFor( () =>
+			expect( pastDisclosure() ).not.toHaveTextContent( 'Past match' )
+		);
+		expect( pastDisclosure() ).toHaveTextContent( 'Past concert' );
+		expect( pastDisclosure() ).not.toHaveAttribute( 'open' );
+
+		// A category without past events shows no disclosure.
+		fireEvent.change( categorySelect(), { target: { value: '4' } } );
+		await waitFor( () =>
+			expect( screen.getByText( 'Upcoming match' ) ).toBeInTheDocument()
+		);
+		expect( pastDisclosure() ).not.toBeInTheDocument();
+	} );
+
+	it( 'lists every day in other months and collapses again on Today', async () => {
+		await renderApp();
+		fireEvent.click( pastSummary() );
+
+		eventsBySlug[ '' ] = [ novemberEvent( 'December party', 2 ) ];
+		fireEvent.click( screen.getByRole( 'button', { name: 'Next' } ) );
+		await waitFor( () =>
+			expect( urlParams().get( 'month' ) ).toBe( '2026-12' )
+		);
+		await waitFor( () =>
+			expect(
+				document.querySelector( '.fair-events-calendar-grid' )
+			).toBeInTheDocument()
+		);
+		expect( pastDisclosure() ).not.toBeInTheDocument();
+
+		eventsBySlug[ '' ] = [
+			novemberEvent( 'Past concert', 3 ),
+			novemberEvent( 'Upcoming concert', 25 ),
+		];
+		fireEvent.click( screen.getByRole( 'button', { name: 'Today' } ) );
+		await waitFor( () => expect( pastDisclosure() ).toBeInTheDocument() );
+		expect( pastDisclosure() ).not.toHaveAttribute( 'open' );
+		expect( pastDisclosure() ).toHaveTextContent( 'Past concert' );
+	} );
+} );

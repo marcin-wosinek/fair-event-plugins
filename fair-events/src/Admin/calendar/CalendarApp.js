@@ -424,6 +424,7 @@ export default function CalendarApp() {
 								showEmptyMessage={
 									eventsState.status === 'success'
 								}
+								collapsePastDays
 								labels={ calendarLabels }
 							/>
 							<CalendarLegend />

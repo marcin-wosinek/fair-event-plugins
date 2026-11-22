@@ -21,13 +21,14 @@ plugin's strings live in its own text domain.
 | Export           | Props / signature                                                                                                                            |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `CalendarHeader` | `currentDate`, `onPrevMonth`, `onNextMonth`, `onToday`, `onAddEvent?`, `labels`                                                               |
-| `CalendarGrid`   | `currentDate`, `events`, `startOfWeek` (0–6, default 1), `onAddEvent?`, `manageEventUrl?`, `forceGrid?`, `showEmptyMessage?`, `labels`        |
+| `CalendarGrid`   | `currentDate`, `events`, `startOfWeek` (0–6, default 1), `onAddEvent?`, `manageEventUrl?`, `forceGrid?`, `showEmptyMessage?`, `collapsePastDays?`, `labels` |
 | `DayCell`        | Rendered by `CalendarGrid`; exported for tests.                                                                                              |
 | `month.js`       | `startOfMonth`, `addMonths`, `formatMonthParam`, `parseMonthParam`, `getCalendarDays`, `getVisibleRange`                                      |
 | `eventLinks.js`  | `getEventLinkType`, `getLinkTypeIcon`, `getEventDateId`, `getEventUrl`                                                                        |
 
 `labels` holds `previous`, `today`, `next`, `addEvent`, `untitled`,
-`openDestination`, `noEvents` (strings) and `more( count )` (returns the
+`openDestination`, `noEvents`, `pastEvents` (strings; `pastEvents` is needed
+only with `collapsePastDays`) and `more( count )` (returns the
 `_n()`-formatted "+N more" text).
 
 - **Creation actions** appear only when `onAddEvent` is passed: the header's
@@ -43,6 +44,13 @@ plugin's strings live in its own text domain.
 - **Empty months:** the mobile agenda shows `labels.noEvents` only when
   `showEmptyMessage` is set. Pass it only after a successful load, so a
   failed or pending request is never reported as an empty month.
+- **`collapsePastDays`**: in the mobile agenda of the current month, days
+  before today that have events move into a collapsed native `<details>`
+  disclosure labelled `labels.pastEvents`. Today's events, including earlier
+  ones, stay visible. It is omitted when there are no past days, and has no
+  effect in grid mode, other months or with `forceGrid`. The grid remounts
+  after each load, so the disclosure starts collapsed for every month or
+  filter change.
 - **`forceGrid`** keeps the dated grid on mobile and suppresses the agenda
   empty message — for a page that shows its own empty-results message.
 
@@ -59,6 +67,7 @@ entry point. The rules assume the calendar sits in a `Card`, with
 | Category filter              | Yes, in the URL with the month (#1850)                                 | No                                                        |
 | Filtered-empty results       | Message above a forced dated grid                                      | n/a                                                       |
 | Requests                     | `/fair-events/v1/events`, 500 per page until a short page               | `/fair-events/v1/sources/{slug}/json`, one request        |
+| Past days (mobile agenda)    | Collapsed "Past events" disclosure in the current month (#2446)        | All days listed                                           |
 | Legend                       | Link-type legend below the grid                                        | None                                                      |
 | Around the calendar          | Success notice after creating an event                                 | Feed details, feed URLs, edit modal, back link            |
 
