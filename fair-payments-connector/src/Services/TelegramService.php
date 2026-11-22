@@ -7,6 +7,8 @@
 
 namespace FairPaymentsConnector\Services;
 
+use FairEventsShared\Helpers\DisplayText;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -104,8 +106,14 @@ class TelegramService {
 	 * resolved empty are dropped entirely — rendered with an empty label they
 	 * look like valid-but-blank data rather than "not applicable".
 	 *
+	 * Text values arrive as stored, often HTML-encoded (`La&nbsp;Mutable`,
+	 * `Rock &amp; Roll`). Each one is decoded exactly once and then escaped
+	 * for Telegram's HTML parse mode, always encoding `&`, so entities read as
+	 * text, a literal `&lt;` stays literal, and no value can inject markup or
+	 * links (#2450). URLs keep the `esc_url()` path.
+	 *
 	 * @param string $template    Template string.
-	 * @param array  $context     Context with raw values (will be HTML-escaped on insertion).
+	 * @param array  $context     Context with stored values (decoded and escaped on insertion).
 	 * @param bool   $include_pii Whether to substitute PII placeholders.
 	 * @return string
 	 */
@@ -135,12 +143,12 @@ class TelegramService {
 
 			if ( 'participant_name' === $key ) {
 				if ( $include_pii ) {
-					$value = esc_html( (string) ( $context['participant_name'] ?? '' ) );
+					$value = self::text( $context['participant_name'] ?? '' );
 				} else {
 					$short = ( isset( $context['participant_name_short'] ) && '' !== $context['participant_name_short'] )
-						? (string) $context['participant_name_short']
-						: self::abbreviate_name( (string) ( $context['participant_name'] ?? '' ) );
-					$value = esc_html( $short );
+						? DisplayText::decode( $context['participant_name_short'] )
+						: self::abbreviate_name( DisplayText::decode( $context['participant_name'] ?? '' ) );
+					$value = DisplayText::html( $short );
 				}
 			} elseif ( 'participant_email' === $key && ! $include_pii ) {
 				$value = '';
@@ -148,7 +156,7 @@ class TelegramService {
 				if ( in_array( $key, array( 'event_url', 'participant_url' ), true ) ) {
 					$value = esc_url( (string) $context[ $key ] );
 				} else {
-					$value = esc_html( (string) $context[ $key ] );
+					$value = self::text( $context[ $key ] );
 				}
 			}
 
@@ -158,6 +166,16 @@ class TelegramService {
 		$rendered = strtr( (string) $template, $replacements );
 
 		return self::drop_empty_lines( $rendered );
+	}
+
+	/**
+	 * Decode a stored text value once and escape it for Telegram HTML.
+	 *
+	 * @param mixed $value Stored text, possibly HTML-encoded.
+	 * @return string Escaped text safe to substitute into the template.
+	 */
+	private static function text( $value ) {
+		return DisplayText::html( DisplayText::decode( $value ) );
 	}
 
 	/**
