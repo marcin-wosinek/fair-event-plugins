@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import apiFetch from '@wordpress/api-fetch';
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 import { dateI18n, getSettings } from '@wordpress/date';
 import {
@@ -11,6 +11,7 @@ import {
 	CardBody,
 	CardHeader,
 	Notice,
+	SelectControl,
 	TextControl,
 	ToggleControl,
 } from '@wordpress/components';
@@ -28,18 +29,40 @@ import {
 /**
  * Internal dependencies
  */
-import { useUnsavedWarning } from './shared.js';
+import { DAYS, useUnsavedWarning } from './shared.js';
 
 export const SALE_ALERTS_PATH = '/fair-events/v1/sale-alerts';
 
 // The server's own check (TelegramSettings::valid_chat_id()).
 const CHAT_ID = /^(-?\d{1,20}|@[A-Za-z][A-Za-z0-9_]{3,31})$/;
 
+// The server's own check (TelegramSettings::valid_time()).
+const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+const FREQUENCIES = [
+	{
+		value: 'immediate',
+		label: __( 'Immediately, one message per sale', 'fair-events' ),
+	},
+	{ value: 'daily', label: __( 'Daily digest', 'fair-events' ) },
+	{ value: 'weekly', label: __( 'Weekly digest', 'fair-events' ) },
+];
+
+/**
+ * Whether an organizer's sales are collected into a digest.
+ *
+ * @param {Object} organizer Organizer settings.
+ * @return {boolean} True for a daily or weekly digest.
+ */
+export function isDigest( organizer ) {
+	return 'daily' === organizer.frequency || 'weekly' === organizer.frequency;
+}
+
 /**
  * Form state from the server's payload.
  *
  * @param {Object} payload Settings payload.
- * @return {Object} `{ enabled, organizers: { [id]: { enabled, chat_id } } }`.
+ * @return {Object} `{ enabled, organizers: { [id]: { enabled, chat_id, frequency, time_of_day, day_of_week } } }`.
  */
 export function toDraft( payload ) {
 	return {
@@ -50,6 +73,9 @@ export function toDraft( payload ) {
 				{
 					enabled: organizer.settings.enabled,
 					chat_id: organizer.settings.chat_id,
+					frequency: organizer.settings.frequency || 'immediate',
+					time_of_day: organizer.settings.time_of_day || '08:00',
+					day_of_week: organizer.settings.day_of_week || 1,
 				},
 			] )
 		),
@@ -82,6 +108,74 @@ export function draftErrors( draft ) {
 }
 
 /**
+ * Why each digest organizer's delivery time can't be saved, by organizer ID.
+ *
+ * @param {Object} draft Form state.
+ * @return {Object} Messages by organizer ID; empty when every time is valid.
+ */
+export function scheduleErrors( draft ) {
+	const errors = {};
+	Object.entries( draft.organizers ).forEach( ( [ id, organizer ] ) => {
+		if ( isDigest( organizer ) && ! TIME.test( organizer.time_of_day ) ) {
+			errors[ id ] = __(
+				'Enter the delivery time as hours and minutes, for example 08:00.',
+				'fair-events'
+			);
+		}
+	} );
+	return errors;
+}
+
+/**
+ * When an organizer's sales are sent, from its saved settings.
+ *
+ * @param {Object} organizer  Organizer from the payload.
+ * @param {string} dateFormat Date and time format.
+ * @param {string} timezone   Site timezone name.
+ * @return {string} One or two sentences.
+ */
+export function deliveryText( organizer, dateFormat, timezone ) {
+	if ( ! isDigest( organizer.settings ) ) {
+		return __(
+			'Each sale is sent as soon as its payment is confirmed.',
+			'fair-events'
+		);
+	}
+	const waiting = organizer.pending
+		? ' ' +
+			sprintf(
+				/* translators: %d: number of ticket sales waiting for the digest */
+				_n(
+					'%d sale is waiting for it.',
+					'%d sales are waiting for it.',
+					organizer.pending,
+					'fair-events'
+				),
+				organizer.pending
+			)
+		: '';
+	if ( ! organizer.next_digest ) {
+		return (
+			__(
+				'No digest is scheduled while alerts are off for this organizer or sitewide. Sales already waiting are kept for the next digest.',
+				'fair-events'
+			) + waiting
+		);
+	}
+	return (
+		sprintf(
+			/* translators: 1: date and time of the next digest, 2: site timezone name, for example Europe/Madrid */
+			__( 'Next digest: %1$s (%2$s).', 'fair-events' ),
+			dateI18n( dateFormat, organizer.next_digest ),
+			timezone
+		) +
+		waiting +
+		' ' +
+		__( 'Days without sales send nothing.', 'fair-events' )
+	);
+}
+
+/**
  * What a recorded outcome means, and its tone.
  *
  * @param {Object} alert Recent outcome: `state` and `reason`.
@@ -90,7 +184,37 @@ export function draftErrors( draft ) {
 export function outcomeLabel( alert ) {
 	const { state, reason } = alert;
 	if ( 'sent' === state ) {
-		return { label: __( 'Sent', 'fair-events' ), tone: 'success' };
+		return {
+			label: alert.digest
+				? __( 'Sent in a digest', 'fair-events' )
+				: __( 'Sent', 'fair-events' ),
+			tone: 'success',
+		};
+	}
+	if ( 'pending' === state ) {
+		const refused = /^http_(\d+)$/.exec( reason );
+		if ( refused || reason ) {
+			return {
+				label: refused
+					? sprintf(
+							/* translators: %s: HTTP status code returned by Telegram */
+							__(
+								'Waiting for the next digest: Telegram refused the last one (error %s)',
+								'fair-events'
+							),
+							refused[ 1 ]
+						)
+					: __(
+							'Waiting for the next digest: the last one was not sent',
+							'fair-events'
+						),
+				tone: 'warning',
+			};
+		}
+		return {
+			label: __( 'Waiting for the next digest', 'fair-events' ),
+			tone: 'info',
+		};
 	}
 	if ( 'queued' === state || 'claimed' === state || 'sending' === state ) {
 		return { label: __( 'Sending', 'fair-events' ), tone: 'info' };
@@ -262,10 +386,16 @@ export default function SaleAlertsSection() {
 	}
 
 	const errors = draftErrors( draft );
-	const blocked = Object.keys( errors ).length > 0;
+	const timeErrors = scheduleErrors( draft );
+	const blocked =
+		Object.keys( errors ).length > 0 ||
+		Object.keys( timeErrors ).length > 0;
 
 	const updateOrganizer = ( id, field ) => ( value ) => {
-		setServerErrors( ( current ) => ( { ...current, [ id ]: undefined } ) );
+		setServerErrors( ( current ) => ( {
+			...current,
+			[ id ]: undefined,
+		} ) );
 		setDraft( ( current ) => ( {
 			...current,
 			organizers: {
@@ -310,9 +440,14 @@ export default function SaleAlertsSection() {
 				const byOrganizer = {};
 				Object.entries( error?.data?.params || {} ).forEach(
 					( [ field, message ] ) => {
-						const match = /^organizers\.([^.]+)\./.exec( field );
+						const match = /^organizers\.([^.]+)\.(.+)$/.exec(
+							field
+						);
 						if ( match ) {
-							byOrganizer[ match[ 1 ] ] = message;
+							byOrganizer[ match[ 1 ] ] = {
+								...byOrganizer[ match[ 1 ] ],
+								[ match[ 2 ] ]: message,
+							};
 						}
 					}
 				);
@@ -347,7 +482,7 @@ export default function SaleAlertsSection() {
 			<CardBody>
 				<p style={ { marginTop: 0 } }>
 					{ __(
-						'Post a message to the event’s organizer for each paid ticket purchase, as soon as the payment is confirmed. It names the event, its dates, each ticket type with its quantity and the total paid, never the buyer. Events without an organizer of their own go to the sitewide organizer; an event’s sales never go to another organizer’s chat.',
+						'Post the event’s organizer a message for each paid ticket purchase as soon as the payment is confirmed, or a daily or weekly digest of them. Messages name the event, its dates, each ticket type with its quantity and the total paid, never the buyer. Events without an organizer of their own go to the sitewide organizer; an event’s sales never go to another organizer’s chat.',
 						'fair-events'
 					) }
 				</p>
@@ -402,8 +537,19 @@ export default function SaleAlertsSection() {
 
 				{ payload.organizers.map( ( organizer ) => {
 					const value = draft.organizers[ organizer.id ];
+					const fieldErrors = serverErrors[ organizer.id ] || {};
 					const error =
-						serverErrors[ organizer.id ] || errors[ organizer.id ];
+						fieldErrors.chat_id ||
+						fieldErrors.enabled ||
+						errors[ organizer.id ];
+					const timeError =
+						fieldErrors.time_of_day || timeErrors[ organizer.id ];
+					const organizerDirty =
+						JSON.stringify( value ) !==
+						JSON.stringify(
+							toDraft( { ...payload, organizers: [ organizer ] } )
+								.organizers[ organizer.id ]
+						);
 					return (
 						<div
 							key={ organizer.id }
@@ -459,6 +605,89 @@ export default function SaleAlertsSection() {
 									) }
 									disabled={ saving }
 								/>
+								<SelectControl
+									__nextHasNoMarginBottom
+									__next40pxDefaultSize
+									label={ __( 'How often', 'fair-events' ) }
+									help={ fieldErrors.frequency }
+									className={
+										fieldErrors.frequency
+											? 'has-error'
+											: undefined
+									}
+									value={ value.frequency }
+									options={ FREQUENCIES }
+									onChange={ updateOrganizer(
+										organizer.id,
+										'frequency'
+									) }
+									disabled={ saving }
+								/>
+								{ 'weekly' === value.frequency && (
+									<SelectControl
+										__nextHasNoMarginBottom
+										__next40pxDefaultSize
+										label={ __( 'Weekday', 'fair-events' ) }
+										help={ fieldErrors.day_of_week }
+										className={
+											fieldErrors.day_of_week
+												? 'has-error'
+												: undefined
+										}
+										value={ String( value.day_of_week ) }
+										options={ DAYS }
+										onChange={ ( day ) =>
+											updateOrganizer(
+												organizer.id,
+												'day_of_week'
+											)( parseInt( day, 10 ) )
+										}
+										disabled={ saving }
+									/>
+								) }
+								{ isDigest( value ) && (
+									<TextControl
+										__nextHasNoMarginBottom
+										__next40pxDefaultSize
+										type="time"
+										label={ __(
+											'Delivery time',
+											'fair-events'
+										) }
+										help={
+											timeError ||
+											sprintf(
+												/* translators: %s: site timezone name, for example Europe/Madrid */
+												__(
+													'In the site’s timezone (%s).',
+													'fair-events'
+												),
+												payload.timezone
+											)
+										}
+										className={
+											timeError ? 'has-error' : undefined
+										}
+										value={ value.time_of_day }
+										onChange={ updateOrganizer(
+											organizer.id,
+											'time_of_day'
+										) }
+										disabled={ saving }
+									/>
+								) }
+								<p className="is-wide fair-events-notifications__sale-alert-delivery">
+									{ organizerDirty
+										? __(
+												'Save to see when this organizer’s sales are sent. Sales already waiting for a digest are kept; switching to Immediately sends them in one final digest.',
+												'fair-events'
+											)
+										: deliveryText(
+												organizer,
+												dateFormat,
+												payload.timezone
+											) }
+								</p>
 							</div>
 						</div>
 					);
@@ -486,7 +715,7 @@ export default function SaleAlertsSection() {
 						<span className="fair-events-notifications__unsaved">
 							{ blocked
 								? __(
-										'Unsaved changes: correct the highlighted chat first.',
+										'Unsaved changes: correct the highlighted fields first.',
 										'fair-events'
 									)
 								: __( 'Unsaved changes', 'fair-events' ) }

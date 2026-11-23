@@ -23,7 +23,8 @@ defined( 'WPINC' ) || die;
 
 /**
  * Settings and recent outcomes of the Telegram ticket sale alerts (#2448),
- * for administrators only.
+ * for administrators only, with each organizer's frequency, its next
+ * digest and the sales waiting for it (#2449).
  *
  * The organizers' chats and channels are returned here, to the editor
  * that saves them, and nowhere else. Recent outcomes name the event, the
@@ -107,16 +108,25 @@ class SaleAlertsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Save the settings. Organizers left out keep their saved settings.
+	 * Save the settings. Organizers left out keep their saved settings, and
+	 * so do the fields an organizer's entry leaves out.
 	 *
 	 * @param \WP_REST_Request $request Request.
 	 * @return \WP_REST_Response|WP_Error
 	 */
 	public function update_settings( $request ) {
-		$current = SaleAlertSettings::get();
-		$input   = array(
+		$current    = SaleAlertSettings::get();
+		$organizers = null !== $request->get_param( 'organizers' ) ? $request->get_param( 'organizers' ) : array();
+		if ( is_array( $organizers ) ) {
+			foreach ( $organizers as $key => $organizer ) {
+				if ( is_array( $organizer ) && isset( $current['organizers'][ $key ] ) ) {
+					$organizers[ $key ] = array_merge( $current['organizers'][ $key ], $organizer );
+				}
+			}
+		}
+		$input = array(
 			'enabled'    => null !== $request->get_param( 'enabled' ) ? $request->get_param( 'enabled' ) : $current['enabled'],
-			'organizers' => null !== $request->get_param( 'organizers' ) ? $request->get_param( 'organizers' ) : array(),
+			'organizers' => $organizers,
 		);
 
 		$validated = SaleAlertSettings::validate( $input );
@@ -131,9 +141,12 @@ class SaleAlertsController extends WP_REST_Controller {
 			);
 		}
 
-		SaleAlertSettings::save( $validated['settings'] );
-		if ( SaleAlertSettings::enabled() ) {
+		$saved = SaleAlertSettings::save( $validated['settings'] );
+		if ( $saved['enabled'] ) {
 			\FairEvents\Core\Cron::ensure_recurring( SaleAlertDispatcher::RECOVERY_HOOK, 'hourly', time() + HOUR_IN_SECONDS );
+		}
+		foreach ( array_keys( $saved['organizers'] ) as $key ) {
+			SaleAlertDispatcher::reschedule_digest( (string) $key );
 		}
 
 		return rest_ensure_response( $this->payload() );
@@ -147,13 +160,17 @@ class SaleAlertsController extends WP_REST_Controller {
 	private function payload() {
 		$directory  = new SalesSummaryOrganizers();
 		$settings   = SaleAlertSettings::get();
+		$pending    = ( new SaleAlertLog() )->pending_counts();
 		$organizers = array();
 		foreach ( $directory->all() as $organizer ) {
+			$next         = SaleAlertDispatcher::next_digest( $organizer['id'] );
 			$organizers[] = array(
-				'id'       => $organizer['id'],
-				'name'     => DisplayText::decode( $organizer['name'] ),
-				'sitewide' => SalesSummarySettings::DEFAULT_ORGANIZER === $organizer['id'],
-				'settings' => $settings['organizers'][ $organizer['id'] ] ?? SaleAlertSettings::organizer_defaults(),
+				'id'          => $organizer['id'],
+				'name'        => DisplayText::decode( $organizer['name'] ),
+				'sitewide'    => SalesSummarySettings::DEFAULT_ORGANIZER === $organizer['id'],
+				'settings'    => $settings['organizers'][ $organizer['id'] ] ?? SaleAlertSettings::organizer_defaults(),
+				'next_digest' => null !== $next ? gmdate( 'c', $next ) : null,
+				'pending'     => (int) ( $pending[ $organizer['id'] ] ?? 0 ),
 			);
 		}
 
@@ -161,6 +178,7 @@ class SaleAlertsController extends WP_REST_Controller {
 
 		return array(
 			'enabled'                        => $settings['enabled'],
+			'timezone'                       => wp_timezone_string(),
 			'organizers'                     => $organizers,
 			'organizer_resolution_available' => $directory->resolution_available(),
 			'credential_problem'             => $problem ? $problem['message'] : '',
@@ -190,6 +208,7 @@ class SaleAlertsController extends WP_REST_Controller {
 				'organizer_name' => $organizer ? DisplayText::decode( $organizer['name'] ) : '',
 				'state'          => $row['state'],
 				'reason'         => $row['reason'],
+				'digest'         => '' !== $row['batch'],
 				'created_at'     => gmdate( 'c', (int) strtotime( $row['created_at'] . ' UTC' ) ),
 				'updated_at'     => gmdate( 'c', (int) strtotime( $row['updated_at'] . ' UTC' ) ),
 			);

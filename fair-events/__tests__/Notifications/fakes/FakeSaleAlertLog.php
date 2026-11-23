@@ -40,6 +40,7 @@ class FakeSaleAlertLog extends SaleAlertLog {
 			'organizer_id'   => (string) $organizer_id,
 			'state'          => self::QUEUED,
 			'reason'         => '',
+			'batch'          => '',
 			'created_at'     => gmdate( 'Y-m-d H:i:s' ),
 			'updated_at'     => gmdate( 'Y-m-d H:i:s' ),
 		);
@@ -91,6 +92,41 @@ class FakeSaleAlertLog extends SaleAlertLog {
 			}
 		}
 		return array_slice( $ids, 0, $limit );
+	}
+
+	/**
+	 * Claim an organizer's pending rows under a batch.
+	 *
+	 * @param string $organizer_id Organizer.
+	 * @param string $batch        Batch ID.
+	 * @param int    $limit        Limit.
+	 * @return int[]
+	 */
+	public function claim_pending( $organizer_id, $batch, $limit = 500 ) {
+		$ids = array();
+		foreach ( $this->rows as $id => $row ) {
+			if ( count( $ids ) < $limit && self::PENDING === $row['state'] && (string) $organizer_id === $row['organizer_id'] ) {
+				$this->rows[ $id ]['state'] = self::CLAIMED;
+				$this->rows[ $id ]['batch'] = (string) $batch;
+				$ids[]                      = $id;
+			}
+		}
+		return $ids;
+	}
+
+	/**
+	 * Pending rows by organizer.
+	 *
+	 * @return array<string, int>
+	 */
+	public function pending_counts() {
+		$counts = array();
+		foreach ( $this->rows as $row ) {
+			if ( self::PENDING === $row['state'] ) {
+				$counts[ $row['organizer_id'] ] = ( $counts[ $row['organizer_id'] ] ?? 0 ) + 1;
+			}
+		}
+		return $counts;
 	}
 
 	/**

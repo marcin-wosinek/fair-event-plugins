@@ -10,6 +10,10 @@
  *   twice; a failed payment queues nothing.
  * - A refusal is recorded as failed and a timeout as uncertain, without
  *   Telegram's text or the buyer in the response, and neither is resent.
+ * - An organizer's frequency (#2449): a daily or weekly digest keeps its
+ *   sales pending until its site-local time, then sends them in one
+ *   message, once; switching back to Immediate sends what is pending in a
+ *   final digest.
  *
  * Purchases go through the public route against the Mollie double,
  * payment notifications through payment-lifecycle.php, and alerts through
@@ -465,5 +469,175 @@ test.describe.serial( 'Telegram ticket sale alerts', () => {
 		expect( text ).not.toContain( 'timed out' );
 		expect( text ).not.toContain( BUYER_EMAIL_DOMAIN );
 		expect( text ).not.toContain( 'AAEabcdefghijklmnop' );
+	} );
+
+	test( 'a daily digest collects sales and sends them once', async () => {
+		const res = await save( {
+			enabled: true,
+			organizers: {
+				default: {
+					enabled: true,
+					chat_id: CHAT,
+					frequency: 'daily',
+					time_of_day: '07:45',
+				},
+			},
+		} );
+		const body = await res.json();
+		expect( res.status(), JSON.stringify( body ) ).toBe( 200 );
+		expect( body.organizers[ 0 ].settings ).toEqual( {
+			enabled: true,
+			chat_id: CHAT,
+			frequency: 'daily',
+			time_of_day: '07:45',
+			day_of_week: 1,
+		} );
+		expect( typeof body.timezone ).toBe( 'string' );
+
+		const queued = ( await alerts( 'digests', { organizer: 'default' } ) )
+			.digests;
+		expect( queued ).toHaveLength( 1 );
+		expect( queued[ 0 ].args.slice( 0, 2 ) ).toEqual( [
+			'default',
+			'daily',
+		] );
+		expect( queued[ 0 ].local ).toMatch( / 07:45$/ );
+		expect( Date.parse( body.organizers[ 0 ].next_digest ) ).toBe(
+			queued[ 0 ].timestamp * 1000
+		);
+
+		// Fields left out keep their saved values; unknown values are refused.
+		const partial = await save( {
+			organizers: { default: { chat_id: CHAT } },
+		} );
+		expect(
+			( await partial.json() ).organizers[ 0 ].settings.frequency
+		).toBe( 'daily' );
+		const invalid = await save( {
+			organizers: {
+				default: { frequency: 'hourly', day_of_week: 9 },
+			},
+		} );
+		expect( invalid.status() ).toBe( 400 );
+		expect( Object.keys( ( await invalid.json() ).data.params ) ).toEqual( [
+			'organizers.default.frequency',
+			'organizers.default.day_of_week',
+		] );
+
+		const sent = ( await telegram() ).length;
+		const sales = [ await checkout(), await checkout() ];
+		for ( const sale of sales ) {
+			await lifecycle( 'settle', {
+				transactionId: sale.transactionId,
+				status: 'paid',
+			} );
+			expect(
+				( await alerts( 'run', { transactionId: sale.transactionId } ) )
+					.row.state
+			).toBe( 'pending' );
+		}
+		expect( await telegram() ).toHaveLength( sent );
+		expect(
+			(
+				await api
+					.get( PATH, { headers: adminHeaders } )
+					.then( ( r ) => r.json() )
+			).organizers[ 0 ].pending
+		).toBe( 2 );
+
+		expect(
+			( await alerts( 'fire', { organizer: 'default' } ) ).fired
+		).toBe( 1 );
+		// The next digest is queued again; firing it finds nothing to send.
+		expect(
+			( await alerts( 'fire', { organizer: 'default' } ) ).fired
+		).toBe( 1 );
+		await alerts( 'recover' );
+
+		const requests = ( await telegram() ).slice( sent );
+		expect( requests ).toHaveLength( 1 );
+		expect( requests[ 0 ].chat_id ).toBe( CHAT );
+		expect( requests[ 0 ].text.split( '\n' )[ 0 ] ).toBe(
+			'<b>Ticket sales digest</b>'
+		);
+		expect( requests[ 0 ].text ).toMatch(
+			/2 sales, total: 80[.,]00 [A-Z]{3}/
+		);
+		expect( requests[ 0 ].text ).toContain( '4 × Standard' );
+		expect( requests[ 0 ].text ).not.toContain( BUYER_EMAIL_DOMAIN );
+
+		const rows = (
+			await alerts( 'rows', {
+				transactionIds: sales.map( ( s ) => s.transactionId ),
+			} )
+		).rows;
+		for ( const sale of sales ) {
+			expect( rows[ sale.transactionId ].state ).toBe( 'sent' );
+		}
+		const page = await (
+			await api.get( PATH, { headers: adminHeaders } )
+		).json();
+		expect( page.organizers[ 0 ].pending ).toBe( 0 );
+		expect(
+			page.recent.find(
+				( row ) =>
+					row.event_id === eventDateId &&
+					'sent' === row.state &&
+					row.digest
+			)
+		).toBeTruthy();
+	} );
+
+	test( 'switching a digest to Immediate sends what is pending once', async () => {
+		await save( {
+			organizers: {
+				default: {
+					frequency: 'weekly',
+					day_of_week: 5,
+					time_of_day: '18:30',
+				},
+			},
+		} );
+		const weekly = ( await alerts( 'digests', { organizer: 'default' } ) )
+			.digests;
+		expect( weekly ).toHaveLength( 1 );
+		expect( weekly[ 0 ].local ).toBe( '5 18:30' );
+
+		const sent = ( await telegram() ).length;
+		const pending = await checkout();
+		await lifecycle( 'settle', {
+			transactionId: pending.transactionId,
+			status: 'paid',
+		} );
+		await alerts( 'run', { transactionId: pending.transactionId } );
+
+		await save( { organizers: { default: { frequency: 'immediate' } } } );
+		const flush = ( await alerts( 'digests', { organizer: 'default' } ) )
+			.digests;
+		expect( flush.map( ( { args } ) => args ) ).toEqual( [
+			[ 'default', 'immediate', 'now' ],
+		] );
+		await alerts( 'fire', { organizer: 'default' } );
+		await alerts( 'recover' );
+
+		const later = await checkout();
+		await lifecycle( 'settle', {
+			transactionId: later.transactionId,
+			status: 'paid',
+		} );
+		expect(
+			( await alerts( 'run', { transactionId: later.transactionId } ) )
+				.row.state
+		).toBe( 'sent' );
+
+		const requests = ( await telegram() ).slice( sent );
+		expect( requests.map( ( r ) => r.text.split( '\n' )[ 0 ] ) ).toEqual( [
+			'<b>Ticket sales digest</b>',
+			'<b>New ticket sale</b>',
+		] );
+		expect( requests[ 0 ].text ).toMatch( /1 sale, total: / );
+		expect(
+			( await alerts( 'digests', { organizer: 'default' } ) ).digests
+		).toEqual( [] );
 	} );
 } );

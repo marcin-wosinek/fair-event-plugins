@@ -302,3 +302,7 @@
 .fair-events-notifications__sale-alerts .components-notice {
 	margin: 0 0 12px;
 }
+
+.fair-events-notifications__sale-alert-delivery {
+	margin: 0;
+}

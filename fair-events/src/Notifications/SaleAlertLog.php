@@ -28,15 +28,23 @@ defined( 'WPINC' ) || die;
  * by Telegram, so its row becomes `uncertain` and is never resent
  * automatically.
  *
+ * A sale of an organizer with a daily or weekly digest (#2449) moves from
+ * `claimed` to `pending` instead of being sent. A digest run claims all of
+ * its organizer's pending rows at once under a new batch ID, so two runs
+ * never put one sale in two digests, and the batch then moves through
+ * `sending` like a single alert. A digest Telegram refused returns its rows
+ * to `pending` for the next digest.
+ *
  * Rows hold IDs, a state and a safe reason code only: never the
  * destination, the bot token, buyer data or Telegram's own error text.
  */
 class SaleAlertLog {
 	public const TABLE_SUFFIX      = 'fair_events_sale_alerts';
-	public const DB_VERSION        = '1';
+	public const DB_VERSION        = '2';
 	public const DB_VERSION_OPTION = 'fair_events_sale_alerts_db_version';
 
 	public const QUEUED    = 'queued';
+	public const PENDING   = 'pending';
 	public const CLAIMED   = 'claimed';
 	public const SENDING   = 'sending';
 	public const SENT      = 'sent';
@@ -89,11 +97,14 @@ class SaleAlertLog {
 					organizer_id varchar(36) NOT NULL DEFAULT '',
 					state varchar(20) NOT NULL,
 					reason varchar(40) NOT NULL DEFAULT '',
+					batch varchar(36) NOT NULL DEFAULT '',
 					created_at datetime NOT NULL,
 					updated_at datetime NOT NULL,
 					PRIMARY KEY  (id),
 					UNIQUE KEY transaction_id (transaction_id),
 					KEY state_updated (state,updated_at),
+					KEY organizer_state (organizer_id,state),
+					KEY batch (batch),
 					KEY recent (created_at)
 				) {$charset};"
 			);
@@ -208,6 +219,65 @@ class SaleAlertLog {
 	}
 
 	/**
+	 * Claim an organizer's pending rows for one digest, atomically: a row
+	 * claimed by one run is never claimed by another.
+	 *
+	 * @param string $organizer_id Organizer key.
+	 * @param string $batch        New batch ID.
+	 * @param int    $limit        Maximum rows.
+	 * @return int[] Transactions claimed, oldest sale first.
+	 */
+	public function claim_pending( $organizer_id, $batch, $limit = 500 ) {
+		if ( ! self::is_current() || '' === (string) $organizer_id || '' === (string) $batch ) {
+			return array();
+		}
+		global $wpdb;
+		$wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET state = %s, batch = %s, updated_at = %s WHERE organizer_id = %s AND state = %s ORDER BY created_at ASC, id ASC LIMIT %d',
+				self::table_name(),
+				self::CLAIMED,
+				(string) $batch,
+				current_time( 'mysql', true ),
+				(string) $organizer_id,
+				self::PENDING,
+				(int) $limit
+			)
+		);
+		return array_map(
+			'intval',
+			(array) $wpdb->get_col(
+				$wpdb->prepare(
+					'SELECT transaction_id FROM %i WHERE batch = %s AND state = %s ORDER BY created_at ASC, id ASC',
+					self::table_name(),
+					(string) $batch,
+					self::CLAIMED
+				)
+			)
+		);
+	}
+
+	/**
+	 * Pending rows by organizer.
+	 *
+	 * @return array<string, int> Count of pending sales by organizer key.
+	 */
+	public function pending_counts() {
+		if ( ! self::is_current() ) {
+			return array();
+		}
+		global $wpdb;
+		$counts = array();
+		foreach ( (array) $wpdb->get_results(
+			$wpdb->prepare( 'SELECT organizer_id, COUNT(*) AS total FROM %i WHERE state = %s GROUP BY organizer_id', self::table_name(), self::PENDING ),
+			ARRAY_A
+		) as $row ) {
+			$counts[ (string) $row['organizer_id'] ] = (int) $row['total'];
+		}
+		return $counts;
+	}
+
+	/**
 	 * The most recent rows, newest first.
 	 *
 	 * @param int $limit Maximum rows.
@@ -239,6 +309,7 @@ class SaleAlertLog {
 			'organizer_id'   => (string) $row['organizer_id'],
 			'state'          => (string) $row['state'],
 			'reason'         => (string) $row['reason'],
+			'batch'          => (string) ( $row['batch'] ?? '' ),
 			'created_at'     => (string) $row['created_at'],
 			'updated_at'     => (string) $row['updated_at'],
 		);

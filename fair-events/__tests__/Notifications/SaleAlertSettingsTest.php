@@ -35,8 +35,11 @@ class SaleAlertSettingsTest extends TestCase {
 		$this->assertSame( array(), SaleAlertSettings::get()['organizers'] );
 		$this->assertSame(
 			array(
-				'enabled' => false,
-				'chat_id' => '',
+				'enabled'     => false,
+				'chat_id'     => '',
+				'frequency'   => 'immediate',
+				'time_of_day' => '08:00',
+				'day_of_week' => 1,
 			),
 			SaleAlertSettings::organizer( 'default' )
 		);
@@ -163,11 +166,82 @@ class SaleAlertSettingsTest extends TestCase {
 		$this->assertSame(
 			array(
 				'default' => array(
-					'enabled' => false,
-					'chat_id' => '',
+					'enabled'     => false,
+					'chat_id'     => '',
+					'frequency'   => 'immediate',
+					'time_of_day' => '08:00',
+					'day_of_week' => 1,
 				),
 			),
 			$sanitized['organizers']
+		);
+	}
+
+	/**
+	 * Configurations saved before frequencies existed send immediately.
+	 *
+	 * @return void
+	 */
+	public function test_existing_organizers_default_to_immediate() {
+		$GLOBALS['_fair_test_options'][ SaleAlertSettings::OPTION ] = array(
+			'enabled'    => true,
+			'organizers' => array(
+				'default' => array(
+					'enabled' => true,
+					'chat_id' => '-100001',
+				),
+			),
+		);
+
+		$organizer = SaleAlertSettings::organizer( 'default' );
+		$this->assertSame( 'immediate', $organizer['frequency'] );
+		$this->assertTrue( $organizer['enabled'] );
+		$this->assertFalse( SaleAlertSettings::is_digest( $organizer ) );
+	}
+
+	/**
+	 * Daily and weekly digests save with their time and weekday.
+	 *
+	 * @return void
+	 */
+	public function test_validates_frequency_time_and_weekday() {
+		$valid = SaleAlertSettings::validate(
+			array(
+				'enabled'    => true,
+				'organizers' => array(
+					self::ORGANIZER => array(
+						'enabled'     => true,
+						'chat_id'     => '-100002',
+						'frequency'   => 'weekly',
+						'time_of_day' => '18:30',
+						'day_of_week' => 5,
+					),
+				),
+			)
+		);
+		$this->assertSame( array(), $valid['errors'] );
+		SaleAlertSettings::save( $valid['settings'] );
+		$saved = SaleAlertSettings::organizer( self::ORGANIZER );
+		$this->assertSame( array( 'weekly', '18:30', 5 ), array( $saved['frequency'], $saved['time_of_day'], $saved['day_of_week'] ) );
+		$this->assertTrue( SaleAlertSettings::is_digest( $saved ) );
+
+		$invalid = SaleAlertSettings::validate(
+			array(
+				'enabled'    => true,
+				'organizers' => array(
+					'default' => array(
+						'enabled'     => false,
+						'chat_id'     => '',
+						'frequency'   => 'hourly',
+						'time_of_day' => '25:00',
+						'day_of_week' => 8,
+					),
+				),
+			)
+		);
+		$this->assertSame(
+			array( 'organizers.default.frequency', 'organizers.default.time_of_day', 'organizers.default.day_of_week' ),
+			array_keys( $invalid['errors'] )
 		);
 	}
 }

@@ -179,4 +179,37 @@ class SaleAlertFormatterTest extends TestCase {
 		$this->assertStringNotContainsString( 'Ana', $html );
 		$this->assertStringNotContainsString( 'example.com', $html );
 	}
+
+	/**
+	 * A digest of many events stays under Telegram's length limit and
+	 * counts the events it leaves out; titles stay escaped.
+	 *
+	 * @return void
+	 */
+	public function test_digest_fits_telegram_and_counts_the_rest() {
+		$sales = array();
+		for ( $i = 1; $i <= 80; $i++ ) {
+			$sales[] = array(
+				'event_id' => $i,
+				'title'    => 'Workshop <b>' . $i . '</b> with a fairly long descriptive title',
+				'dates'    => array( 'Saturday 5 December 2026, 10:00–12:00' ),
+				'tickets'  => array(
+					array(
+						'ticket_type_id' => 1,
+						'name'           => 'Regular',
+						'quantity'       => 1,
+					),
+				),
+				'amount'   => 10,
+				'currency' => 'EUR',
+			);
+		}
+
+		$html = SaleAlertFormatter::digest_html( $sales );
+
+		$this->assertLessThanOrEqual( 4096, mb_strlen( $html ) );
+		$this->assertStringContainsString( '80 sales, total: 800.00 EUR', $html );
+		$this->assertMatchesRegularExpression( '/and \d+ more events$/', $html );
+		$this->assertStringContainsString( 'Workshop &lt;b&gt;1&lt;/b&gt;', $html );
+	}
 }
