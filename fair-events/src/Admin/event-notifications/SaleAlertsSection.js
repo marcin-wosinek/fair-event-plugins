@@ -640,7 +640,7 @@ export default function SaleAlertsSection() {
 											updateOrganizer(
 												organizer.id,
 												'day_of_week'
-											)( parseInt( day, 10 ) )
+											)( Number.parseInt( day, 10 ) )
 										}
 										disabled={ saving }
 									/>
