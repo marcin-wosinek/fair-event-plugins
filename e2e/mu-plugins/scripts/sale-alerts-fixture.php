@@ -12,13 +12,18 @@
  *   run        {transactionId}  Run the alert worker for a transaction, as
  *                  its scheduled event would.
  *   recover    {}  Run the hourly recovery once.
+ *   digests    {organizer}  Queued digests of an organizer (#2449): when,
+ *                  in site-local time, and their arguments.
+ *   fire       {organizer}  Run an organizer's queued digests now, as
+ *                  WP-Cron would: each is removed, then its callback runs.
  *   retype     {signupId, ticketTypeId}  Give the purchase's last ticket
  *                  unit another ticket type, as an organizer can.
  *   telegram   {chatIds}  Requests the Telegram double logged for those
  *                  chats: text and parse mode.
  *   rows       {transactionIds}  Alert records of those transactions.
- *   cleanup    {transactionIds, chatIds}  Remove those records and the
- *                  double's log entries for those chats.
+ *   cleanup    {transactionIds, chatIds}  Remove those records, every
+ *                  queued digest and the double's log entries for those
+ *                  chats.
  *
  * Prints one `E2E_SALE_ALERTS:{json}` line.
  *
@@ -33,6 +38,7 @@ use FairEvents\Models\EventTicket;
 use FairEvents\Notifications\SaleAlertDispatcher;
 use FairEvents\Notifications\SaleAlertLog;
 use FairEvents\Notifications\SaleAlertSettings;
+use FairEvents\Notifications\ScheduledSends;
 use FairEvents\Notifications\TelegramSettings;
 
 global $wpdb;
@@ -93,6 +99,32 @@ switch ( $fixture_action ) {
 		$result = array( 'recovered' => true );
 		break;
 
+	case 'digests':
+		$digests = array();
+		foreach ( ScheduledSends::events( SaleAlertDispatcher::DIGEST_HOOK ) as list( $timestamp, $event_args ) ) {
+			if ( ( $event_args[0] ?? '' ) === (string) $data['organizer'] ) {
+				$digests[] = array(
+					'timestamp' => $timestamp,
+					'local'     => wp_date( 'N H:i', $timestamp ),
+					'args'      => $event_args,
+				);
+			}
+		}
+		$result = array( 'digests' => $digests );
+		break;
+
+	case 'fire':
+		$fired = 0;
+		foreach ( ScheduledSends::events( SaleAlertDispatcher::DIGEST_HOOK ) as list( $timestamp, $event_args ) ) {
+			if ( ( $event_args[0] ?? '' ) === (string) $data['organizer'] ) {
+				wp_unschedule_event( $timestamp, SaleAlertDispatcher::DIGEST_HOOK, $event_args );
+				SaleAlertDispatcher::handle_digest( ...$event_args );
+				++$fired;
+			}
+		}
+		$result = array( 'fired' => $fired );
+		break;
+
 	case 'retype':
 		$units  = EventTicket::get_by_signup_id( (int) $data['signupId'] );
 		$last   = end( $units );
@@ -136,6 +168,7 @@ switch ( $fixture_action ) {
 			$wpdb->delete( SaleAlertLog::table_name(), array( 'transaction_id' => $transaction_id ) );
 			wp_clear_scheduled_hook( SaleAlertDispatcher::WORKER_HOOK, array( $transaction_id ) );
 		}
+		wp_unschedule_hook( SaleAlertDispatcher::DIGEST_HOOK );
 		$chats = array_map( 'strval', (array) ( $data['chatIds'] ?? array() ) );
 		update_option(
 			$log_option,

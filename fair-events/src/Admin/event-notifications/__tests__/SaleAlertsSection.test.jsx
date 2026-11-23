@@ -13,6 +13,7 @@ import {
 import apiFetch from '@wordpress/api-fetch';
 import SaleAlertsSection, {
 	SALE_ALERTS_PATH,
+	deliveryText,
 	draftErrors,
 	outcomeLabel,
 } from '../SaleAlertsSection.js';
@@ -43,6 +44,7 @@ function payload( overrides = {} ) {
 		organizer_resolution_available: true,
 		credential_problem: '',
 		connectors_url: '/wp-admin/options-connectors.php',
+		timezone: 'Europe/Madrid',
 		recent: [],
 		...overrides,
 	};
@@ -168,8 +170,20 @@ describe( 'SaleAlertsSection', () => {
 			data: {
 				enabled: true,
 				organizers: {
-					default: { enabled: false, chat_id: '' },
-					[ STUDIO ]: { enabled: true, chat_id: '@studio_sales' },
+					default: {
+						enabled: false,
+						chat_id: '',
+						frequency: 'immediate',
+						time_of_day: '08:00',
+						day_of_week: 1,
+					},
+					[ STUDIO ]: {
+						enabled: true,
+						chat_id: '@studio_sales',
+						frequency: 'immediate',
+						time_of_day: '08:00',
+						day_of_week: 1,
+					},
 				},
 			},
 		} );
@@ -333,5 +347,144 @@ describe( 'outcomeLabel', () => {
 			outcomeLabel( { state: 'skipped', reason: 'organizer_disabled' } )
 				.tone
 		).toBe( 'neutral' );
+	} );
+
+	it( 'sends existing organizers immediately until a digest is chosen', async () => {
+		await renderSection();
+		const studio = organizer( 'Studio' );
+
+		expect(
+			studio.getByRole( 'combobox', { name: 'How often' } )
+		).toHaveValue( 'immediate' );
+		expect(
+			studio.getByText(
+				'Each sale is sent as soon as its payment is confirmed.'
+			)
+		).toBeInTheDocument();
+		expect( studio.queryByLabelText( 'Delivery time' ) ).toBeNull();
+		expect( studio.queryByLabelText( 'Weekday' ) ).toBeNull();
+	} );
+
+	it( 'saves a weekly digest with its weekday and time, then shows the next digest', async () => {
+		await renderSection();
+		const saved = payload( {
+			organizers: [
+				payload().organizers[ 0 ],
+				{
+					...payload().organizers[ 1 ],
+					settings: {
+						enabled: false,
+						chat_id: '',
+						frequency: 'weekly',
+						time_of_day: '18:30',
+						day_of_week: 5,
+					},
+					next_digest: '2026-11-27T17:30:00+00:00',
+					pending: 2,
+				},
+			],
+		} );
+		apiFetch.mockResolvedValueOnce( saved );
+		const studio = organizer( 'Studio' );
+
+		fireEvent.change(
+			studio.getByRole( 'combobox', { name: 'How often' } ),
+			{ target: { value: 'weekly' } }
+		);
+		fireEvent.change( studio.getByRole( 'combobox', { name: 'Weekday' } ), {
+			target: { value: '5' },
+		} );
+		fireEvent.change( studio.getByLabelText( 'Delivery time' ), {
+			target: { value: '18:30' },
+		} );
+		expect(
+			studio.getByText( /Save to see when this organizer’s sales/ )
+		).toBeInTheDocument();
+		expect(
+			studio.getByText( 'In the site’s timezone (Europe/Madrid).' )
+		).toBeInTheDocument();
+
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', {
+					name: 'Save ticket sale alerts',
+				} )
+			);
+		} );
+
+		const put = apiFetch.mock.calls.find(
+			( [ options ] ) => 'PUT' === options.method
+		)[ 0 ];
+		expect( put.data.organizers[ STUDIO ] ).toEqual( {
+			enabled: false,
+			chat_id: '',
+			frequency: 'weekly',
+			time_of_day: '18:30',
+			day_of_week: 5,
+		} );
+		expect(
+			await studio.findByText(
+				/^Next digest: .+ \(Europe\/Madrid\)\. 2 sales are waiting for it\. Days without sales send nothing\.$/
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'blocks saving a digest without a delivery time', async () => {
+		await renderSection();
+		const studio = organizer( 'Studio' );
+
+		fireEvent.change(
+			studio.getByRole( 'combobox', { name: 'How often' } ),
+			{ target: { value: 'daily' } }
+		);
+		fireEvent.change( studio.getByLabelText( 'Delivery time' ), {
+			target: { value: '' },
+		} );
+
+		expect(
+			studio.getByText(
+				'Enter the delivery time as hours and minutes, for example 08:00.'
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Save ticket sale alerts' } )
+		).toHaveAttribute( 'aria-disabled', 'true' );
+		expect(
+			screen.getByText(
+				'Unsaved changes: correct the highlighted fields first.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'explains a digest that is not scheduled', () => {
+		expect(
+			deliveryText(
+				{
+					settings: { frequency: 'daily' },
+					next_digest: null,
+					pending: 1,
+				},
+				'Y-m-d H:i',
+				'Europe/Madrid'
+			)
+		).toBe(
+			'No digest is scheduled while alerts are off for this organizer or sitewide. Sales already waiting are kept for the next digest. 1 sale is waiting for it.'
+		);
+	} );
+
+	it( 'labels digest outcomes', () => {
+		expect( outcomeLabel( { state: 'pending', reason: '' } ) ).toEqual( {
+			label: 'Waiting for the next digest',
+			tone: 'info',
+		} );
+		expect(
+			outcomeLabel( { state: 'pending', reason: 'http_403' } )
+		).toEqual( {
+			label: 'Waiting for the next digest: Telegram refused the last one (error 403)',
+			tone: 'warning',
+		} );
+		expect(
+			outcomeLabel( { state: 'sent', reason: '', digest: true } ).label
+		).toBe( 'Sent in a digest' );
 	} );
 } );

@@ -11,7 +11,9 @@ defined( 'WPINC' ) || die;
 
 /**
  * Stores whether Telegram ticket sale alerts are on (#2448), and each
- * organizer's switch and private chat or channel.
+ * organizer's switch, private chat or channel, and how often its alerts go
+ * out (#2449): one message per sale, or a daily or weekly digest at a
+ * site-local time.
  *
  * Organizers are keyed like the sales summaries
  * ({@see SalesSummarySettings::DEFAULT_ORGANIZER} for the sitewide
@@ -21,10 +23,18 @@ defined( 'WPINC' ) || die;
  *
  * Everything starts off, on new and existing sites alike: nothing is sent
  * until an administrator turns the alerts on and gives an organizer a
- * destination.
+ * destination. An organizer saved before frequencies existed sends
+ * immediately.
  */
 class SaleAlertSettings {
 	public const OPTION = 'fair_events_sale_alerts';
+
+	public const IMMEDIATE    = 'immediate';
+	public const DAILY        = SalesSummarySettings::DAILY;
+	public const WEEKLY       = SalesSummarySettings::WEEKLY;
+	public const FREQUENCIES  = array( self::IMMEDIATE, self::DAILY, self::WEEKLY );
+	public const DEFAULT_TIME = SalesSummarySettings::DEFAULT_TIME;
+	public const DEFAULT_DAY  = SalesSummarySettings::DEFAULT_DAY;
 
 	/**
 	 * Settings that were never saved.
@@ -41,13 +51,26 @@ class SaleAlertSettings {
 	/**
 	 * One organizer's settings that were never saved.
 	 *
-	 * @return array{enabled: bool, chat_id: string}
+	 * @return array{enabled: bool, chat_id: string, frequency: string, time_of_day: string, day_of_week: int}
 	 */
 	public static function organizer_defaults() {
 		return array(
-			'enabled' => false,
-			'chat_id' => '',
+			'enabled'     => false,
+			'chat_id'     => '',
+			'frequency'   => self::IMMEDIATE,
+			'time_of_day' => self::DEFAULT_TIME,
+			'day_of_week' => self::DEFAULT_DAY,
 		);
+	}
+
+	/**
+	 * Whether an organizer's sales are collected into a digest.
+	 *
+	 * @param array $organizer Organizer settings.
+	 * @return bool
+	 */
+	public static function is_digest( array $organizer ) {
+		return in_array( $organizer['frequency'] ?? self::IMMEDIATE, array( self::DAILY, self::WEEKLY ), true );
 	}
 
 	/**
@@ -82,7 +105,7 @@ class SaleAlertSettings {
 	 * One organizer's settings; the defaults when never saved.
 	 *
 	 * @param string $key Organizer key.
-	 * @return array{enabled: bool, chat_id: string}
+	 * @return array{enabled: bool, chat_id: string, frequency: string, time_of_day: string, day_of_week: int}
 	 */
 	public static function organizer( $key ) {
 		return self::get()['organizers'][ (string) $key ] ?? self::organizer_defaults();
@@ -115,7 +138,8 @@ class SaleAlertSettings {
 
 	/**
 	 * Validate settings from input. Nothing is repaired: a value that isn't
-	 * valid is reported by field.
+	 * valid is reported by field. An organizer field left out takes its
+	 * default; callers merge saved values in first to keep them.
 	 *
 	 * @param array $value Raw settings: enabled, organizers keyed by organizer.
 	 * @return array{settings: array, errors: array<string, string>}
@@ -157,9 +181,14 @@ class SaleAlertSettings {
 				$errors[ "organizers.{$key}.chat_id" ] = __( 'Enter a chat or channel before turning the organizer’s alerts on.', 'fair-events' );
 			}
 
-			$organizers[ $key ] = array(
-				'enabled' => $organizer_enabled,
-				'chat_id' => $chat_id,
+			$schedule = self::validate_schedule( $key, $organizer, $errors );
+
+			$organizers[ $key ] = array_merge(
+				array(
+					'enabled' => $organizer_enabled,
+					'chat_id' => $chat_id,
+				),
+				$schedule
 			);
 		}
 
@@ -173,8 +202,45 @@ class SaleAlertSettings {
 	}
 
 	/**
+	 * Validate one organizer's frequency, delivery time and weekday.
+	 *
+	 * @param string $key       Organizer key.
+	 * @param array  $organizer Raw organizer settings.
+	 * @param array  $errors    Errors by field, added to.
+	 * @return array{frequency: string, time_of_day: string, day_of_week: int}
+	 */
+	private static function validate_schedule( $key, array $organizer, array &$errors ) {
+		$defaults = self::organizer_defaults();
+
+		$frequency = $organizer['frequency'] ?? $defaults['frequency'];
+		if ( ! in_array( $frequency, self::FREQUENCIES, true ) ) {
+			$errors[ "organizers.{$key}.frequency" ] = __( 'Choose how often the organizer’s sales are sent: immediately, daily or weekly.', 'fair-events' );
+			$frequency                               = $defaults['frequency'];
+		}
+
+		$time = $organizer['time_of_day'] ?? $defaults['time_of_day'];
+		if ( ! TelegramSettings::valid_time( $time ) ) {
+			$errors[ "organizers.{$key}.time_of_day" ] = __( 'Enter the delivery time as hours and minutes, for example 08:00.', 'fair-events' );
+			$time                                      = $defaults['time_of_day'];
+		}
+
+		$day = $organizer['day_of_week'] ?? $defaults['day_of_week'];
+		if ( ! is_int( $day ) || $day < 1 || $day > 7 ) {
+			$errors[ "organizers.{$key}.day_of_week" ] = __( 'Choose the weekday for the weekly digest.', 'fair-events' );
+			$day                                       = $defaults['day_of_week'];
+		}
+
+		return array(
+			'frequency'   => $frequency,
+			'time_of_day' => $time,
+			'day_of_week' => $day,
+		);
+	}
+
+	/**
 	 * Normalize stored settings onto the defaults. An organizer whose
-	 * destination can't be read is stored off.
+	 * destination can't be read is stored off; one without a readable
+	 * frequency sends immediately.
 	 *
 	 * @param mixed $value Raw settings.
 	 * @return array
@@ -186,15 +252,22 @@ class SaleAlertSettings {
 		}
 
 		$organizers = array();
+		$fallback   = self::organizer_defaults();
 		foreach ( (array) ( $value['organizers'] ?? array() ) as $key => $organizer ) {
 			$key = (string) $key;
 			if ( ! self::valid_key( $key ) || ! is_array( $organizer ) ) {
 				continue;
 			}
 			$chat_id            = isset( $organizer['chat_id'] ) && is_string( $organizer['chat_id'] ) && TelegramSettings::valid_chat_id( $organizer['chat_id'] ) ? $organizer['chat_id'] : '';
+			$frequency          = $organizer['frequency'] ?? null;
+			$time               = $organizer['time_of_day'] ?? null;
+			$day                = isset( $organizer['day_of_week'] ) ? (int) $organizer['day_of_week'] : 0;
 			$organizers[ $key ] = array(
-				'enabled' => '' !== $chat_id && true === ( $organizer['enabled'] ?? false ),
-				'chat_id' => $chat_id,
+				'enabled'     => '' !== $chat_id && true === ( $organizer['enabled'] ?? false ),
+				'chat_id'     => $chat_id,
+				'frequency'   => in_array( $frequency, self::FREQUENCIES, true ) ? $frequency : $fallback['frequency'],
+				'time_of_day' => TelegramSettings::valid_time( $time ) ? $time : $fallback['time_of_day'],
+				'day_of_week' => $day >= 1 && $day <= 7 ? $day : $fallback['day_of_week'],
 			);
 		}
 

@@ -33,10 +33,25 @@ defined( 'WPINC' ) || die;
  * Every outcome is recorded ({@see SaleAlertLog}) for the Event
  * notifications page. An alert Telegram may have accepted is recorded as
  * uncertain and never resent automatically.
+ *
+ * Frequency (#2449): an organizer set to a daily or weekly digest has its
+ * checked sales kept as pending instead of sent. One WP-Cron event per
+ * organizer sends them at the configured site-local time
+ * ({@see SalesSummaryPeriod::next_due()}), as one message, and only when
+ * there are any. Each sale is checked again when its digest is built. A
+ * digest Telegram refused keeps its sales pending for the next one; one
+ * Telegram may have accepted is uncertain and never resent. Switching an
+ * organizer back to Immediate sends what is pending as one final digest.
  */
 class SaleAlertDispatcher {
 	public const WORKER_HOOK   = 'fair_events_sale_alert_send';
 	public const RECOVERY_HOOK = 'fair_events_sale_alert_recovery';
+	public const DIGEST_HOOK   = 'fair_events_sale_alert_digest';
+
+	/**
+	 * Occurrence of a digest that sends what is pending right away.
+	 */
+	public const FLUSH = 'now';
 
 	/**
 	 * Seconds to wait for every linked purchase to be confirmed.
@@ -120,6 +135,7 @@ class SaleAlertDispatcher {
 		add_action( 'fair_events_signup_confirmed', array( self::class, 'handle_signup_confirmed' ), 20, 2 );
 		add_action( self::WORKER_HOOK, array( self::class, 'handle_worker' ) );
 		add_action( self::RECOVERY_HOOK, array( self::class, 'handle_recovery' ) );
+		add_action( self::DIGEST_HOOK, array( self::class, 'handle_digest' ), 10, 3 );
 
 		if ( SaleAlertSettings::enabled() ) {
 			Cron::ensure_recurring( self::RECOVERY_HOOK, 'hourly', time() + HOUR_IN_SECONDS );
@@ -134,6 +150,7 @@ class SaleAlertDispatcher {
 	public static function unschedule_all() {
 		wp_unschedule_hook( self::WORKER_HOOK );
 		wp_unschedule_hook( self::RECOVERY_HOOK );
+		wp_unschedule_hook( self::DIGEST_HOOK );
 	}
 
 	/**
@@ -169,6 +186,30 @@ class SaleAlertDispatcher {
 	 */
 	public static function handle_recovery() {
 		( new self() )->recover();
+	}
+
+	/**
+	 * Digest callback. The organizer's next digest is scheduled first, so
+	 * a failure below never stops the cycle. A send queued with a cadence
+	 * the organizer no longer has does nothing.
+	 *
+	 * @param string $organizer  Organizer key.
+	 * @param string $frequency  Cadence it was scheduled with; Immediate for a final digest.
+	 * @param string $occurrence Day or week it was scheduled for, or {@see self::FLUSH}.
+	 * @return void
+	 */
+	public static function handle_digest( $organizer = '', $frequency = '', $occurrence = '' ) {
+		unset( $occurrence );
+		$organizer = (string) $organizer;
+		if ( ! SaleAlertSettings::valid_key( $organizer ) ) {
+			return;
+		}
+		$settings = SaleAlertSettings::organizer( $organizer );
+		self::schedule_digest( $organizer );
+		if ( SaleAlertSettings::IMMEDIATE !== $frequency && $settings['frequency'] !== $frequency ) {
+			return;
+		}
+		( new self() )->send_digest( $organizer );
 	}
 
 	/**
@@ -223,6 +264,14 @@ class SaleAlertDispatcher {
 			return SaleAlertLog::SKIPPED;
 		}
 
+		if ( 'digest' === $decision['action'] ) {
+			if ( ! $this->log->transition( $transaction_id, SaleAlertLog::CLAIMED, SaleAlertLog::PENDING ) ) {
+				return '';
+			}
+			self::schedule_digest( $row['organizer_id'] );
+			return SaleAlertLog::PENDING;
+		}
+
 		// From here on Telegram may receive the request.
 		if ( ! $this->log->transition( $transaction_id, SaleAlertLog::CLAIMED, SaleAlertLog::SENDING ) ) {
 			return '';
@@ -260,6 +309,209 @@ class SaleAlertDispatcher {
 		foreach ( $this->log->in_state( SaleAlertLog::QUEUED ) as $transaction_id ) {
 			$this->process( $transaction_id );
 		}
+
+		// Sales pending for an organizer that sends immediately now (a final
+		// digest that never ran) go out; digest organizers keep their next
+		// digest scheduled.
+		$settings = SaleAlertSettings::get();
+		$pending  = $this->log->pending_counts();
+		foreach ( array_unique( array_merge( array_keys( $settings['organizers'] ), array_keys( $pending ) ) ) as $organizer ) {
+			$organizer = (string) $organizer;
+			$current   = $settings['organizers'][ $organizer ] ?? SaleAlertSettings::organizer_defaults();
+			if ( SaleAlertSettings::is_digest( $current ) ) {
+				self::schedule_digest( $organizer );
+			} elseif ( ! empty( $pending[ $organizer ] ) ) {
+				$this->send_digest( $organizer );
+			}
+		}
+	}
+
+	/**
+	 * Send an organizer's pending sales as one digest.
+	 *
+	 * Nothing is claimed while alerts are off, for the organizer or
+	 * sitewide, or while the Telegram credentials have a problem: the
+	 * sales stay pending. Each claimed sale is checked again as a single
+	 * alert would be; one that no longer qualifies is skipped with its
+	 * reason. Nothing is sent when no sale is left.
+	 *
+	 * @param string $organizer Organizer key.
+	 * @return string The digest's state: sent, uncertain, or pending again
+	 *     after Telegram refused it; '' when nothing was sent.
+	 */
+	public function send_digest( $organizer ) {
+		$organizer = (string) $organizer;
+		$settings  = SaleAlertSettings::get();
+		$current   = $settings['organizers'][ $organizer ] ?? null;
+		if ( ! $settings['enabled'] || null === $current || ! $current['enabled'] || $this->provider->credential_problem() ) {
+			return '';
+		}
+
+		$sales = array();
+		foreach ( $this->log->claim_pending( $organizer, wp_generate_uuid4() ) as $transaction_id ) {
+			$checked = $this->check_sale( $this->log->get( $transaction_id ) );
+			if ( 'wait' === $checked['action'] ) {
+				$this->log->transition( $transaction_id, SaleAlertLog::CLAIMED, SaleAlertLog::PENDING );
+				continue;
+			}
+			if ( 'skip' === $checked['action'] ) {
+				$this->log->transition( $transaction_id, SaleAlertLog::CLAIMED, SaleAlertLog::SKIPPED, $checked['reason'] );
+				continue;
+			}
+			$sales[ $transaction_id ] = self::summary( $checked['sale'] );
+		}
+
+		// From here on Telegram may receive the request.
+		foreach ( array_keys( $sales ) as $transaction_id ) {
+			if ( ! $this->log->transition( $transaction_id, SaleAlertLog::CLAIMED, SaleAlertLog::SENDING ) ) {
+				unset( $sales[ $transaction_id ] );
+			}
+		}
+		if ( ! $sales ) {
+			return '';
+		}
+
+		try {
+			$result = $this->provider->send_html( $current['chat_id'], SaleAlertFormatter::digest_html( array_values( $sales ) ) );
+		} catch ( \Throwable $e ) {
+			$result = array(
+				'state' => SaleAlertLog::UNCERTAIN,
+				'code'  => 'internal_error',
+			);
+		}
+
+		$state = in_array( $result['state'], array( SaleAlertLog::SENT, SaleAlertLog::FAILED ), true ) ? $result['state'] : SaleAlertLog::UNCERTAIN;
+		// Refused for sure: nothing was posted, so the next digest retries.
+		$final = SaleAlertLog::FAILED === $state ? SaleAlertLog::PENDING : $state;
+		foreach ( array_keys( $sales ) as $transaction_id ) {
+			$this->log->transition( $transaction_id, SaleAlertLog::SENDING, $final, (string) $result['code'] );
+		}
+		return $final;
+	}
+
+	/**
+	 * Make sure a digest organizer's next digest is scheduled. An event
+	 * already queued for its cadence is kept, so an overdue digest still
+	 * runs.
+	 *
+	 * @param string $organizer Organizer key.
+	 * @return bool Whether a digest is scheduled.
+	 */
+	public static function schedule_digest( $organizer ) {
+		$organizer = (string) $organizer;
+		$settings  = SaleAlertSettings::organizer( $organizer );
+		if ( ! SaleAlertSettings::enabled() || ! $settings['enabled'] || ! SaleAlertSettings::is_digest( $settings ) ) {
+			return false;
+		}
+		foreach ( self::scheduled_digests( $organizer ) as list( , $args ) ) {
+			if ( $args[1] === $settings['frequency'] ) {
+				return true;
+			}
+		}
+
+		$due = SalesSummaryPeriod::next_due( $settings, WeeklySendSchedule::now() );
+		return true === Cron::ensure_single(
+			$due->getTimestamp(),
+			self::DIGEST_HOOK,
+			array( $organizer, $settings['frequency'], SalesSummaryPeriod::occurrence( $settings['frequency'], $due ) )
+		);
+	}
+
+	/**
+	 * Bring an organizer's queued digests in line with its settings after
+	 * they were saved.
+	 *
+	 * A queued digest that still matches the cadence, weekday and time is
+	 * kept, overdue or not; any other is removed and the next one
+	 * scheduled, carrying the pending sales forward. An organizer that
+	 * sends immediately now gets one final digest of its pending sales.
+	 *
+	 * @param string            $organizer Organizer key.
+	 * @param SaleAlertLog|null $log       Alert records.
+	 * @return void
+	 */
+	public static function reschedule_digest( $organizer, $log = null ) {
+		$organizer = (string) $organizer;
+		$settings  = SaleAlertSettings::organizer( $organizer );
+		$active    = SaleAlertSettings::enabled() && $settings['enabled'];
+		$digest    = $active && SaleAlertSettings::is_digest( $settings );
+
+		foreach ( self::scheduled_digests( $organizer ) as list( $timestamp, $args ) ) {
+			// A final digest stays only while the organizer sends immediately;
+			// a scheduled one only while it still matches the settings.
+			$keep = self::FLUSH === $args[2] ? ! $digest : $digest && self::matches( $settings, $timestamp, $args );
+			if ( ! $keep ) {
+				wp_unschedule_event( $timestamp, self::DIGEST_HOOK, $args );
+			}
+		}
+
+		if ( $digest ) {
+			self::schedule_digest( $organizer );
+		} elseif ( $active && ! empty( ( $log ? $log : new SaleAlertLog() )->pending_counts()[ $organizer ] ) ) {
+			Cron::ensure_single( time(), self::DIGEST_HOOK, array( $organizer, SaleAlertSettings::IMMEDIATE, self::FLUSH ) );
+		}
+	}
+
+	/**
+	 * When an organizer's next digest is sent.
+	 *
+	 * @param string $organizer Organizer key.
+	 * @return int|null Unix time, or null when none is scheduled.
+	 */
+	public static function next_digest( $organizer ) {
+		$times = array_column( self::scheduled_digests( (string) $organizer ), 0 );
+		return $times ? (int) min( $times ) : null;
+	}
+
+	/**
+	 * Queued digests of one organizer.
+	 *
+	 * @param string $organizer Organizer key.
+	 * @return array[] Each `array( timestamp, args )`.
+	 */
+	private static function scheduled_digests( $organizer ) {
+		return array_values(
+			array_filter(
+				ScheduledSends::events( self::DIGEST_HOOK ),
+				static function ( $event ) use ( $organizer ) {
+					return 3 === count( $event[1] ) && $event[1][0] === $organizer;
+				}
+			)
+		);
+	}
+
+	/**
+	 * Whether a queued digest is one the settings would schedule.
+	 *
+	 * @param array $settings  Organizer settings.
+	 * @param int   $timestamp When it runs.
+	 * @param array $args      Its arguments.
+	 * @return bool
+	 */
+	private static function matches( array $settings, $timestamp, array $args ) {
+		if ( $args[1] !== $settings['frequency'] ) {
+			return false;
+		}
+		$before = ( new \DateTimeImmutable( '@' . ( (int) $timestamp - 1 ) ) )->setTimezone( wp_timezone() );
+		$due    = SalesSummaryPeriod::next_due( $settings, $before );
+		return $due->getTimestamp() === (int) $timestamp && SalesSummaryPeriod::occurrence( $settings['frequency'], $due ) === $args[2];
+	}
+
+	/**
+	 * What a digest lists of one sale.
+	 *
+	 * @param array $sale Sale from {@see SaleAlertSource::load()}.
+	 * @return array
+	 */
+	private static function summary( array $sale ) {
+		return array(
+			'event_id' => (int) $sale['event']['id'],
+			'title'    => $sale['event']['title'],
+			'dates'    => $sale['dates'],
+			'tickets'  => $sale['tickets'],
+			'amount'   => $sale['transaction']['amount'],
+			'currency' => $sale['transaction']['currency'],
+		);
 	}
 
 	/**
@@ -290,6 +542,60 @@ class SaleAlertDispatcher {
 		}
 		if ( ! SaleAlertSettings::enabled() ) {
 			return self::skip( self::REASON_DISABLED );
+		}
+
+		$checked = $this->check_sale( $row );
+		if ( 'ok' !== $checked['action'] ) {
+			return $checked;
+		}
+		$organizer = $row['organizer_id'];
+		$sale      = $checked['sale'];
+
+		// An organizer never set up has no destination (a warning); one
+		// switched off is skipped on purpose. A saved switch is on only with
+		// a valid destination ({@see SaleAlertSettings::sanitize()}).
+		$settings = SaleAlertSettings::get()['organizers'][ $organizer ] ?? null;
+		if ( null === $settings ) {
+			return self::skip( self::REASON_MISSING_DESTINATION );
+		}
+		if ( ! $settings['enabled'] ) {
+			return self::skip( self::REASON_ORGANIZER_DISABLED );
+		}
+		if ( SaleAlertSettings::is_digest( $settings ) ) {
+			return array( 'action' => 'digest' );
+		}
+
+		$problem = $this->provider->credential_problem();
+		if ( $problem ) {
+			return self::skip( $problem['code'] );
+		}
+
+		return array(
+			'action'  => 'send',
+			'chat_id' => $settings['chat_id'],
+			'html'    => SaleAlertFormatter::html(
+				array(
+					'title'    => $sale['event']['title'],
+					'dates'    => $sale['dates'],
+					'tickets'  => $sale['tickets'],
+					'amount'   => $sale['transaction']['amount'],
+					'currency' => $sale['transaction']['currency'],
+				)
+			),
+		);
+	}
+
+	/**
+	 * Whether a recorded sale still qualifies for its organizer: a paid,
+	 * fully confirmed purchase of one event that still belongs to the
+	 * organizer it was queued for.
+	 *
+	 * @param array|null $row Alert record.
+	 * @return array{action: string, reason?: string, sale?: array} `ok` with the sale, `wait` or `skip`.
+	 */
+	private function check_sale( $row ) {
+		if ( ! $row ) {
+			return self::skip( self::REASON_MISSING_TRANSACTION );
 		}
 
 		$sale = $this->source->load( $row['transaction_id'] );
@@ -329,34 +635,9 @@ class SaleAlertDispatcher {
 			return self::skip( self::REASON_ASSIGNMENT_CHANGED );
 		}
 
-		// An organizer never set up has no destination (a warning); one
-		// switched off is skipped on purpose. A saved switch is on only with
-		// a valid destination ({@see SaleAlertSettings::sanitize()}).
-		$settings = SaleAlertSettings::get()['organizers'][ $organizer ] ?? null;
-		if ( null === $settings ) {
-			return self::skip( self::REASON_MISSING_DESTINATION );
-		}
-		if ( ! $settings['enabled'] ) {
-			return self::skip( self::REASON_ORGANIZER_DISABLED );
-		}
-
-		$problem = $this->provider->credential_problem();
-		if ( $problem ) {
-			return self::skip( $problem['code'] );
-		}
-
 		return array(
-			'action'  => 'send',
-			'chat_id' => $settings['chat_id'],
-			'html'    => SaleAlertFormatter::html(
-				array(
-					'title'    => $sale['event']['title'],
-					'dates'    => $sale['dates'],
-					'tickets'  => $sale['tickets'],
-					'amount'   => $sale['transaction']['amount'],
-					'currency' => $sale['transaction']['currency'],
-				)
-			),
+			'action' => 'ok',
+			'sale'   => $sale,
 		);
 	}
 
