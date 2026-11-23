@@ -27,7 +27,7 @@
 	"author": "",
 	"license": "GPL-2.0-or-later",
 	"dependencies": {
-		"@wordpress/components": "44.0.0",
+		"@wordpress/components": "45.0.0",
 		"@wordpress/date": "6.1.0",
 		"@wordpress/html-entities": "5.1.0",
 		"@wordpress/icons": "20.0.0",
