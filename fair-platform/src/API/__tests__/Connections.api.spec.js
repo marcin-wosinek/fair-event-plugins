@@ -283,7 +283,7 @@ test.describe.serial( 'Connection administration API', () => {
 					expect( first ).toMatchObject( {
 						mollie_organization_id: 'org_1',
 						mollie_profile_id: 'pfl_1',
-						profile_created: '1',
+						profile_created: true,
 						site_url: 'https://alpha.example.test',
 						scope_granted: 'payments.read',
 						error_code: null,
@@ -292,7 +292,7 @@ test.describe.serial( 'Connection administration API', () => {
 					expect( second ).toMatchObject( {
 						error_code: 'access_denied',
 						error_message: 'Denied',
-						profile_created: '0',
+						profile_created: false,
 					} );
 				} else {
 					expect( first ).toMatchObject( {

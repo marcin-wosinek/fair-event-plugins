@@ -50,7 +50,21 @@ class ConnectionRepository extends AbstractConnectionRepository {
 	}
 
 	/**
+	 * Whether a Mollie profile was created during connection.
+	 *
+	 * @return string[]
+	 */
+	protected function get_boolean_columns() {
+		return array( 'profile_created' );
+	}
+
+	/**
 	 * Log a connection attempt
+	 *
+	 * A connected row bound to a refresh token takes that binding over from
+	 * the same site's earlier rows: Mollie can hand back the same refresh
+	 * token on re-authorization, and a token bound to several connected
+	 * rows is never attributed. Earlier rows keep their dates.
 	 *
 	 * @param array $data Connection data.
 	 * @return int|false Insert ID or false on failure.
@@ -88,7 +102,30 @@ class ConnectionRepository extends AbstractConnectionRepository {
 			array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s' )
 		);
 
-		return $result ? $wpdb->insert_id : false;
+		if ( ! $result ) {
+			return false;
+		}
+
+		$insert_id = (int) $wpdb->insert_id;
+
+		if ( 'connected' === $data['status'] && is_string( $data['refresh_token_fingerprint'] ) && '' !== $data['refresh_token_fingerprint'] ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query(
+				$wpdb->prepare(
+					'UPDATE %i
+					SET refresh_token_fingerprint = NULL
+					WHERE site_id = %s
+						AND refresh_token_fingerprint = %s
+						AND id < %d',
+					$this->table_name,
+					$data['site_id'],
+					$data['refresh_token_fingerprint'],
+					$insert_id
+				)
+			);
+		}
+
+		return $insert_id;
 	}
 
 	/**

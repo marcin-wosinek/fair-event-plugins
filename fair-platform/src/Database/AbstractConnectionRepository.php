@@ -88,6 +88,16 @@ abstract class AbstractConnectionRepository {
 	abstract protected function get_listed_columns();
 
 	/**
+	 * Listed columns stored as MySQL booleans, which a listing returns as
+	 * JSON booleans rather than the "0"/"1" strings wpdb reads.
+	 *
+	 * @return string[]
+	 */
+	protected function get_boolean_columns() {
+		return array();
+	}
+
+	/**
 	 * Log a connection attempt
 	 *
 	 * @param array $data Connection data.
@@ -164,6 +174,14 @@ abstract class AbstractConnectionRepository {
 			ARRAY_A
 		);
 		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+
+		$boolean_columns = $this->get_boolean_columns();
+		foreach ( $items as &$item ) {
+			foreach ( $boolean_columns as $column ) {
+				$item[ $column ] = (bool) (int) $item[ $column ];
+			}
+		}
+		unset( $item );
 
 		return array(
 			'items'       => $items,
