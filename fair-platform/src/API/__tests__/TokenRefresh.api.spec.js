@@ -189,6 +189,124 @@ test.describe.serial( 'Fair Platform token refresh logging', () => {
 		);
 	} );
 
+	test( 'a reconnect that reuses the refresh token takes the binding over', async () => {
+		// Production (#2380): Mollie handed La Mutable the same refresh
+		// token on re-authorization, leaving two connected rows bound to it.
+		const earlierId = await seedBound( {
+			refreshToken: 'refresh_e2e_reused',
+			refreshedDaysAgo: 3,
+		} );
+		const { ordinary: seeded } = await fixture( 'rows' );
+		const session = await fixture( 'profile-session', {
+			siteId: 'site-a',
+			siteName: 'Alpha',
+			siteUrl: 'https://alpha.example.test',
+			refreshToken: 'refresh_e2e_reused',
+		} );
+
+		const completed = await api.post( '/oauth/select-profile', {
+			form: {
+				session_token: session.session_token,
+				profile_id: 'pfl_e2e',
+				nonce: session.nonce,
+			},
+			maxRedirects: 0,
+		} );
+		expect( completed.status(), await completed.text() ).toBe( 302 );
+
+		const before = await fixture( 'rows' );
+		const row = before.ordinary[ before.ordinary.length - 1 ];
+		const earlier = byId( seeded, earlierId );
+		expect( row ).toMatchObject( {
+			site_id: 'site-a',
+			status: 'connected',
+			last_token_refresh: null,
+			refresh_token_fingerprint:
+				await fingerprint( 'refresh_e2e_reused' ),
+		} );
+		// The earlier row is unbound and keeps its dates.
+		expect( byId( before.ordinary, earlierId ) ).toEqual( {
+			...earlier,
+			refresh_token_fingerprint: null,
+		} );
+
+		await expectRefreshed(
+			await refresh( 'refresh_e2e_reused', 'keep' ),
+			undefined
+		);
+
+		const after = await fixture( 'rows' );
+		const refreshed = byId( after.ordinary, row.id );
+		expect( refreshed.last_token_refresh ).not.toBeNull();
+		expect( refreshed ).toEqual( {
+			...row,
+			last_token_refresh: refreshed.last_token_refresh,
+		} );
+		expect( without( after.ordinary, row.id ) ).toEqual(
+			without( before.ordinary, row.id )
+		);
+		expect( after.instagram ).toEqual( before.instagram );
+
+		// A second success advances the new row only.
+		await expectRefreshed(
+			await refresh( 'refresh_e2e_reused', 'rotate:refresh_e2e_next' ),
+			'refresh_e2e_next'
+		);
+		const again = await fixture( 'rows' );
+		const advanced = byId( again.ordinary, row.id );
+		expect(
+			advanced.last_token_refresh >= refreshed.last_token_refresh
+		).toBe( true );
+		expect( advanced.connected_at ).toBe( row.connected_at );
+		expect( advanced.refresh_token_fingerprint ).toBe(
+			await fingerprint( 'refresh_e2e_next' )
+		);
+		expect( without( again.ordinary, row.id ) ).toEqual(
+			without( before.ordinary, row.id )
+		);
+	} );
+
+	test( 'a reconnect leaves another site sharing the token ambiguous', async () => {
+		await fixture( 'seed', {
+			ordinary: [
+				{
+					site_id: 'site-b',
+					site_name: 'Bravo',
+					status: 'connected',
+					refreshToken: 'refresh_e2e_shared',
+					daysAgo: 2,
+				},
+			],
+		} );
+		const session = await fixture( 'profile-session', {
+			siteId: 'site-a',
+			siteName: 'Alpha',
+			siteUrl: 'https://alpha.example.test',
+			refreshToken: 'refresh_e2e_shared',
+		} );
+		const completed = await api.post( '/oauth/select-profile', {
+			form: {
+				session_token: session.session_token,
+				profile_id: 'pfl_e2e',
+				nonce: session.nonce,
+			},
+			maxRedirects: 0,
+		} );
+		expect( completed.status(), await completed.text() ).toBe( 302 );
+
+		const before = await fixture( 'rows' );
+		const shared = await fingerprint( 'refresh_e2e_shared' );
+		expect(
+			before.ordinary.map( ( row ) => row.refresh_token_fingerprint )
+		).toEqual( [ shared, shared ] );
+
+		await expectRefreshed(
+			await refresh( 'refresh_e2e_shared', 'keep' ),
+			undefined
+		);
+		expect( await fixture( 'rows' ) ).toEqual( before );
+	} );
+
 	test( 'a later refresh advances the time and follows a rotated token', async () => {
 		const id = await seedBound( {
 			refreshToken: 'refresh_e2e_old',
