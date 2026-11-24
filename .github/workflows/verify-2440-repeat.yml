@@ -1,0 +1,101 @@
+name: Verify 2440 repeat-each
+
+# Temporary verification for #2440 — lives only on the verify/2440-*
+# branch, never merged. Runs the Event Feeds keyboard scenario 30 times
+# with retries disabled on a clean isolated wp-env tests instance.
+permissions:
+    contents: read
+
+on:
+    push:
+        branches: ['verify/2440-*']
+
+jobs:
+    repeat:
+        name: Event Feeds keyboard menu ×30
+        runs-on: ubuntu-latest
+        timeout-minutes: 60
+        steps:
+            - uses: actions/checkout@v7
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+              with:
+                  php-version: '8.5'
+                  extensions: mbstring, intl, zip
+                  coverage: none
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: '24'
+
+            - name: Install locked npm dependencies
+              run: HUSKY=0 npm ci
+
+            - name: Install WP-CLI
+              run: |
+                  curl --fail --location --show-error \
+                      --retry 5 --retry-all-errors --retry-delay 3 \
+                      --output wp-cli.phar \
+                      https://github.com/wp-cli/wp-cli/releases/download/v2.12.0/wp-cli-2.12.0.phar
+                  echo "be928f6b8ca1e8dfb9d2f4b75a13aa4aee0896f8a9a0a1c45cd5d2c98605e6172e6d014dda2e27f88c98befc16c040cbb2bd1bfa121510ea5cdf5f6a30fe8832  wp-cli.phar" | sha512sum -c -
+                  chmod +x wp-cli.phar
+                  sudo mv wp-cli.phar /usr/local/bin/wp
+
+            - name: Build JavaScript for all plugins
+              run: npm run build
+
+            - name: Install production Composer dependencies in all plugins
+              run: npm run composer:install:prod
+
+            - name: Install Playwright browser
+              run: npx playwright install chromium
+
+            - name: Prepare WordPress environment images
+              uses: ./.github/actions/prepare-wp-env
+              with:
+                  artifact-name: wp-env-prepare-verify-2440-attempt-${{ github.run_attempt }}
+
+            - name: Record environment versions
+              run: |
+                  {
+                      echo "### Environment"
+                      echo "- Commit: $GITHUB_SHA"
+                      echo "- Runner: $(lsb_release -ds)"
+                      echo "- Node.js: $(node --version), npm $(npm --version)"
+                      echo "- Playwright: $(npx playwright --version)"
+                      echo "- Chromium: $(node -e "require('@playwright/test').chromium.launch().then(async b=>{console.log(b.version());await b.close()})")"
+                      echo "- wp-env: $(npx wp-env --version)"
+                      echo "- .wp-env.json: core $(jq -r .core .wp-env.json), PHP $(jq -r .phpVersion .wp-env.json)"
+                  } | tee -a "$GITHUB_STEP_SUMMARY"
+
+            # The runner owns a fresh tests instance (clean database), sets
+            # CI=1, and keeps the database for all 30 repetitions.
+            - name: Run the keyboard scenario 30 times
+              run: >
+                  npm run test:e2e:local -- --prepared
+                  e2e/fair-events-experimental-feeds-list.spec.js
+                  --grep "copies both URLs from the keyboard menu"
+                  --repeat-each=30 --retries=0 --workers=1
+
+            - name: Summarize totals
+              if: ${{ !cancelled() }}
+              run: |
+                  {
+                      echo "### Totals"
+                      jq -r '.stats | "- expected (passed): \(.expected)\n- unexpected (failed): \(.unexpected)\n- flaky: \(.flaky)\n- skipped: \(.skipped)\n- duration: \(.duration/1000|floor)s"' e2e-results/results.json
+                      echo "- WordPress images: $(docker images --format '{{.Repository}}:{{.Tag}}' | grep -i wordpress | sort -u | tr '\n' ' ')"
+                  } | tee -a "$GITHUB_STEP_SUMMARY"
+
+            - name: Upload Playwright report
+              if: ${{ !cancelled() }}
+              uses: actions/upload-artifact@v7
+              with:
+                  name: verify-2440-playwright-report-attempt-${{ github.run_attempt }}
+                  path: |
+                      playwright-report/
+                      test-results/
+                      e2e-results/
+                  retention-days: 30
+                  if-no-files-found: ignore
