@@ -1612,6 +1612,52 @@ complete snapshot read (#2424). Field names and meanings follow the
     unresolvable timezone). The `*_checked` reads on `EventDates` and
     `Venue` tell a missing row apart from a failed query.
 
+**Public facts.** `GET fair-events/v1/event-dates/{id}/public-campaign-facts`
+(public) is `CampaignFacts::read_public()`: the public subset of a
+**published** occurrence, with a field list that doesn't depend on the
+caller.
+
+```json
+{
+	"eventDateId": 140,
+	"event": {
+		"title": "Rock & Roll",
+		"status": "cancelled",
+		"attendanceMode": "in_person",
+		"timing": {
+			"timezone": "Europe/Madrid",
+			"allDay": false,
+			"startDate": "2026-12-20",
+			"endDate": "2026-12-20",
+			"startTime": "14:30:00",
+			"endTime": null
+		},
+		"urls": {
+			"event": "https://example.org/minifesti/?event_date=2026-12-20"
+		}
+	},
+	"venue": {
+		"name": "Example venue",
+		"address": null,
+		"coordinates": { "latitude": 39.4699, "longitude": -0.3763 }
+	}
+}
+```
+
+-   **Published only.** The resolved publication status (inherited from the
+    series master) must be `publish`. A draft answers exactly like a missing
+    ID (404 `rest_event_date_not_found`) and is rejected before its page or
+    venue is read. Published cancellations are answered, with
+    `status: "cancelled"`.
+-   **Fields.** Title, status, attendance mode and timing as above.
+    `urls.event` is the linked page only when it is publicly viewable and
+    has no password, else null. `venue` is the venue's name, address and
+    coordinates, or null without one. Publication status, content language,
+    booking URL, venue IDs, website and socials are left out, as are the
+    fields neither route exports.
+-   **Errors** for broken references and unusable required facts are the
+    same as on the authenticated route.
+
 ## Related Documentation
 
 -   [REST_API_USAGE.md](./REST_API_USAGE.md) - Frontend implementation guide

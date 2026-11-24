@@ -9,6 +9,11 @@
  * timed records, named and fixed-offset timezones, online and hybrid events
  * with joining links, venue normalization and coordinates, and missing
  * records and broken references staying errors.
+ *
+ * The public route (`…/public-campaign-facts`) is covered too: anonymous
+ * reads of published events with a fixed public field list, published
+ * cancellations, drafts answering like missing IDs before their page or
+ * venue is read, and non-public linked pages and joining links left out.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -139,12 +144,13 @@ test.describe( 'CampaignFactsController — occurrence and venue facts', () => {
 			} )
 		).json();
 
-	const createPage = async ( label ) => {
+	const createPage = async ( label, data = {} ) => {
 		const response = await api.post( '/wp-json/wp/v2/pages', {
 			headers: adminHeaders,
 			data: {
 				title: `Campaign page ${ label } ${ run }`,
 				status: 'publish',
+				...data,
 			},
 		} );
 		expect( response.ok(), await response.text() ).toBeTruthy();
@@ -561,5 +567,195 @@ test.describe( 'CampaignFactsController — occurrence and venue facts', () => {
 		expect( ( await noTitle.json() ).code ).toBe(
 			'fair_events_campaign_facts_title_missing'
 		);
+	} );
+	const publicFacts = ( id, headers = {} ) =>
+		api.get(
+			`/wp-json/fair-events/v1/event-dates/${ id }/public-campaign-facts`,
+			{ headers }
+		);
+
+	const linkPage = async ( eventDateId, pageId ) => {
+		const linked = await api.post(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/link-post`,
+			{ headers: adminHeaders, data: { post_id: pageId } }
+		);
+		expect( linked.ok(), await linked.text() ).toBeTruthy();
+	};
+
+	const setPublication = async ( eventDateId, status ) => {
+		const response = await api.post(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/publication-status`,
+			{ headers: adminHeaders, data: { publication_status: status } }
+		);
+		expect( response.ok(), await response.text() ).toBeTruthy();
+	};
+
+	test( 'public route returns only public facts of a published event', async () => {
+		const venueId = await createVenue( {
+			name: 'Public hall',
+			address: 'Gran Via 2, Valencia',
+			latitude: '39.47',
+			longitude: '-0.37',
+			website_url: 'https://private-venue-site.example.com',
+			instagram_handle: '@privatevenuehandle',
+			facebook_page_link: 'https://facebook.com/privatevenuepage',
+		} );
+		const event = await createEvent( 'public', {
+			address: 'Private free text street 9',
+		} );
+		await fixture( 'event-date', {
+			id: event.id,
+			columns: { venue_id: venueId },
+		} );
+		const page = await createPage( 'public' );
+		await linkPage( event.id, page.id );
+
+		const response = await publicFacts( event.id );
+		expect( response.status(), await response.text() ).toBe( 200 );
+		const body = await response.json();
+
+		expect( body ).toEqual( {
+			eventDateId: event.id,
+			event: {
+				title: `Campaign page public ${ run }`,
+				status: 'active',
+				attendanceMode: 'in_person',
+				timing: {
+					timezone: 'Europe/Madrid',
+					allDay: false,
+					startDate: '2037-05-10',
+					endDate: '2037-05-10',
+					startTime: '10:00:00',
+					endTime: '12:00:00',
+				},
+				urls: { event: page.link },
+			},
+			venue: {
+				name: 'Public hall',
+				address: 'Gran Via 2, Valencia',
+				coordinates: { latitude: 39.47, longitude: -0.37 },
+			},
+		} );
+		const text = JSON.stringify( body );
+		for ( const hidden of [
+			'Private free text',
+			'private-venue-site',
+			'privatevenuehandle',
+			'privatevenuepage',
+			`venue:${ venueId }`,
+		] ) {
+			expect( text ).not.toContain( hidden );
+		}
+
+		// The field list is the same whoever calls.
+		const asAdmin = await publicFacts( event.id, adminHeaders );
+		expect( await asAdmin.json() ).toEqual( body );
+	} );
+
+	test( 'public route reports a published cancellation', async () => {
+		const event = await createEvent( 'public cancelled' );
+		await fixture( 'event-date', {
+			id: event.id,
+			columns: { status: 'cancelled' },
+		} );
+
+		const response = await publicFacts( event.id );
+		expect( response.status(), await response.text() ).toBe( 200 );
+		const body = await response.json();
+		expect( body.event.status ).toBe( 'cancelled' );
+		expect( body.venue ).toBeNull();
+		expect( body.event.urls ).toEqual( { event: null } );
+	} );
+
+	test( 'public route answers drafts like missing IDs', async () => {
+		const missing = await publicFacts( 2147480003 );
+		expect( missing.status() ).toBe( 404 );
+		const notFound = await missing.json();
+		expect( notFound.code ).toBe( 'rest_event_date_not_found' );
+
+		// A draft whose venue no longer exists: publication is checked
+		// before the venue is read, so this is a 404, not a 500.
+		const venueId = await createVenue( { name: 'Draft hall' } );
+		const draft = await createEvent( 'public draft' );
+		await fixture( 'event-date', {
+			id: draft.id,
+			columns: { venue_id: venueId },
+		} );
+		await fixture( 'delete-venue', { id: venueId } );
+		await setPublication( draft.id, 'draft' );
+
+		// A generated occurrence of a draft series.
+		const master = await createEvent( 'public draft series', {
+			rrule: 'FREQ=WEEKLY;COUNT=2',
+		} );
+		await setPublication( master.id, 'draft' );
+		const child = ( await readEventDate( master.id ) )
+			.generated_occurrences[ 0 ];
+		eventDateIds.push( child.id );
+
+		for ( const id of [ draft.id, child.id ] ) {
+			for ( const headers of [ {}, adminHeaders ] ) {
+				const response = await publicFacts( id, headers );
+				expect( response.status() ).toBe( 404 );
+				const body = await response.json();
+				expect( body.code ).toBe( notFound.code );
+				expect( body.message ).toBe( notFound.message );
+			}
+		}
+
+		// Editors still read the draft occurrence on the campaign route.
+		const draftFacts = await readFacts( child.id );
+		expect( draftFacts.event.publicationStatus ).toBe( 'draft' );
+		expect(
+			(
+				await api.get(
+					`/wp-json/fair-events/v1/event-dates/${ child.id }/campaign-facts`
+				)
+			).status()
+		).toBe( 401 );
+		expect(
+			( await facts( child.id, await createUser( 'author' ) ) ).status()
+		).toBe( 200 );
+	} );
+
+	test( 'public route leaves out non-public pages and joining links', async () => {
+		const protectedEvent = await createEvent( 'public protected page' );
+		await linkPage(
+			protectedEvent.id,
+			( await createPage( 'protected', { password: 'secret' } ) ).id
+		);
+		const draftPageEvent = await createEvent( 'public draft page' );
+		await linkPage(
+			draftPageEvent.id,
+			( await createPage( 'draft', { status: 'draft' } ) ).id
+		);
+
+		for ( const event of [ protectedEvent, draftPageEvent ] ) {
+			const response = await publicFacts( event.id );
+			expect( response.status(), await response.text() ).toBe( 200 );
+			expect( ( await response.json() ).event.urls ).toEqual( {
+				event: null,
+			} );
+			// The authenticated read keeps its full page URL.
+			expect(
+				( await readFacts( event.id ) ).event.urls.event
+			).not.toBeNull();
+		}
+
+		const online = await createEvent( 'public online', {
+			attendance_mode: 'online',
+			joining_link: 'https://example.com/meet/private-public-online',
+			link_type: 'external',
+			external_url: 'https://partner.example.com/private-display',
+		} );
+		const response = await publicFacts( online.id );
+		expect( response.status(), await response.text() ).toBe( 200 );
+		const body = await response.json();
+		expect( body.event.attendanceMode ).toBe( 'online' );
+		expect( body.event.urls ).toEqual( { event: null } );
+		expect( JSON.stringify( body ) ).not.toContain(
+			'private-public-online'
+		);
+		expect( JSON.stringify( body ) ).not.toContain( 'private-display' );
 	} );
 } );

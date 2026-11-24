@@ -18,7 +18,8 @@ use WP_Error;
 
 /**
  * Exposes the authoritative event and venue facts of one occurrence for
- * campaign snapshots (#2420). See CampaignFacts for the response shape.
+ * campaign snapshots (#2420), and the public facts of a published one. See
+ * CampaignFacts for the response shapes.
  */
 class CampaignFactsController extends WP_REST_Controller {
 
@@ -44,6 +45,29 @@ class CampaignFactsController extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_item' ),
 					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'description' => __( 'Event date ID.', 'fair-events' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+					),
+				),
+			)
+		);
+
+		// GET /fair-events/v1/event-dates/{id}/public-campaign-facts.
+		register_rest_route(
+			$this->namespace,
+			'/event-dates/(?P<id>\d+)/public-campaign-facts',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_public_item' ),
+					// Public on purpose: only published events are answered,
+					// with a fixed list of public-facing fields (see
+					// CampaignFacts::read_public()); drafts read as missing.
+					'permission_callback' => '__return_true',
 					'args'                => array(
 						'id' => array(
 							'description' => __( 'Event date ID.', 'fair-events' ),
@@ -90,6 +114,22 @@ class CampaignFactsController extends WP_REST_Controller {
 	 */
 	public function get_item( $request ) {
 		$facts = CampaignFacts::read( (int) $request->get_param( 'id' ) );
+
+		if ( is_wp_error( $facts ) ) {
+			return $facts;
+		}
+
+		return new WP_REST_Response( $facts, 200 );
+	}
+
+	/**
+	 * Get the public campaign facts of a published event date
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success.
+	 */
+	public function get_public_item( $request ) {
+		$facts = CampaignFacts::read_public( (int) $request->get_param( 'id' ) );
 
 		if ( is_wp_error( $facts ) ) {
 			return $facts;
