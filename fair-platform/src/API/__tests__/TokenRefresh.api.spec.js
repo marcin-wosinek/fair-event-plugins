@@ -89,6 +89,25 @@ test.describe.serial( 'Fair Platform token refresh logging', () => {
 		expect( body.data.data.refresh_token ).toBe( rotated );
 	};
 
+	// Refresh with `token` (Mollie keeps it) and expect only `row` to gain a
+	// Last Refresh time; every other row is unchanged. Returns the row.
+	const expectRecordedOnly = async ( token, row, before ) => {
+		await expectRefreshed( await refresh( token, 'keep' ), undefined );
+
+		const after = await fixture( 'rows' );
+		const refreshed = byId( after.ordinary, row.id );
+		expect( refreshed.last_token_refresh ).not.toBeNull();
+		expect( refreshed ).toEqual( {
+			...row,
+			last_token_refresh: refreshed.last_token_refresh,
+		} );
+		expect( without( after.ordinary, row.id ) ).toEqual(
+			without( before.ordinary, row.id )
+		);
+		expect( after.instagram ).toEqual( before.instagram );
+		return refreshed;
+	};
+
 	// Complete site-a's profile selection, as after Mollie's callback,
 	// handing it the given refresh token; returns the redirect response.
 	const completeProfile = async ( refreshToken ) => {
@@ -159,22 +178,11 @@ test.describe.serial( 'Fair Platform token refresh logging', () => {
 		// No raw credential is stored.
 		expect( JSON.stringify( before ) ).not.toContain( 'refresh_e2e_' );
 
-		await expectRefreshed(
-			await refresh( 'refresh_e2e_alpha', 'keep' ),
-			undefined
+		const refreshed = await expectRecordedOnly(
+			'refresh_e2e_alpha',
+			row,
+			before
 		);
-
-		const after = await fixture( 'rows' );
-		const refreshed = byId( after.ordinary, row.id );
-		expect( refreshed.last_token_refresh ).not.toBeNull();
-		expect( refreshed ).toEqual( {
-			...row,
-			last_token_refresh: refreshed.last_token_refresh,
-		} );
-		expect( without( after.ordinary, row.id ) ).toEqual(
-			without( before.ordinary, row.id )
-		);
-		expect( after.instagram ).toEqual( before.instagram );
 
 		// The Connection Logs API shows the time, never the binding.
 		const listing = await (
@@ -221,22 +229,11 @@ test.describe.serial( 'Fair Platform token refresh logging', () => {
 			refresh_token_fingerprint: null,
 		} );
 
-		await expectRefreshed(
-			await refresh( 'refresh_e2e_reused', 'keep' ),
-			undefined
+		const refreshed = await expectRecordedOnly(
+			'refresh_e2e_reused',
+			row,
+			before
 		);
-
-		const after = await fixture( 'rows' );
-		const refreshed = byId( after.ordinary, row.id );
-		expect( refreshed.last_token_refresh ).not.toBeNull();
-		expect( refreshed ).toEqual( {
-			...row,
-			last_token_refresh: refreshed.last_token_refresh,
-		} );
-		expect( without( after.ordinary, row.id ) ).toEqual(
-			without( before.ordinary, row.id )
-		);
-		expect( after.instagram ).toEqual( before.instagram );
 
 		// A second success advances the new row only.
 		await expectRefreshed(
