@@ -527,9 +527,24 @@ class EventSchedule {
 	private static function write( array $clean, array $existing, $config_id ) {
 		$kept_ids = array_filter( array_column( $clean, 'id' ) );
 		foreach ( array_keys( $existing ) as $stored_id ) {
-			if ( ! in_array( $stored_id, $kept_ids, true ) && ! ScheduleItem::delete( $stored_id ) ) {
+			if ( in_array( $stored_id, $kept_ids, true ) ) {
+				continue;
+			}
+			if ( ! ScheduleItem::delete( $stored_id ) ) {
 				return false;
 			}
+
+			/**
+			 * Fires after an entry was removed from a schedule, inside the
+			 * save's transaction (rolled back with it when the save fails).
+			 *
+			 * Fair Events Experimental's marketing assets clear their link
+			 * to the entry.
+			 *
+			 * @param int $stored_id Removed schedule item ID.
+			 * @param int $config_id Event date the schedule is stored on.
+			 */
+			do_action( 'fair_events_schedule_item_deleted', (int) $stored_id, (int) $config_id );
 		}
 
 		foreach ( $clean as $item ) {

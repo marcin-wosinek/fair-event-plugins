@@ -61,6 +61,10 @@ exist:
 
 - `fair_events_event_date_deleted` removes the memberships the deleted event
   date owned.
+- Removing a member from a team fires
+  `fair_events_experimental_team_member_unlinked` (`$owner_id, $member_id`);
+  marketing assets drop their links to that member on every date sharing
+  the team.
 - Fair Events' `fair_events_event_copy_extensions` filter copies the
   source owner's memberships to the copy. A failure there fails the copy,
   which removes the partial copy and so its memberships. Later changes on
