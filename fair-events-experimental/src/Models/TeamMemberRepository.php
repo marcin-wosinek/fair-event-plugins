@@ -407,7 +407,7 @@ class TeamMemberRepository {
 	public function unlink( $owner_id, $member_id ) {
 		global $wpdb;
 
-		return false !== $wpdb->delete(
+		$deleted = $wpdb->delete(
 			self::memberships_table(),
 			array(
 				'owner_event_date_id' => (int) $owner_id,
@@ -415,6 +415,25 @@ class TeamMemberRepository {
 			),
 			array( '%d', '%d' )
 		);
+
+		if ( false === $deleted ) {
+			return false;
+		}
+
+		if ( $deleted > 0 ) {
+			/**
+			 * Fires after a member was removed from an event's team.
+			 *
+			 * Marketing assets (#2396) drop their links to the member on
+			 * every date sharing that team.
+			 *
+			 * @param int $owner_id  Team owner event date ID.
+			 * @param int $member_id Removed member ID.
+			 */
+			do_action( 'fair_events_experimental_team_member_unlinked', (int) $owner_id, (int) $member_id );
+		}
+
+		return true;
 	}
 
 	/**

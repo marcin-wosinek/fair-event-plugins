@@ -1540,6 +1540,10 @@ tab fair-events-experimental registers on Manage Event.
     `schedule_managed_on_series`.
 -   **Lifecycle.** Entries are deleted with their event date, and copied by
     `EventTicketConfigurationCopier` with shifted dates and remapped options.
+    An entry removed by a save fires `fair_events_schedule_item_deleted`
+    (`$schedule_item_id, $config_event_date_id`) inside the save's
+    transaction; fair-events-experimental's marketing assets clear their
+    link to it.
 
 ### Campaign facts
 

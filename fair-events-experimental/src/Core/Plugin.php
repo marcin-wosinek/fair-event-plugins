@@ -74,6 +74,10 @@ class Plugin {
 		// `event-images` bundle; see docs/event-images.md.
 		$this->load_event_images();
 
+		// Occurrence marketing assets, behind the `marketing-assets` bundle;
+		// see docs/marketing-assets.md.
+		$this->load_marketing_assets();
+
 		// Operator links to an event feed's weekly summary; see
 		// docs/weekly-summary.md.
 		\FairEventsExperimental\Frontend\WeeklySummaryPage::init();
@@ -566,6 +570,84 @@ class Plugin {
 		);
 
 		wp_set_script_translations( 'fair-events-experimental-manage-event-images', 'fair-events-experimental', Features::script_translations_path() );
+	}
+
+	/**
+	 * Load marketing assets (#2396) while the `marketing-assets` bundle is
+	 * on: the tables, the REST routes and the Manage Event Marketing tab.
+	 *
+	 * Cleanup (a deleted occurrence, attachment, team link or schedule
+	 * entry) runs whenever the tables exist, also with the bundle off, so
+	 * nothing points at removed data when it comes back. Turning the bundle
+	 * off keeps every asset and changes nothing about the images' files.
+	 *
+	 * @return void
+	 */
+	private function load_marketing_assets() {
+		\FairEventsExperimental\Services\MarketingAssets::register_lifecycle_hooks();
+
+		if ( ! self::marketing_assets_available() ) {
+			return;
+		}
+
+		add_action( 'init', array( \FairEventsExperimental\Models\MarketingAssetRepository::class, 'maybe_install' ), 5 );
+		add_action(
+			'rest_api_init',
+			static function () {
+				( new \FairEventsExperimental\API\MarketingAssetsController() )->register_routes();
+			}
+		);
+
+		if ( is_admin() ) {
+			add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_marketing_assets' ) );
+		}
+	}
+
+	/**
+	 * Whether marketing assets are available: the bundle is on and the
+	 * active Fair Events has the event dates they belong to.
+	 *
+	 * @return bool
+	 */
+	public static function marketing_assets_available() {
+		return Features::is_enabled( 'marketing-assets' )
+			&& class_exists( \FairEvents\Models\EventDates::class );
+	}
+
+	/**
+	 * Enqueue the Marketing tab on the fair-events manage-event page, with
+	 * the Media Library picker it opens, for administrators only.
+	 *
+	 * Blocking (not deferred), after `fair-events-manage-event`, so its
+	 * `addFilter()` call runs before the host bundle mounts.
+	 *
+	 * @return void
+	 */
+	public function enqueue_manage_event_marketing_assets() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$asset_file = include FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR . 'build/admin/manage-event-marketing-assets/index.asset.php';
+
+		wp_enqueue_media();
+
+		wp_enqueue_script(
+			'fair-events-experimental-manage-event-marketing-assets',
+			FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/admin/manage-event-marketing-assets/index.js',
+			array_merge( $asset_file['dependencies'], array( 'fair-events-manage-event' ) ),
+			$asset_file['version'],
+			true
+		);
+
+		wp_enqueue_style(
+			'fair-events-experimental-manage-event-marketing-assets',
+			FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/admin/manage-event-marketing-assets/index.css',
+			array( 'wp-components' ),
+			$asset_file['version']
+		);
+
+		wp_set_script_translations( 'fair-events-experimental-manage-event-marketing-assets', 'fair-events-experimental', Features::script_translations_path() );
 	}
 
 	/**

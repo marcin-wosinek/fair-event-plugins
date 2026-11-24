@@ -4,8 +4,8 @@
  *
  * Manages the advanced bundles moved out of fair-events:
  * sources, ticketing extensions, mailings, Meta conversions, organizers,
- * the Instagram connection, the WhatsApp connection, team members and
- * event images.
+ * the Instagram connection, the WhatsApp connection, team members, event
+ * images and marketing assets.
  * Existing internal bundles default on; processing integrations that
  * require explicit consent and credentials, and multiple organizers, default
  * off.
@@ -101,6 +101,11 @@ class Features {
 				'description' => 'Ordered images for an event and its programme items, each with an optional circle marking what matters when the image is cropped. Turning this off hides the Images tab and its API and keeps every saved image link.',
 				'default'     => false,
 			),
+			'marketing-assets' => array(
+				'label'       => 'Marketing assets',
+				'description' => 'Text and PNG/JPEG images for promoting each event date, managed in the Marketing tab of Manage Event and through an authenticated API. Images are ordinary Media Library files: anyone with an image\'s link can open it. Turning this off hides the tab and its API and keeps every asset; it does not remove images or their links.',
+				'default'     => false,
+			),
 		);
 	}
 
@@ -170,6 +175,10 @@ class Features {
 			'event-images'     => array(
 				'label'       => __( 'Event images', 'fair-events-experimental' ),
 				'description' => __( 'Ordered images for an event and its programme items, each with an optional circle marking what matters when the image is cropped. Turning this off hides the Images tab and its API and keeps every saved image link.', 'fair-events-experimental' ),
+			),
+			'marketing-assets' => array(
+				'label'       => __( 'Marketing assets', 'fair-events-experimental' ),
+				'description' => __( 'Text and PNG/JPEG images for promoting each event date, managed in the Marketing tab of Manage Event and through an authenticated API. Images are ordinary Media Library files: anyone with an image\'s link can open it. Turning this off hides the tab and its API and keeps every asset; it does not remove images or their links.', 'fair-events-experimental' ),
 			),
 		);
 
