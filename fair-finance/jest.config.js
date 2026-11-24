@@ -9,6 +9,7 @@ export default {
 		'/node_modules/',
 		'/vendor/',
 		'/e2e/',
+		'/__tests__/helpers/',
 		'\\.api\\.spec\\.js$',
 	],
 	transformIgnorePatterns: [
