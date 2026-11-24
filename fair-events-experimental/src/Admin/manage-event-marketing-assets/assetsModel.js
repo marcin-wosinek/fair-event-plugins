@@ -72,9 +72,15 @@ export function imageFromAttachment( attachment, mimeTypes ) {
 	};
 }
 
-const sameIds = ( a, b ) =>
-	a.length === b.length &&
-	[ ...a ].sort().every( ( id, i ) => id === [ ...b ].sort()[ i ] );
+const byNumber = ( x, y ) => x - y;
+
+const sameIds = ( a, b ) => {
+	if ( a.length !== b.length ) {
+		return false;
+	}
+	const sortedB = [ ...b ].sort( byNumber );
+	return [ ...a ].sort( byNumber ).every( ( id, i ) => id === sortedB[ i ] );
+};
 
 /**
  * Whether the form differs from what it was opened with.
