@@ -591,9 +591,9 @@ class MarketingAssets {
 		$ids          = $wpdb->get_col(
 			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- One array of every value.
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Placeholders only.
-				"SELECT member_id FROM %i WHERE owner_event_date_id = %d AND member_id IN ( $placeholders ) FOR UPDATE",
+				"SELECT member_id FROM %i WHERE owner_event_date_id = %d AND schedule_item_id = %d AND member_id IN ( $placeholders ) FOR UPDATE",
 				array_merge(
-					array( TeamMemberRepository::memberships_table(), TeamMembership::owner_id( $event_date ) ),
+					array( TeamMemberRepository::memberships_table(), TeamMembership::owner_id( $event_date ), TeamMemberRepository::EVENT_TARGET ),
 					$member_ids
 				)
 			)

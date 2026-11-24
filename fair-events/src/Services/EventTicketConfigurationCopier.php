@@ -57,7 +57,7 @@ class EventTicketConfigurationCopier {
 	 * @param int           $source_event_date_id      Source event date ID.
 	 * @param int           $destination_event_date_id Destination event date ID.
 	 * @param \DateInterval $date_shift                Site-local shift from source to destination.
-	 * @return array{ticket_type_id_map: array<int, int>}|false Copy result, or false on failure.
+	 * @return array{ticket_type_id_map: array<int, int>, schedule_item_id_map: array<int, int>}|false Copy result, or false on failure.
 	 * @throws \RuntimeException Internally when any related record cannot be copied.
 	 */
 	public function copy( $source_event_date_id, $destination_event_date_id, $date_shift ) {
@@ -85,10 +85,13 @@ class EventTicketConfigurationCopier {
 			$sale_period_map = $this->copy_sale_periods( $source_event_date_id, $destination_event_date_id, $date_shift );
 			$this->copy_prices( $source_event_date_id, $type_map, $sale_period_map );
 			$option_map = $this->copy_experimental_options( $source_event_date_id, $destination_event_date_id, $sale_period_map );
-			EventSchedule::copy( $source_event_date_id, $destination_event_date_id, $option_map, $date_shift );
+			$item_map   = EventSchedule::copy( $source_event_date_id, $destination_event_date_id, $option_map, $date_shift );
 
 			$wpdb->query( 'COMMIT' );
-			return array( 'ticket_type_id_map' => $type_map );
+			return array(
+				'ticket_type_id_map'   => $type_map,
+				'schedule_item_id_map' => $item_map,
+			);
 		} catch ( \Throwable $error ) {
 			$wpdb->query( 'ROLLBACK' );
 			return false;

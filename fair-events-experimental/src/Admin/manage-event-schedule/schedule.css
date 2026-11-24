@@ -98,3 +98,9 @@
 .fair-events-schedule-field.has-error .components-base-control__help {
 	color: #d63638;
 }
+
+.fair-events-schedule-contributors {
+	margin-top: 16px;
+	padding-top: 16px;
+	border-top: 1px solid #f0f0f0;
+}

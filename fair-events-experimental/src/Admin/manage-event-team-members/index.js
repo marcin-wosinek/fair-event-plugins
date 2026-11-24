@@ -15,7 +15,7 @@ import EventTeamMembers, { SECTION_NAME } from './EventTeamMembers.js';
 addFilter(
 	'fairEvents.manageEvent.detailsSections',
 	'fair-events-experimental/team-members-section',
-	( sections, { eventDateId } ) => [
+	( sections, { eventDateId, eventDate } ) => [
 		...sections,
 		{
 			name: SECTION_NAME,
@@ -23,6 +23,7 @@ addFilter(
 				<EventTeamMembers
 					key={ eventDateId }
 					eventDateId={ eventDateId }
+					isSeries={ 'master' === eventDate?.occurrence_type }
 				/>
 			),
 		},

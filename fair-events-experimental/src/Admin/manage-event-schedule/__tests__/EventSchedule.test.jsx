@@ -520,3 +520,135 @@ describe( 'EventSchedule', () => {
 		).not.toBeInTheDocument();
 	} );
 } );
+
+describe( 'programme contributors (#2422)', () => {
+	const bea = { id: 2, name: 'Bea', surname: 'Nowak', email: '' };
+	const contributors = {
+		owner_event_date_id: 7,
+		series_event_date_id: null,
+		items: [
+			{
+				schedule_item_id: 11,
+				title: 'Acro',
+				assignments: [
+					{
+						id: 30,
+						member_id: 2,
+						name: 'Bea',
+						surname: 'Nowak',
+						role: 'teacher',
+					},
+				],
+			},
+			{ schedule_item_id: 12, title: 'Lunch break', assignments: [] },
+		],
+	};
+
+	const mockContributors = ( writes = jest.fn() ) => {
+		apiFetch.mockImplementation( ( options ) => {
+			if ( options.path.includes( '/contributors' ) && options.method ) {
+				return writes( options );
+			}
+			if ( options.path.endsWith( '/schedule-contributors' ) ) {
+				return Promise.resolve( contributors );
+			}
+			if ( '/fair-events/v1/team-members' === options.path ) {
+				return Promise.resolve( [ bea ] );
+			}
+			return Promise.resolve( savedSchedule );
+		} );
+		return writes;
+	};
+
+	beforeEach( () => {
+		window.fairEventsScheduleData = { teamMembers: true };
+		window.HTMLElement.prototype.scrollIntoView = jest.fn();
+	} );
+
+	afterEach( () => {
+		delete window.fairEventsScheduleData;
+	} );
+
+	it( 'shows each saved item’s contributors in order and asks to save a new item first', async () => {
+		mockContributors();
+		renderSchedule();
+
+		const acro = within( await waitFor( () => entry( 'Acro' ) ) );
+		expect( await acro.findByText( 'Bea Nowak' ) ).toBeInTheDocument();
+		expect( acro.getByText( 'teacher' ) ).toBeInTheDocument();
+		const lunch = within( entry( 'Lunch break' ) );
+		expect( lunch.getByText( 'No contributors yet.' ) ).toBeInTheDocument();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Add schedule item' } )
+		);
+		expect(
+			screen.getByText(
+				'Save the schedule first, then assign contributors to this item.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'saves a contributor on its own, without saving the schedule', async () => {
+		const writes = mockContributors(
+			jest.fn( () =>
+				Promise.resolve( {
+					...contributors,
+					items: [
+						contributors.items[ 0 ],
+						{
+							...contributors.items[ 1 ],
+							assignments: [
+								{
+									id: 31,
+									member_id: 2,
+									name: 'Bea',
+									surname: 'Nowak',
+									role: 'organizer',
+								},
+							],
+						},
+					],
+				} )
+			)
+		);
+		renderSchedule();
+
+		const lunch = within( await waitFor( () => entry( 'Lunch break' ) ) );
+		const picker = await lunch.findByRole( 'combobox', {
+			name: 'Add a contributor',
+		} );
+		fireEvent.focus( picker );
+		fireEvent.click(
+			await lunch.findByRole( 'option', { name: 'Bea Nowak' } )
+		);
+		fireEvent.change( lunch.getByRole( 'combobox', { name: 'Role' } ), {
+			target: { value: 'organizer' },
+		} );
+		fireEvent.click( lunch.getByRole( 'button', { name: 'Add' } ) );
+
+		await waitFor( () =>
+			expect( writes ).toHaveBeenCalledWith( {
+				path: '/fair-events/v1/event-dates/7/schedule-items/12/contributors',
+				method: 'POST',
+				data: { member_id: 2, role: 'organizer' },
+			} )
+		);
+		expect( await lunch.findByText( 'organizer' ) ).toBeInTheDocument();
+		expect( lastSave() ).toBeUndefined();
+	} );
+
+	it( 'stays out without the team directory', async () => {
+		delete window.fairEventsScheduleData;
+		mockContributors();
+		renderSchedule();
+
+		await waitFor( () => entry( 'Acro' ) );
+		expect( screen.queryByText( 'Contributors' ) ).not.toBeInTheDocument();
+		expect(
+			apiFetch.mock.calls.some( ( [ options ] ) =>
+				options.path.endsWith( '/schedule-contributors' )
+			)
+		).toBe( false );
+	} );
+} );

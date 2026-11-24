@@ -108,6 +108,32 @@ function LinkedEvents( { events } ) {
 								: event.start_date }
 						</span>
 					) }
+					{ event.programme_items?.length > 0 && (
+						<span className="fair-events-team-members__event-meta">
+							{ ' — ' }
+							{ sprintf(
+								/* translators: %s: comma-separated titles of schedule items */
+								_n(
+									'programme item: %s',
+									'programme items: %s',
+									event.programme_items.length,
+									'fair-events-experimental'
+								),
+								event.programme_items
+									.map(
+										( item ) =>
+											decodeEntityText(
+												item.title
+											).trim() ||
+											__(
+												'(untitled item)',
+												'fair-events-experimental'
+											)
+									)
+									.join( ', ' )
+							) }
+						</span>
+					) }
 				</li>
 			) ) }
 		</ul>
@@ -594,8 +620,8 @@ export default function TeamMembersPage() {
 						{ sprintf(
 							/* translators: 1: team member name, 2: number of events */
 							_n(
-								'%1$s is on the team of %2$d event. Remove them from it in Manage Event before deleting the profile:',
-								'%1$s is on the team of %2$d events. Remove them from each in Manage Event before deleting the profile:',
+								'%1$s is assigned to %2$d event, on its team or its programme items. Remove them there in Manage Event before deleting the profile:',
+								'%1$s is assigned to %2$d events, on their teams or programme items. Remove them from each in Manage Event before deleting the profile:',
 								pendingDelete.events.length,
 								'fair-events-experimental'
 							),

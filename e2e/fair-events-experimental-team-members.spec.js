@@ -90,21 +90,23 @@ test.describe('Team members', () => {
 		});
 		await picker.fill(name);
 		await page.getByRole('option', { name: `${name} Ruiz` }).click();
+		await page.getByLabel('Role', { exact: true }).fill('teacher');
+		await page.getByRole('button', { name: 'Add', exact: true }).click();
 		await expect(
 			page.locator('.components-notice__content', {
-				hasText: `${name} Ruiz was added to the team.`,
+				hasText: `${name} Ruiz (teacher) was added.`,
 			})
 		).toBeVisible();
 
 		await page.reload();
 		const remove = page.getByRole('button', {
-			name: `Remove ${name} Ruiz from the team`,
+			name: `Remove ${name} Ruiz (teacher)`,
 		});
 		await expect(remove).toBeVisible();
 		await remove.click();
 		await expect(
 			page.locator('.components-notice__content', {
-				hasText: `${name} Ruiz was removed from the team.`,
+				hasText: `${name} Ruiz (teacher) was removed.`,
 			})
 		).toBeVisible();
 		await expect(remove).toHaveCount(0);

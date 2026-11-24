@@ -11,6 +11,7 @@ use FairEvents\Models\EventDates;
 use FairEventsExperimental\EventImages\Source;
 use FairEventsExperimental\Models\TeamMemberRepository;
 use FairEventsExperimental\Services\PromotionalTeamProfiles;
+use FairEventsExperimental\Services\TeamMembership;
 use WP_Error;
 use WP_REST_Controller;
 use WP_REST_Request;
@@ -35,9 +36,10 @@ defined( 'WPINC' ) || die;
  * must be valid when it is new or changed; an older invalid one stays
  * editable and is left out of promotional reads. Every problem is
  * reported together, keyed by field, in the standard `rest_invalid_param`
- * shape, and a rejected submission changes nothing. A profile still linked
- * to events cannot be deleted (409 `rest_team_member_linked`, with the
- * events in `data.events`).
+ * shape, and a rejected submission changes nothing. A profile still
+ * assigned to an event or one of its programme items cannot be deleted
+ * (409 `rest_team_member_linked`, with the events and their programme
+ * items in `data.events`).
  */
 class TeamMembersController extends WP_REST_Controller {
 
@@ -286,27 +288,56 @@ class TeamMembersController extends WP_REST_Controller {
 	}
 
 	/**
-	 * The events a profile is linked to, for administrators.
+	 * The events a profile is linked to, for administrators: on the event
+	 * itself, on its programme items (named in `programme_items`), or both.
 	 *
 	 * @param int $member_id Profile ID.
-	 * @return array[] `{ event_date_id, title, start_date, is_series }` per owning event.
+	 * @return array[] `{ event_date_id, title, start_date, is_series, programme_items }`
+	 *                 per owning event, `programme_items` being
+	 *                 `{ schedule_item_id, title }` per referencing item.
 	 */
 	private function linked_events( $member_id ) {
 		$owner_ids = $this->repository->owner_ids_for_member( $member_id );
+		$programme = $this->repository->programme_items_for_member( $member_id );
 		$dates     = EventDates::get_by_ids( $owner_ids );
 		$events    = array();
 
 		foreach ( $owner_ids as $owner_id ) {
 			$date     = $dates[ $owner_id ] ?? null;
 			$events[] = array(
-				'event_date_id' => (int) $owner_id,
-				'title'         => $date ? (string) $date->get_display_title() : '',
-				'start_date'    => $date ? $date->start_date : null,
-				'is_series'     => $date ? 'master' === $date->occurrence_type : false,
+				'event_date_id'   => (int) $owner_id,
+				'title'           => $date ? (string) $date->get_display_title() : '',
+				'start_date'      => $date ? $date->start_date : null,
+				'is_series'       => $date ? 'master' === $date->occurrence_type : false,
+				'programme_items' => self::programme_items( (int) $owner_id, $programme[ $owner_id ] ?? array() ),
 			);
 		}
 
 		return $events;
+	}
+
+	/**
+	 * The referencing schedule items of an event, in programme order.
+	 *
+	 * @param int   $owner_id Event date that stores the schedule.
+	 * @param int[] $item_ids Schedule item IDs.
+	 * @return array[] `{ schedule_item_id, title }` per item.
+	 */
+	private static function programme_items( $owner_id, array $item_ids ) {
+		if ( ! $item_ids ) {
+			return array();
+		}
+
+		$items = array();
+		foreach ( TeamMembership::schedule_item_titles( $owner_id ) as $item_id => $title ) {
+			if ( in_array( $item_id, $item_ids, true ) ) {
+				$items[] = array(
+					'schedule_item_id' => $item_id,
+					'title'            => $title,
+				);
+			}
+		}
+		return $items;
 	}
 
 	/**
