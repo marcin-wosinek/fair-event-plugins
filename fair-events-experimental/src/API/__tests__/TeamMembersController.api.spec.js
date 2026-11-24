@@ -10,7 +10,13 @@
  * deleted, a series' team shared by existing, newly generated and past
  * dates (read-only there), and independent teams on event copies.
  *
- * The suite removes the events, profiles and user it creates.
+ * Also covers the promotional website, bio and portrait (#2421) and the
+ * campaign-facts reader `PromotionalTeamProfiles::read()`: the exact v1
+ * keys, single and duplicate display names, portraits resolved at read
+ * time (cleared, trashed, restored, deleted, shared), and disabled, denied,
+ * missing and empty reads.
+ *
+ * The suite removes the events, profiles, attachments and user it creates.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -56,6 +62,62 @@ async function evalJson( php ) {
 	return JSON.parse( out.slice( out.indexOf( 'JSON:' ) + 5 ).trim() );
 }
 
+/**
+ * Create a synthetic attachment (no file is uploaded) and return its ID.
+ *
+ * @param {string} mime MIME type.
+ * @return {Promise<number>} Attachment ID.
+ */
+const createAttachment = async ( mime = 'image/png' ) => {
+	const file = `team-2421/portrait-${ Date.now() }-${ Math.random()
+		.toString( 36 )
+		.slice( 2 ) }.${ mime === 'image/png' ? 'png' : 'pdf' }`;
+	const result = await evalJson(
+		`$id = wp_insert_attachment( array( 'post_title' => 'Portrait 2421', 'post_mime_type' => '${ mime }', 'post_status' => 'inherit' ), '${ file }' ); wp_update_attachment_metadata( $id, array( 'width' => 400, 'height' => 500, 'file' => '${ file }' ) ); echo 'JSON:' . wp_json_encode( array( 'id' => $id ) );`
+	);
+	return result.id;
+};
+
+/** Set an attachment's post status (`trash`, `inherit`). */
+const setAttachmentStatus = ( id, status ) =>
+	evalJson(
+		`global $wpdb; $wpdb->update( $wpdb->posts, array( 'post_status' => '${ status }' ), array( 'ID' => ${ Number(
+			id
+		) } ) ); clean_post_cache( ${ Number(
+			id
+		) } ); echo 'JSON:' . wp_json_encode( get_post_status( ${ Number(
+			id
+		) } ) );`
+	);
+
+/** Delete attachments for good. */
+const deleteAttachments = ( ids ) =>
+	evalJson(
+		`foreach ( array( ${ ids
+			.map( Number )
+			.join(
+				', '
+			) } ) as $id ) { wp_delete_attachment( $id, true ); } echo 'JSON:true';`
+	);
+
+/**
+ * Run the promotional reader as a user.
+ *
+ * @param {number[]} ids    Profile IDs.
+ * @param {number}   userId Current user ID (0 for anonymous).
+ * @return {Promise<Object>} The result, or `{ error, data }`.
+ */
+const readPromotional = ( ids, userId = 1 ) =>
+	evalJson(
+		`wp_set_current_user( ${ Number(
+			userId
+		) } ); $r = \\FairEventsExperimental\\Services\\PromotionalTeamProfiles::read( array( ${ ids
+			.map( ( id ) => JSON.stringify( id ) )
+			.join(
+				', '
+			) } ) ); echo 'JSON:' . wp_json_encode( is_wp_error( $r ) ? array( 'error' => $r->get_error_code(), 'data' => $r->get_error_data() ) : $r );`
+	);
+
 /** Raw membership rows owned by an event date. */
 const storedMemberIds = ( ownerId ) =>
 	evalJson(
@@ -81,6 +143,12 @@ test.describe( 'TeamMembersController', () => {
 	let editorHeaders;
 	const memberIds = [];
 	const eventDateIds = [];
+	const attachmentIds = [];
+	const attachment = async ( mime ) => {
+		const id = await createAttachment( mime );
+		attachmentIds.push( id );
+		return id;
+	};
 
 	const create = ( data, headers = adminHeaders ) =>
 		api.post( PATH, { headers, data } );
@@ -183,6 +251,9 @@ test.describe( 'TeamMembersController', () => {
 		}
 		for ( const id of memberIds ) {
 			await api.delete( `${ PATH }/${ id }`, { headers: adminHeaders } );
+		}
+		if ( attachmentIds.length ) {
+			await deleteAttachments( attachmentIds );
 		}
 		await wp( 'option', 'delete', FEATURES_OPTION ).catch( () => {} );
 		if ( editorId ) {
@@ -665,5 +736,246 @@ test.describe( 'TeamMembersController', () => {
 		const index = await anon.get( '/wp-json/' );
 		expect( await index.text() ).not.toContain( PRIVATE_EMAIL );
 		await anon.dispose();
+	} );
+
+	test( 'stores, validates and clears the website, bio and portrait', async () => {
+		const portrait = await attachment();
+		const member = await createOk( {
+			name: 'Lia',
+			instagram: ' @lia.moves ',
+			website_url: 'https://lia.example.com/about',
+			bio: 'Teacher.\r\n\r\nDancer.',
+			portrait_attachment_id: portrait,
+		} );
+		expect( member ).toMatchObject( {
+			instagram: '@lia.moves',
+			website_url: 'https://lia.example.com/about',
+			bio: 'Teacher.\n\nDancer.',
+			portrait_attachment_id: portrait,
+		} );
+
+		const minimal = await createOk( { name: 'Noor' } );
+		expect( minimal ).toMatchObject( {
+			website_url: '',
+			bio: '',
+			portrait_attachment_id: null,
+		} );
+
+		const pdf = await attachment( 'application/pdf' );
+		const trashed = await attachment();
+		await setAttachmentStatus( trashed, 'trash' );
+		const rejected = await create( {
+			name: 'Bad',
+			website_url: 'lia.example.com',
+			instagram: 'lia moves',
+			portrait_attachment_id: pdf,
+		} );
+		expect( rejected.status() ).toBe( 400 );
+		expect(
+			Object.keys( ( await rejected.json() ).data.params ).sort()
+		).toEqual( [ 'instagram', 'portrait_attachment_id', 'website_url' ] );
+		for ( const data of [
+			{ website_url: 'ftp://lia.example.com' },
+			{ website_url: 'javascript:alert(1)' },
+			{ portrait_attachment_id: 999999999 },
+			{ portrait_attachment_id: trashed },
+			{ instagram: '@' + 'a'.repeat( 31 ) },
+		] ) {
+			const res = await create( { name: 'Bad', ...data } );
+			expect( res.status(), JSON.stringify( data ) ).toBe( 400 );
+		}
+
+		const cleared = await api.put( `${ PATH }/${ member.id }`, {
+			headers: adminHeaders,
+			data: { website_url: '', bio: '', portrait_attachment_id: null },
+		} );
+		expect( cleared.status() ).toBe( 200 );
+		expect( await cleared.json() ).toMatchObject( {
+			name: 'Lia',
+			instagram: '@lia.moves',
+			website_url: '',
+			bio: '',
+			portrait_attachment_id: null,
+		} );
+		// Detaching keeps the image in the Media Library (an unattached
+		// attachment reports `publish`; a deleted one `false`).
+		expect( await setAttachmentStatus( portrait, 'inherit' ) ).toBe(
+			'publish'
+		);
+
+		// An older invalid handle doesn't block unrelated edits, but a new
+		// invalid one is rejected.
+		await evalJson(
+			`global $wpdb; $wpdb->update( $wpdb->prefix . 'fair_events_team_members', array( 'instagram' => 'lia moves' ), array( 'id' => ${ member.id } ) ); echo 'JSON:true';`
+		);
+		const unrelated = await api.put( `${ PATH }/${ member.id }`, {
+			headers: adminHeaders,
+			data: { name: 'Lia', instagram: 'lia moves', surname: 'Sol' },
+		} );
+		expect( unrelated.status() ).toBe( 200 );
+		expect( ( await unrelated.json() ).instagram ).toBe( 'lia moves' );
+		const changed = await api.put( `${ PATH }/${ member.id }`, {
+			headers: adminHeaders,
+			data: { instagram: 'lia still moves' },
+		} );
+		expect( changed.status() ).toBe( 400 );
+	} );
+
+	test( 'the promotional read returns only the v1 allowlist and resolves portraits when read', async () => {
+		const shared = await attachment();
+		const trashed = await attachment();
+		const deleted = await createAttachment();
+		const solo = await createOk( {
+			name: ' Solo ',
+			instagram: '@solo.dj',
+			email: PRIVATE_EMAIL,
+			phone: PRIVATE_PHONE,
+			facebook_url: 'https://www.facebook.com/solo',
+			gender: 'female',
+			website_url: 'https://solo.example.com',
+			bio: 'Line one.\nLine two.',
+			portrait_attachment_id: shared,
+		} );
+		const anaOne = await createOk( {
+			name: 'Ana',
+			surname: 'Ruiz',
+			portrait_attachment_id: shared,
+		} );
+		const anaTwo = await createOk( {
+			name: 'Ana',
+			surname: ' Ruiz ',
+			portrait_attachment_id: trashed,
+		} );
+		const gone = await createOk( {
+			name: 'Gone',
+			portrait_attachment_id: deleted,
+		} );
+		await setAttachmentStatus( trashed, 'trash' );
+		await deleteAttachments( [ deleted ] );
+		await evalJson(
+			`global $wpdb; $wpdb->update( $wpdb->prefix . 'fair_events_team_members', array( 'instagram' => 'not valid' ), array( 'id' => ${ gone.id } ) ); echo 'JSON:true';`
+		);
+
+		const ids = [ gone.id, anaTwo.id, solo.id, anaOne.id, solo.id ];
+		const result = await readPromotional( ids );
+		expect( Object.keys( result ).sort() ).toEqual( [
+			'members',
+			'portraits',
+		] );
+		expect( result.members ).toEqual( [
+			{
+				id: `team-member:${ solo.id }`,
+				sourceId: solo.id,
+				displayName: 'Solo',
+				instagramHandle: 'solo.dj',
+				websiteUrl: 'https://solo.example.com',
+				bio: 'Line one.\nLine two.',
+				portraitMediaId: `media:${ shared }`,
+			},
+			{
+				id: `team-member:${ anaOne.id }`,
+				sourceId: anaOne.id,
+				displayName: 'Ana Ruiz',
+				instagramHandle: null,
+				websiteUrl: null,
+				bio: null,
+				portraitMediaId: `media:${ shared }`,
+			},
+			{
+				id: `team-member:${ anaTwo.id }`,
+				sourceId: anaTwo.id,
+				displayName: 'Ana Ruiz',
+				instagramHandle: null,
+				websiteUrl: null,
+				bio: null,
+				portraitMediaId: null,
+			},
+			{
+				id: `team-member:${ gone.id }`,
+				sourceId: gone.id,
+				displayName: 'Gone',
+				instagramHandle: null,
+				websiteUrl: null,
+				bio: null,
+				portraitMediaId: null,
+			},
+		] );
+		expect( Object.keys( result.portraits ) ).toEqual( [
+			String( shared ),
+		] );
+		expect( result.portraits[ shared ] ).toMatchObject( {
+			ok: true,
+			width: 400,
+			height: 500,
+		} );
+		const text = JSON.stringify( result );
+		for ( const secret of [
+			PRIVATE_EMAIL,
+			PRIVATE_PHONE,
+			'facebook.com/solo',
+			'female',
+			'event_count',
+		] ) {
+			expect( text ).not.toContain( secret );
+		}
+
+		// A restored portrait comes back on the next read.
+		await setAttachmentStatus( trashed, 'inherit' );
+		const restored = await readPromotional( [ anaTwo.id ] );
+		expect( restored.members[ 0 ].portraitMediaId ).toBe(
+			`media:${ trashed }`
+		);
+	} );
+
+	test( 'the promotional read tells disabled, denied, missing and empty apart', async () => {
+		const member = await createOk( {
+			name: 'Kai',
+			website_url: 'https://kai.example.com',
+		} );
+
+		expect( await readPromotional( [] ) ).toEqual( {
+			members: [],
+			portraits: [],
+		} );
+		expect( await readPromotional( [ member.id ], 0 ) ).toMatchObject( {
+			error: 'rest_forbidden',
+			data: { status: 401 },
+		} );
+		const subscriber = await evalJson(
+			`$id = wp_insert_user( array( 'user_login' => 'team-2421-' . wp_generate_password( 6, false ), 'user_pass' => wp_generate_password(), 'role' => 'subscriber' ) ); wp_set_current_user( $id ); $r = \\FairEventsExperimental\\Services\\PromotionalTeamProfiles::read( array( ${ member.id } ) ); require_once ABSPATH . 'wp-admin/includes/user.php'; wp_delete_user( $id ); echo 'JSON:' . wp_json_encode( array( 'error' => $r->get_error_code(), 'data' => $r->get_error_data() ) );`
+		);
+		expect( subscriber ).toMatchObject( {
+			error: 'rest_forbidden',
+			data: { status: 403 },
+		} );
+		expect(
+			( await readPromotional( [ member.id ], editorId ) ).members
+		).toHaveLength( 1 );
+
+		expect(
+			await readPromotional( [ member.id, 999999999 ] )
+		).toMatchObject( {
+			error: 'fair_events_team_member_missing',
+			data: { status: 500, member_ids: [ 999999999 ] },
+		} );
+		expect( await readPromotional( [ 0 ] ) ).toMatchObject( {
+			error: 'fair_events_team_member_missing',
+		} );
+
+		await setBundle( false );
+		try {
+			expect( await readPromotional( [ member.id ] ) ).toMatchObject( {
+				error: 'fair_events_team_directory_disabled',
+				data: { status: 409 },
+			} );
+		} finally {
+			await setBundle( true );
+		}
+		expect(
+			( await readPromotional( [ member.id ] ) ).members[ 0 ]
+		).toMatchObject( {
+			sourceId: member.id,
+			websiteUrl: 'https://kai.example.com',
+		} );
 	} );
 } );

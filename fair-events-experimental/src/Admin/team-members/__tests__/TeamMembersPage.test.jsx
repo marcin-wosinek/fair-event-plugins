@@ -3,8 +3,9 @@
  *
  * Tests for the Team members directory page (#2394): the list, the
  * required name, server-side field errors that keep what was typed,
- * clearing optional fields, and deletion blocked while the profile is on
- * an event's team.
+ * clearing optional fields, deletion blocked while the profile is on an
+ * event's team, and the promotional website, bio and Media Library
+ * portrait (#2421).
  */
 import '@testing-library/jest-dom';
 import {
@@ -19,6 +20,7 @@ import TeamMembersPage from '../TeamMembersPage.js';
 import {
 	createTeamMember,
 	deleteTeamMember,
+	loadAttachmentUrl,
 	loadTeamMember,
 	loadTeamMembers,
 	updateTeamMember,
@@ -36,6 +38,9 @@ const profile = ( overrides = {} ) => ( {
 	email: 'ana@example.com',
 	facebook_url: '',
 	phone: '+34 600 000 001',
+	website_url: '',
+	bio: '',
+	portrait_attachment_id: null,
 	gender: null,
 	event_count: 0,
 	...overrides,
@@ -58,8 +63,48 @@ async function chooseMenuItem( member, item ) {
 	);
 }
 
+/** Stand-in for `wp.media` that selects `attachment` when opened. */
+function mockMediaLibrary( attachment ) {
+	const frame = {
+		handlers: {},
+		on( event, handler ) {
+			this.handlers[ event ] = handler;
+		},
+		open: jest.fn( function () {
+			this.handlers.select();
+		} ),
+		state: () => ( {
+			get: () => ( { first: () => ( { toJSON: () => attachment } ) } ),
+		} ),
+	};
+	window.wp = { media: jest.fn( () => frame ) };
+	return frame;
+}
+
+/** Open the editor of Ana Ruiz once her profile has loaded. */
+async function editAna() {
+	fireEvent.click(
+		await screen.findByRole( 'button', { name: 'Edit “Ana Ruiz”' } )
+	);
+	await screen.findByText( 'Not on any event’s team yet.', {
+		exact: false,
+	} );
+}
+
+const saveMember = () =>
+	act( async () =>
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Save team member' } )
+		)
+	);
+
+afterEach( () => {
+	delete window.wp;
+} );
+
 beforeEach( () => {
 	jest.resetAllMocks();
+	loadAttachmentUrl.mockResolvedValue( null );
 	loadTeamMembers.mockResolvedValue( [
 		profile(),
 		profile( {
@@ -311,5 +356,132 @@ describe( 'TeamMembersPage', () => {
 			)
 		).toBeVisible();
 		expect( deleteTeamMember ).toHaveBeenCalledWith( 1 );
+	} );
+
+	it( 'saves a website and a bio with its line breaks', async () => {
+		loadTeamMember.mockResolvedValue( { ...profile(), events: [] } );
+		updateTeamMember.mockImplementation( ( id, data ) =>
+			Promise.resolve( { ...profile(), ...data, events: [] } )
+		);
+		render( <TeamMembersPage /> );
+		await editAna();
+
+		fireEvent.change( screen.getByLabelText( 'Website' ), {
+			target: { value: 'https://ana.example.com' },
+		} );
+		fireEvent.change( screen.getByLabelText( 'Bio' ), {
+			target: { value: 'Teacher.\nDancer.' },
+		} );
+		await saveMember();
+
+		expect( updateTeamMember ).toHaveBeenCalledWith(
+			1,
+			expect.objectContaining( {
+				website_url: 'https://ana.example.com',
+				bio: 'Teacher.\nDancer.',
+				portrait_attachment_id: null,
+			} )
+		);
+	} );
+
+	it( 'chooses a portrait from the Media Library and shows its preview', async () => {
+		loadTeamMember.mockResolvedValue( { ...profile(), events: [] } );
+		updateTeamMember.mockImplementation( ( id, data ) =>
+			Promise.resolve( { ...profile(), ...data, events: [] } )
+		);
+		const frame = mockMediaLibrary( {
+			id: 52,
+			url: 'https://example.test/ana.jpg',
+		} );
+		render( <TeamMembersPage /> );
+		await editAna();
+
+		await act( async () =>
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Choose portrait' } )
+			)
+		);
+
+		expect( window.wp.media ).toHaveBeenCalledWith(
+			expect.objectContaining( {
+				library: { type: 'image' },
+				multiple: false,
+			} )
+		);
+		expect( frame.open ).toHaveBeenCalled();
+		expect(
+			screen.getByRole( 'img', { name: 'Portrait preview' } )
+		).toHaveAttribute( 'src', 'https://example.test/ana.jpg' );
+		expect(
+			screen.getByRole( 'button', { name: 'Replace portrait' } )
+		).toBeVisible();
+		await saveMember();
+
+		expect( updateTeamMember ).toHaveBeenCalledWith(
+			1,
+			expect.objectContaining( { portrait_attachment_id: 52 } )
+		);
+	} );
+
+	it( 'removes a portrait by saving it as cleared', async () => {
+		loadTeamMembers.mockResolvedValue( [
+			profile( { portrait_attachment_id: 52 } ),
+		] );
+		loadTeamMember.mockResolvedValue( {
+			...profile( { portrait_attachment_id: 52 } ),
+			events: [],
+		} );
+		loadAttachmentUrl.mockResolvedValue( 'https://example.test/ana.jpg' );
+		updateTeamMember.mockImplementation( ( id, data ) =>
+			Promise.resolve( { ...profile(), ...data, events: [] } )
+		);
+		render( <TeamMembersPage /> );
+		await editAna();
+
+		expect(
+			await screen.findByRole( 'img', { name: 'Portrait preview' } )
+		).toHaveAttribute( 'src', 'https://example.test/ana.jpg' );
+		expect( loadAttachmentUrl ).toHaveBeenCalledWith( 52 );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Remove portrait' } )
+		);
+
+		expect(
+			screen.queryByRole( 'img', { name: 'Portrait preview' } )
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Choose portrait' } )
+		).toBeVisible();
+		await saveMember();
+
+		expect( updateTeamMember ).toHaveBeenCalledWith(
+			1,
+			expect.objectContaining( { portrait_attachment_id: null } )
+		);
+	} );
+
+	it( 'explains a portrait that is no longer in the Media Library', async () => {
+		loadTeamMembers.mockResolvedValue( [
+			profile( { portrait_attachment_id: 77 } ),
+		] );
+		loadTeamMember.mockResolvedValue( {
+			...profile( { portrait_attachment_id: 77 } ),
+			events: [],
+		} );
+		render( <TeamMembersPage /> );
+		await editAna();
+
+		expect(
+			await screen.findByText(
+				'This image is no longer available in the Media Library',
+				{ exact: false }
+			)
+		).toBeVisible();
+		expect(
+			screen.queryByRole( 'img', { name: 'Portrait preview' } )
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Remove portrait' } )
+		).toBeVisible();
 	} );
 } );

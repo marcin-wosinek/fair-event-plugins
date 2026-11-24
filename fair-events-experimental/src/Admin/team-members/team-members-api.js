@@ -63,3 +63,16 @@ export function deleteTeamMember( id ) {
 		method: 'DELETE',
 	} );
 }
+
+/**
+ * Preview URL of a Media Library image.
+ *
+ * @param {number} attachmentId Attachment ID.
+ * @return {Promise<string|null>} Its URL, or null when it can't be read
+ *                                (deleted, trashed or not an attachment).
+ */
+export function loadAttachmentUrl( attachmentId ) {
+	return apiFetch( { path: `/wp/v2/media/${ attachmentId }` } )
+		.then( ( media ) => media?.source_url || null )
+		.catch( () => null );
+}

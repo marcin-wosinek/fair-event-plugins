@@ -8,7 +8,9 @@
 namespace FairEventsExperimental\API;
 
 use FairEvents\Models\EventDates;
+use FairEventsExperimental\EventImages\Source;
 use FairEventsExperimental\Models\TeamMemberRepository;
+use FairEventsExperimental\Services\PromotionalTeamProfiles;
 use WP_Error;
 use WP_REST_Controller;
 use WP_REST_Request;
@@ -26,7 +28,12 @@ defined( 'WPINC' ) || die;
  * `manage_options`. Registered only while the `team-members` bundle is on.
  *
  * Only the name is required. On update, omitted fields keep their value and
- * an empty string (or null for the gender) clears one. Every problem is
+ * an empty string (or null for the gender and portrait) clears one. The
+ * website is an absolute http(s) URL, the bio plain text with its line
+ * breaks, and the portrait an image attachment from the Media Library
+ * (#2421); clearing the portrait keeps the attachment. An Instagram handle
+ * must be valid when it is new or changed; an older invalid one stays
+ * editable and is left out of promotional reads. Every problem is
  * reported together, keyed by field, in the standard `rest_invalid_param`
  * shape, and a rejected submission changes nothing. A profile still linked
  * to events cannot be deleted (409 `rest_team_member_linked`, with the
@@ -60,6 +67,8 @@ class TeamMembersController extends WP_REST_Controller {
 		'email'        => 254,
 		'facebook_url' => 500,
 		'phone'        => 64,
+		'website_url'  => 500,
+		'bio'          => 2000,
 	);
 
 	/**
@@ -199,12 +208,13 @@ class TeamMembersController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function update_item( $request ) {
-		$id = (int) $request['id'];
-		if ( null === $this->repository->find( $id ) ) {
+		$id      = (int) $request['id'];
+		$current = $this->repository->find( $id );
+		if ( null === $current ) {
 			return $this->not_found();
 		}
 
-		$data = $this->validate_submission( $request, false );
+		$data = $this->validate_submission( $request, false, $current );
 		if ( is_wp_error( $data ) ) {
 			return $data;
 		}
@@ -305,9 +315,10 @@ class TeamMembersController extends WP_REST_Controller {
 	 *
 	 * @param WP_REST_Request $request   Request object.
 	 * @param bool            $is_create Whether a new profile is being created.
+	 * @param array|null      $current   Stored profile, on update.
 	 * @return array|WP_Error Fields to store, or the validation errors.
 	 */
-	private function validate_submission( $request, $is_create ) {
+	private function validate_submission( $request, $is_create, $current = null ) {
 		$params = $request->get_params();
 		$errors = array();
 		$data   = array();
@@ -321,7 +332,9 @@ class TeamMembersController extends WP_REST_Controller {
 				$errors[ $field ] = __( 'Enter text.', 'fair-events-experimental' );
 				continue;
 			}
-			$value          = trim( sanitize_text_field( (string) $raw ) );
+			$value          = 'bio' === $field
+				? trim( str_replace( array( "\r\n", "\r" ), "\n", sanitize_textarea_field( (string) $raw ) ) )
+				: trim( sanitize_text_field( (string) $raw ) );
 			$data[ $field ] = $value;
 
 			if ( mb_strlen( $value ) > self::MAX_LENGTHS[ $field ] ) {
@@ -343,6 +356,31 @@ class TeamMembersController extends WP_REST_Controller {
 
 		if ( ! empty( $data['facebook_url'] ) && ! isset( $errors['facebook_url'] ) && ! self::is_facebook_url( $data['facebook_url'] ) ) {
 			$errors['facebook_url'] = __( 'Enter the full address of a Facebook profile, e.g. https://www.facebook.com/name, or leave it empty.', 'fair-events-experimental' );
+		}
+
+		if ( ! empty( $data['website_url'] ) && ! isset( $errors['website_url'] ) && ! PromotionalTeamProfiles::is_http_url( $data['website_url'] ) ) {
+			$errors['website_url'] = __( 'Enter the full address of a website, e.g. https://example.com, or leave it empty.', 'fair-events-experimental' );
+		}
+
+		$instagram_changed = array_key_exists( 'instagram', $data ) && ( null === $current || $data['instagram'] !== $current['instagram'] );
+		if ( $instagram_changed && ! isset( $errors['instagram'] ) && ! PromotionalTeamProfiles::is_valid_instagram( $data['instagram'] ) ) {
+			$errors['instagram'] = __( 'Enter an Instagram handle of up to 30 letters, numbers, periods or underscores, e.g. @ana.dances, or leave it empty.', 'fair-events-experimental' );
+		}
+
+		if ( $is_create || array_key_exists( 'portrait_attachment_id', $params ) ) {
+			$portrait = $params['portrait_attachment_id'] ?? null;
+			$is_id    = is_int( $portrait ) || ( is_string( $portrait ) && ctype_digit( $portrait ) );
+			$stored   = null !== $current ? (int) $current['portrait_attachment_id'] : 0;
+			if ( null === $portrait || '' === $portrait || ( $is_id && 0 === (int) $portrait ) ) {
+				$data['portrait_attachment_id'] = 0;
+			} elseif ( $is_id && ( (int) $portrait === $stored || Source::describe( (int) $portrait )['ok'] ) ) {
+				// The stored portrait is kept even when it was trashed or
+				// deleted meanwhile, so unrelated edits save and a restored
+				// image comes back.
+				$data['portrait_attachment_id'] = (int) $portrait;
+			} else {
+				$errors['portrait_attachment_id'] = __( 'Choose an image from the Media Library, or remove the portrait.', 'fair-events-experimental' );
+			}
 		}
 
 		if ( $is_create || array_key_exists( 'gender', $params ) ) {
@@ -428,14 +466,19 @@ class TeamMembersController extends WP_REST_Controller {
 		$string = array( 'type' => 'string' );
 
 		return array(
-			'name'         => $string,
-			'surname'      => $string,
-			'instagram'    => $string,
-			'email'        => $string,
-			'facebook_url' => $string,
-			'phone'        => $string,
-			'gender'       => array(
+			'name'                   => $string,
+			'surname'                => $string,
+			'instagram'              => $string,
+			'email'                  => $string,
+			'facebook_url'           => $string,
+			'phone'                  => $string,
+			'website_url'            => $string,
+			'bio'                    => $string,
+			'gender'                 => array(
 				'type' => array( 'string', 'null' ),
+			),
+			'portrait_attachment_id' => array(
+				'type' => array( 'integer', 'null' ),
 			),
 		);
 	}

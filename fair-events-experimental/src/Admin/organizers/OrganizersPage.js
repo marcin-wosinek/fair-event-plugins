@@ -17,7 +17,6 @@ import OrganizerForm, {
 	EMPTY_ORGANIZER,
 	toSavePayload,
 } from 'fair-events/src/Admin/settings/OrganizerForm.js';
-import SaleAlertCard from 'fair-events/src/Admin/settings/SaleAlertCard.js';
 import SalesSummaryCard from 'fair-events/src/Admin/settings/SalesSummaryCard.js';
 import {
 	AdminTable,
@@ -472,11 +471,6 @@ export default function OrganizersPage() {
 							'fair-events-experimental'
 						) }
 					/>
-				</div>
-			) }
-			{ editor.id && (
-				<div style={ { marginTop: '16px' } }>
-					<SaleAlertCard key={ editor.id } organizer={ editor.id } />
 				</div>
 			) }
 			<ConfirmDialog

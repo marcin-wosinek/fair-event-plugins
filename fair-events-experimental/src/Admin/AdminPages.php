@@ -435,6 +435,8 @@ class AdminPages {
 				break;
 
 			case 'fair-events-team-members':
+				// The portrait field picks from the media library.
+				wp_enqueue_media();
 				$asset_file = include $exp_dir . 'build/admin/team-members/index.asset.php';
 				wp_enqueue_script( 'fair-events-team-members', $exp_url . 'build/admin/team-members/index.js', $asset_file['dependencies'], $asset_file['version'], true );
 				wp_localize_script(

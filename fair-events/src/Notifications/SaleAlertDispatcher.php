@@ -21,9 +21,8 @@ defined( 'WPINC' ) || die;
  * Telegram. The worker claims the alert atomically, waits until every
  * purchase the payment is linked to is confirmed (a series purchase is
  * confirmed one occurrence at a time), and checks again, at send time, that
- * the event still belongs to the organizer the alert was queued for and
- * that the organizer's switch is on with a destination. Nothing is queued
- * while every organizer's switch is off.
+ * alerts are on, that the event still belongs to the organizer the alert
+ * was queued for, and that the organizer has a destination.
  *
  * Routing: an event with no stored assignment belongs to the sitewide
  * organizer. An event assigned to an additional organizer is sent only to
@@ -70,7 +69,6 @@ class SaleAlertDispatcher {
 	public const RECHECK_AFTER = MINUTE_IN_SECONDS;
 
 	// Skip reasons. Warnings name a configuration an administrator can fix.
-	// Disabled: recorded while the former sitewide switch was off.
 	public const REASON_DISABLED              = 'disabled';
 	public const REASON_ORGANIZER_DISABLED    = 'organizer_disabled';
 	public const REASON_MISSING_DESTINATION   = 'missing_destination';
@@ -139,8 +137,7 @@ class SaleAlertDispatcher {
 		add_action( self::RECOVERY_HOOK, array( self::class, 'handle_recovery' ) );
 		add_action( self::DIGEST_HOOK, array( self::class, 'handle_digest' ), 10, 3 );
 
-		SaleAlertSettings::migrate();
-		if ( SaleAlertSettings::any_enabled() ) {
+		if ( SaleAlertSettings::enabled() ) {
 			Cron::ensure_recurring( self::RECOVERY_HOOK, 'hourly', time() + HOUR_IN_SECONDS );
 		}
 	}
@@ -223,7 +220,7 @@ class SaleAlertDispatcher {
 	 * @return bool Whether a worker was scheduled.
 	 */
 	public function queue( $signup, $transaction ) {
-		if ( ! SaleAlertSettings::any_enabled() || ! self::paid_sale( self::transaction_fields( $transaction ) ) ) {
+		if ( ! SaleAlertSettings::enabled() || ! self::paid_sale( self::transaction_fields( $transaction ) ) ) {
 			return false;
 		}
 
@@ -332,8 +329,9 @@ class SaleAlertDispatcher {
 	/**
 	 * Send an organizer's pending sales as one digest.
 	 *
-	 * Nothing is claimed while the organizer's switch is off or while the
-	 * Telegram credentials have a problem: the sales stay pending. Each claimed sale is checked again as a single
+	 * Nothing is claimed while alerts are off, for the organizer or
+	 * sitewide, or while the Telegram credentials have a problem: the
+	 * sales stay pending. Each claimed sale is checked again as a single
 	 * alert would be; one that no longer qualifies is skipped with its
 	 * reason. Nothing is sent when no sale is left.
 	 *
@@ -343,8 +341,9 @@ class SaleAlertDispatcher {
 	 */
 	public function send_digest( $organizer ) {
 		$organizer = (string) $organizer;
-		$current   = SaleAlertSettings::get()['organizers'][ $organizer ] ?? null;
-		if ( null === $current || ! $current['enabled'] || $this->provider->credential_problem() ) {
+		$settings  = SaleAlertSettings::get();
+		$current   = $settings['organizers'][ $organizer ] ?? null;
+		if ( ! $settings['enabled'] || null === $current || ! $current['enabled'] || $this->provider->credential_problem() ) {
 			return '';
 		}
 
@@ -401,7 +400,7 @@ class SaleAlertDispatcher {
 	public static function schedule_digest( $organizer ) {
 		$organizer = (string) $organizer;
 		$settings  = SaleAlertSettings::organizer( $organizer );
-		if ( ! $settings['enabled'] || ! SaleAlertSettings::is_digest( $settings ) ) {
+		if ( ! SaleAlertSettings::enabled() || ! $settings['enabled'] || ! SaleAlertSettings::is_digest( $settings ) ) {
 			return false;
 		}
 		foreach ( self::scheduled_digests( $organizer ) as list( , $args ) ) {
@@ -434,7 +433,7 @@ class SaleAlertDispatcher {
 	public static function reschedule_digest( $organizer, $log = null ) {
 		$organizer = (string) $organizer;
 		$settings  = SaleAlertSettings::organizer( $organizer );
-		$active    = $settings['enabled'];
+		$active    = SaleAlertSettings::enabled() && $settings['enabled'];
 		$digest    = $active && SaleAlertSettings::is_digest( $settings );
 
 		foreach ( self::scheduled_digests( $organizer ) as list( $timestamp, $args ) ) {
@@ -541,6 +540,10 @@ class SaleAlertDispatcher {
 		if ( ! $row ) {
 			return self::skip( self::REASON_MISSING_TRANSACTION );
 		}
+		if ( ! SaleAlertSettings::enabled() ) {
+			return self::skip( self::REASON_DISABLED );
+		}
+
 		$checked = $this->check_sale( $row );
 		if ( 'ok' !== $checked['action'] ) {
 			return $checked;

@@ -13,11 +13,15 @@ export const EMPTY_TEAM_MEMBER = {
 	email: '',
 	facebook_url: '',
 	phone: '',
+	website_url: '',
+	bio: '',
+	portrait_attachment_id: 0,
 	gender: '',
 };
 
 /**
- * Editor state for a profile: only the edited fields, an unset gender as ''.
+ * Editor state for a profile: only the edited fields, an unset gender as ''
+ * and no portrait as 0.
  *
  * @param {Object|null} profile Profile from the API, or null for a new one.
  * @return {Object} Form state.
@@ -35,8 +39,8 @@ export function toFormState( profile ) {
 }
 
 /**
- * Save payload for a form state: every field, an unset gender as null so
- * clearing it is saved too.
+ * Save payload for a form state: every field, an unset gender and a removed
+ * portrait as null so clearing them is saved too.
  *
  * @param {Object} state Form state.
  * @return {Object} Request body.
@@ -45,6 +49,9 @@ export function toSavePayload( state ) {
 	return {
 		...state,
 		gender: state.gender ? state.gender : null,
+		portrait_attachment_id: state.portrait_attachment_id
+			? state.portrait_attachment_id
+			: null,
 	};
 }
 

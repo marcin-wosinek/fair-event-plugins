@@ -212,22 +212,4 @@ class SaleAlertFormatterTest extends TestCase {
 		$this->assertMatchesRegularExpression( '/and \d+ more events$/', $html );
 		$this->assertStringContainsString( 'Workshop &lt;b&gt;1&lt;/b&gt;', $html );
 	}
-
-	/**
-	 * The test message is labelled, names the site decoded once and
-	 * escaped, and carries no sale.
-	 *
-	 * @return void
-	 */
-	public function test_test_message_names_the_site_only() {
-		$GLOBALS['_fair_test_bloginfo'] = array( 'name' => 'La&nbsp;Mutable <b>&amp; friends</b>' );
-		$html                           = SaleAlertFormatter::test_html();
-		unset( $GLOBALS['_fair_test_bloginfo'] );
-
-		$lines = explode( "\n", $html );
-		$this->assertSame( '<b>Test message</b>', $lines[0] );
-		$this->assertSame( "Ticket sale alerts from La\u{00A0}Mutable &lt;b&gt;&amp; friends&lt;/b&gt; will be posted here.", $lines[1] );
-		$this->assertSame( 'This is only a test: no ticket was sold.', $lines[2] );
-		$this->assertStringNotContainsString( 'Total', $html );
-	}
 }
