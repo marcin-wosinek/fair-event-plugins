@@ -89,6 +89,27 @@ test.describe.serial( 'Fair Platform token refresh logging', () => {
 		expect( body.data.data.refresh_token ).toBe( rotated );
 	};
 
+	// Complete site-a's profile selection, as after Mollie's callback,
+	// handing it the given refresh token; returns the redirect response.
+	const completeProfile = async ( refreshToken ) => {
+		const session = await fixture( 'profile-session', {
+			siteId: 'site-a',
+			siteName: 'Alpha',
+			siteUrl: 'https://alpha.example.test',
+			refreshToken,
+		} );
+		const completed = await api.post( '/oauth/select-profile', {
+			form: {
+				session_token: session.session_token,
+				profile_id: 'pfl_e2e',
+				nonce: session.nonce,
+			},
+			maxRedirects: 0,
+		} );
+		expect( completed.status(), await completed.text() ).toBe( 302 );
+		return completed;
+	};
+
 	// Seed the neighbours plus one bound site-a row; returns its ID.
 	const seedBound = async ( row ) => {
 		const ids = await fixture( 'seed', {
@@ -120,22 +141,7 @@ test.describe.serial( 'Fair Platform token refresh logging', () => {
 
 	test( 'profile completion binds the new row and its refresh is recorded there only', async () => {
 		await fixture( 'seed', NEIGHBOURS );
-		const session = await fixture( 'profile-session', {
-			siteId: 'site-a',
-			siteName: 'Alpha',
-			siteUrl: 'https://alpha.example.test',
-			refreshToken: 'refresh_e2e_alpha',
-		} );
-
-		const completed = await api.post( '/oauth/select-profile', {
-			form: {
-				session_token: session.session_token,
-				profile_id: 'pfl_e2e',
-				nonce: session.nonce,
-			},
-			maxRedirects: 0,
-		} );
-		expect( completed.status(), await completed.text() ).toBe( 302 );
+		const completed = await completeProfile( 'refresh_e2e_alpha' );
 		const location = new URL( completed.headers().location );
 		expect( location.searchParams.get( 'mollie_refresh_token' ) ).toBe(
 			'refresh_e2e_alpha'
@@ -197,22 +203,7 @@ test.describe.serial( 'Fair Platform token refresh logging', () => {
 			refreshedDaysAgo: 3,
 		} );
 		const { ordinary: seeded } = await fixture( 'rows' );
-		const session = await fixture( 'profile-session', {
-			siteId: 'site-a',
-			siteName: 'Alpha',
-			siteUrl: 'https://alpha.example.test',
-			refreshToken: 'refresh_e2e_reused',
-		} );
-
-		const completed = await api.post( '/oauth/select-profile', {
-			form: {
-				session_token: session.session_token,
-				profile_id: 'pfl_e2e',
-				nonce: session.nonce,
-			},
-			maxRedirects: 0,
-		} );
-		expect( completed.status(), await completed.text() ).toBe( 302 );
+		await completeProfile( 'refresh_e2e_reused' );
 
 		const before = await fixture( 'rows' );
 		const row = before.ordinary[ before.ordinary.length - 1 ];
@@ -278,21 +269,7 @@ test.describe.serial( 'Fair Platform token refresh logging', () => {
 				},
 			],
 		} );
-		const session = await fixture( 'profile-session', {
-			siteId: 'site-a',
-			siteName: 'Alpha',
-			siteUrl: 'https://alpha.example.test',
-			refreshToken: 'refresh_e2e_shared',
-		} );
-		const completed = await api.post( '/oauth/select-profile', {
-			form: {
-				session_token: session.session_token,
-				profile_id: 'pfl_e2e',
-				nonce: session.nonce,
-			},
-			maxRedirects: 0,
-		} );
-		expect( completed.status(), await completed.text() ).toBe( 302 );
+		await completeProfile( 'refresh_e2e_shared' );
 
 		const before = await fixture( 'rows' );
 		const shared = await fingerprint( 'refresh_e2e_shared' );
