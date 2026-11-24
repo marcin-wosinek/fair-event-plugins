@@ -10,10 +10,11 @@ namespace FairEvents\Notifications;
 defined( 'WPINC' ) || die;
 
 /**
- * Stores whether Telegram ticket sale alerts are on (#2448), and each
- * organizer's switch, private chat or channel, and how often its alerts go
- * out (#2449): one message per sale, or a daily or weekly digest at a
- * site-local time.
+ * Stores each organizer's Telegram ticket sale alert settings (#2448): its
+ * switch, private chat or channel, and how often its alerts go out
+ * (#2449): one message per sale, or a daily or weekly digest at a
+ * site-local time. The organizer's switch is the only one: it controls
+ * both its immediate alerts and its digests.
  *
  * Organizers are keyed like the sales summaries
  * ({@see SalesSummarySettings::DEFAULT_ORGANIZER} for the sitewide
@@ -21,10 +22,15 @@ defined( 'WPINC' ) || die;
  * non-autoloaded option, never in an organizer's identity record, so
  * turning organizer management off or replacing an organizer keeps them.
  *
- * Everything starts off, on new and existing sites alike: nothing is sent
- * until an administrator turns the alerts on and gives an organizer a
- * destination. An organizer saved before frequencies existed sends
- * immediately.
+ * Everything starts off: nothing is sent until an administrator gives an
+ * organizer a destination and turns its switch on. An organizer saved
+ * before frequencies existed sends immediately.
+ *
+ * Sites saved before the organizer switch became the only one also stored
+ * a sitewide switch. Read, a sitewide switch that was off turns every
+ * organizer's switch off, keeping destinations and schedules, so upgrading
+ * never starts sending; one that was on leaves each organizer's switch as
+ * it was. {@see self::migrate()} then saves the settings without it.
  */
 class SaleAlertSettings {
 	public const OPTION = 'fair_events_sale_alerts';
@@ -39,11 +45,10 @@ class SaleAlertSettings {
 	/**
 	 * Settings that were never saved.
 	 *
-	 * @return array{enabled: bool, organizers: array<string, array{enabled: bool, chat_id: string}>}
+	 * @return array{organizers: array<string, array{enabled: bool, chat_id: string}>}
 	 */
 	public static function defaults() {
 		return array(
-			'enabled'    => false,
 			'organizers' => array(),
 		);
 	}
@@ -93,12 +98,33 @@ class SaleAlertSettings {
 	}
 
 	/**
-	 * Whether ticket sale alerts are on at all.
+	 * Whether any organizer sends its ticket sales.
 	 *
 	 * @return bool
 	 */
-	public static function enabled() {
-		return self::get()['enabled'];
+	public static function any_enabled() {
+		foreach ( self::get()['organizers'] as $organizer ) {
+			if ( $organizer['enabled'] ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Save settings stored with the former sitewide switch without it,
+	 * once, with the organizer switches it implies
+	 * ({@see self::sanitize()}).
+	 *
+	 * @return bool Whether settings were migrated.
+	 */
+	public static function migrate() {
+		$raw = get_option( self::OPTION, false );
+		if ( ! is_array( $raw ) || ! array_key_exists( 'enabled', $raw ) ) {
+			return false;
+		}
+		update_option( self::OPTION, self::sanitize( $raw ), false );
+		return true;
 	}
 
 	/**
@@ -122,7 +148,6 @@ class SaleAlertSettings {
 	public static function save( array $settings ) {
 		$current   = self::get();
 		$merged    = array(
-			'enabled'    => ! empty( $settings['enabled'] ),
 			'organizers' => array_merge( $current['organizers'], $settings['organizers'] ?? array() ),
 		);
 		$sanitized = self::sanitize( $merged );
@@ -141,16 +166,11 @@ class SaleAlertSettings {
 	 * valid is reported by field. An organizer field left out takes its
 	 * default; callers merge saved values in first to keep them.
 	 *
-	 * @param array $value Raw settings: enabled, organizers keyed by organizer.
+	 * @param array $value Raw settings: organizers keyed by organizer.
 	 * @return array{settings: array, errors: array<string, string>}
 	 */
 	public static function validate( array $value ) {
-		$errors  = array();
-		$enabled = $value['enabled'] ?? false;
-		if ( ! is_bool( $enabled ) ) {
-			$errors['enabled'] = __( 'Turn ticket sale alerts on or off.', 'fair-events' );
-			$enabled           = false;
-		}
+		$errors = array();
 
 		$organizers = array();
 		$raw        = $value['organizers'] ?? array();
@@ -194,7 +214,6 @@ class SaleAlertSettings {
 
 		return array(
 			'settings' => array(
-				'enabled'    => $enabled,
 				'organizers' => $organizers,
 			),
 			'errors'   => $errors,
@@ -240,7 +259,8 @@ class SaleAlertSettings {
 	/**
 	 * Normalize stored settings onto the defaults. An organizer whose
 	 * destination can't be read is stored off; one without a readable
-	 * frequency sends immediately.
+	 * frequency sends immediately. A former sitewide switch that is not on
+	 * turns every organizer off.
 	 *
 	 * @param mixed $value Raw settings.
 	 * @return array
@@ -251,6 +271,8 @@ class SaleAlertSettings {
 			return $defaults;
 		}
 
+		// Settings saved with the former sitewide switch.
+		$legacy_off = array_key_exists( 'enabled', $value ) && true !== $value['enabled'];
 		$organizers = array();
 		$fallback   = self::organizer_defaults();
 		foreach ( (array) ( $value['organizers'] ?? array() ) as $key => $organizer ) {
@@ -263,7 +285,7 @@ class SaleAlertSettings {
 			$time               = $organizer['time_of_day'] ?? null;
 			$day                = isset( $organizer['day_of_week'] ) ? (int) $organizer['day_of_week'] : 0;
 			$organizers[ $key ] = array(
-				'enabled'     => '' !== $chat_id && true === ( $organizer['enabled'] ?? false ),
+				'enabled'     => ! $legacy_off && '' !== $chat_id && true === ( $organizer['enabled'] ?? false ),
 				'chat_id'     => $chat_id,
 				'frequency'   => in_array( $frequency, self::FREQUENCIES, true ) ? $frequency : $fallback['frequency'],
 				'time_of_day' => TelegramSettings::valid_time( $time ) ? $time : $fallback['time_of_day'],
@@ -272,7 +294,6 @@ class SaleAlertSettings {
 		}
 
 		return array(
-			'enabled'    => true === ( $value['enabled'] ?? false ),
 			'organizers' => $organizers,
 		);
 	}

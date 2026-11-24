@@ -2,19 +2,10 @@
  * WordPress dependencies
  */
 import apiFetch from '@wordpress/api-fetch';
-import { __, _n, sprintf } from '@wordpress/i18n';
-import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
+import { __, sprintf } from '@wordpress/i18n';
+import { useCallback, useEffect, useState } from '@wordpress/element';
 import { dateI18n, getSettings } from '@wordpress/date';
-import {
-	Button,
-	Card,
-	CardBody,
-	CardHeader,
-	Notice,
-	SelectControl,
-	TextControl,
-	ToggleControl,
-} from '@wordpress/components';
+import { Card, CardBody, CardHeader, Notice } from '@wordpress/components';
 
 /**
  * Shared dependencies
@@ -29,151 +20,9 @@ import {
 /**
  * Internal dependencies
  */
-import { DAYS, useUnsavedWarning } from './shared.js';
+import { SALE_ALERTS_PATH } from '../settings/SaleAlertCard.js';
 
-export const SALE_ALERTS_PATH = '/fair-events/v1/sale-alerts';
-
-// The server's own check (TelegramSettings::valid_chat_id()).
-const CHAT_ID = /^(-?\d{1,20}|@[A-Za-z][A-Za-z0-9_]{3,31})$/;
-
-// The server's own check (TelegramSettings::valid_time()).
-const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
-
-const FREQUENCIES = [
-	{
-		value: 'immediate',
-		label: __( 'Immediately, one message per sale', 'fair-events' ),
-	},
-	{ value: 'daily', label: __( 'Daily digest', 'fair-events' ) },
-	{ value: 'weekly', label: __( 'Weekly digest', 'fair-events' ) },
-];
-
-/**
- * Whether an organizer's sales are collected into a digest.
- *
- * @param {Object} organizer Organizer settings.
- * @return {boolean} True for a daily or weekly digest.
- */
-export function isDigest( organizer ) {
-	return 'daily' === organizer.frequency || 'weekly' === organizer.frequency;
-}
-
-/**
- * Form state from the server's payload.
- *
- * @param {Object} payload Settings payload.
- * @return {Object} `{ enabled, organizers: { [id]: { enabled, chat_id, frequency, time_of_day, day_of_week } } }`.
- */
-export function toDraft( payload ) {
-	return {
-		enabled: payload.enabled,
-		organizers: Object.fromEntries(
-			payload.organizers.map( ( organizer ) => [
-				organizer.id,
-				{
-					enabled: organizer.settings.enabled,
-					chat_id: organizer.settings.chat_id,
-					frequency: organizer.settings.frequency || 'immediate',
-					time_of_day: organizer.settings.time_of_day || '08:00',
-					day_of_week: organizer.settings.day_of_week || 1,
-				},
-			] )
-		),
-	};
-}
-
-/**
- * Why each organizer's settings can't be saved, by organizer ID.
- *
- * @param {Object} draft Form state.
- * @return {Object} Messages by organizer ID; empty when the form is valid.
- */
-export function draftErrors( draft ) {
-	const errors = {};
-	Object.entries( draft.organizers ).forEach( ( [ id, organizer ] ) => {
-		const chat = organizer.chat_id.trim();
-		if ( '' !== chat && ! CHAT_ID.test( chat ) ) {
-			errors[ id ] = __(
-				'Enter one chat ID (a number such as -1001234567890) or a public @channelname.',
-				'fair-events'
-			);
-		} else if ( '' === chat && organizer.enabled ) {
-			errors[ id ] = __(
-				'Enter a chat or channel before turning the organizer’s alerts on.',
-				'fair-events'
-			);
-		}
-	} );
-	return errors;
-}
-
-/**
- * Why each digest organizer's delivery time can't be saved, by organizer ID.
- *
- * @param {Object} draft Form state.
- * @return {Object} Messages by organizer ID; empty when every time is valid.
- */
-export function scheduleErrors( draft ) {
-	const errors = {};
-	Object.entries( draft.organizers ).forEach( ( [ id, organizer ] ) => {
-		if ( isDigest( organizer ) && ! TIME.test( organizer.time_of_day ) ) {
-			errors[ id ] = __(
-				'Enter the delivery time as hours and minutes, for example 08:00.',
-				'fair-events'
-			);
-		}
-	} );
-	return errors;
-}
-
-/**
- * When an organizer's sales are sent, from its saved settings.
- *
- * @param {Object} organizer  Organizer from the payload.
- * @param {string} dateFormat Date and time format.
- * @param {string} timezone   Site timezone name.
- * @return {string} One or two sentences.
- */
-export function deliveryText( organizer, dateFormat, timezone ) {
-	if ( ! isDigest( organizer.settings ) ) {
-		return __(
-			'Each sale is sent as soon as its payment is confirmed.',
-			'fair-events'
-		);
-	}
-	const waiting = organizer.pending
-		? ' ' +
-			sprintf(
-				/* translators: %d: number of ticket sales waiting for the digest */
-				_n(
-					'%d sale is waiting for it.',
-					'%d sales are waiting for it.',
-					organizer.pending,
-					'fair-events'
-				),
-				organizer.pending
-			)
-		: '';
-	if ( ! organizer.next_digest ) {
-		return (
-			__(
-				'No digest is scheduled while alerts are off for this organizer or sitewide. Sales already waiting are kept for the next digest.',
-				'fair-events'
-			) + waiting
-		);
-	}
-	return (
-		sprintf(
-			/* translators: 1: date and time of the next digest, 2: site timezone name, for example Europe/Madrid */
-			__( 'Next digest: %1$s (%2$s).', 'fair-events' ),
-			dateI18n( dateFormat, organizer.next_digest ),
-			timezone
-		) +
-		waiting +
-		' ' +
-		__( 'Days without sales send nothing.', 'fair-events' )
-	);
-}
+export { SALE_ALERTS_PATH };
 
 /**
  * What a recorded outcome means, and its tone.
@@ -305,36 +154,26 @@ export function outcomeLabel( alert ) {
 }
 
 /**
- * Telegram ticket sale alerts (#2448): one message to the event’s
- * organizer for each paid ticket purchase. Saved on its own, with its own
- * recent outcomes.
+ * Telegram ticket sale alerts (#2448): what is set up and the recent
+ * outcomes. Each organizer's switch, chat or channel and schedule are
+ * edited with the organizer, on the page `settings_url` names.
  *
  * @return {JSX.Element} The section.
  */
 export default function SaleAlertsSection() {
 	const [ payload, setPayload ] = useState( null );
-	const [ draft, setDraft ] = useState( null );
 	const [ loadError, setLoadError ] = useState( null );
-	const [ saving, setSaving ] = useState( false );
-	const [ notice, setNotice ] = useState( null );
-	const [ serverErrors, setServerErrors ] = useState( {} );
-	const savingRef = useRef( false );
 
 	const load = useCallback( () => {
 		setLoadError( null );
-		apiFetch( { path: SALE_ALERTS_PATH } ).then(
-			( response ) => {
-				setPayload( response );
-				setDraft( toDraft( response ) );
-			},
-			( error ) =>
-				setLoadError(
-					error?.message ||
-						__(
-							'The ticket sale alert settings could not be loaded.',
-							'fair-events'
-						)
-				)
+		apiFetch( { path: SALE_ALERTS_PATH } ).then( setPayload, ( error ) =>
+			setLoadError(
+				error?.message ||
+					__(
+						'The ticket sale alerts could not be loaded.',
+						'fair-events'
+					)
+			)
 		);
 	}, [] );
 
@@ -342,19 +181,13 @@ export default function SaleAlertsSection() {
 		load();
 	}, [ load ] );
 
-	const isDirty =
-		!! payload &&
-		!! draft &&
-		JSON.stringify( draft ) !== JSON.stringify( toDraft( payload ) );
-	useUnsavedWarning( isDirty );
-
 	const header = (
 		<CardHeader>
 			<h2>{ __( 'Telegram ticket sales', 'fair-events' ) }</h2>
 		</CardHeader>
 	);
 
-	if ( ! payload || ! draft ) {
+	if ( ! payload ) {
 		return (
 			<Card className="fair-events-notifications__channel fair-events-notifications__sale-alerts">
 				{ header }
@@ -385,91 +218,11 @@ export default function SaleAlertsSection() {
 		);
 	}
 
-	const errors = draftErrors( draft );
-	const timeErrors = scheduleErrors( draft );
-	const blocked =
-		Object.keys( errors ).length > 0 ||
-		Object.keys( timeErrors ).length > 0;
-
-	const updateOrganizer = ( id, field ) => ( value ) => {
-		setServerErrors( ( current ) => ( {
-			...current,
-			[ id ]: undefined,
-		} ) );
-		setDraft( ( current ) => ( {
-			...current,
-			organizers: {
-				...current.organizers,
-				[ id ]: { ...current.organizers[ id ], [ field ]: value },
-			},
-		} ) );
-	};
-
-	const save = () => {
-		if ( savingRef.current || blocked ) {
-			return;
-		}
-		savingRef.current = true;
-		setSaving( true );
-		setNotice( null );
-		setServerErrors( {} );
-		apiFetch( {
-			path: SALE_ALERTS_PATH,
-			method: 'PUT',
-			data: {
-				enabled: draft.enabled,
-				organizers: Object.fromEntries(
-					Object.entries( draft.organizers ).map(
-						( [ id, organizer ] ) => [
-							id,
-							{ ...organizer, chat_id: organizer.chat_id.trim() },
-						]
-					)
-				),
-			},
-		} )
-			.then( ( response ) => {
-				setPayload( response );
-				setDraft( toDraft( response ) );
-				setNotice( {
-					status: 'success',
-					message: __( 'Ticket sale alerts saved.', 'fair-events' ),
-				} );
-			} )
-			.catch( ( error ) => {
-				const byOrganizer = {};
-				Object.entries( error?.data?.params || {} ).forEach(
-					( [ field, message ] ) => {
-						const match = /^organizers\.([^.]+)\.(.+)$/.exec(
-							field
-						);
-						if ( match ) {
-							byOrganizer[ match[ 1 ] ] = {
-								...byOrganizer[ match[ 1 ] ],
-								[ match[ 2 ] ]: message,
-							};
-						}
-					}
-				);
-				setServerErrors( byOrganizer );
-				setNotice( {
-					status: 'error',
-					message:
-						error?.message ||
-						__(
-							'The ticket sale alerts were not saved. Try again.',
-							'fair-events'
-						),
-				} );
-			} )
-			.finally( () => {
-				savingRef.current = false;
-				setSaving( false );
-			} );
-	};
-
-	// Saved state only: the warning describes what is sent now.
-	const missing = payload.enabled
+	const sending = payload.organizers.filter(
+		( organizer ) => organizer.settings.enabled
+	);
+	// Sales of these organizers' events are recorded as not sent.
+	const missing = sending.length
 		? payload.organizers.filter(
 				( organizer ) => ! organizer.settings.chat_id
 			)
@@ -487,7 +240,7 @@ export default function SaleAlertsSection() {
 					) }
 				</p>
 
-				{ payload.credential_problem && draft.enabled && (
+				{ payload.credential_problem && sending.length > 0 && (
 					<Notice status="warning" isDismissible={ false }>
 						{ payload.credential_problem }{ ' ' }
 						<a href={ payload.connectors_url }>
@@ -503,7 +256,7 @@ export default function SaleAlertsSection() {
 						) }
 					</Notice>
 				) }
-				{ missing.length > 0 && ! isDirty && (
+				{ missing.length > 0 && (
 					<Notice status="warning" isDismissible={ false }>
 						{ sprintf(
 							/* translators: %s: comma-separated organizer names */
@@ -518,210 +271,34 @@ export default function SaleAlertsSection() {
 					</Notice>
 				) }
 
-				<ToggleControl
-					__nextHasNoMarginBottom
-					label={ __(
-						'Send ticket sale alerts to Telegram',
-						'fair-events'
-					) }
-					help={ __(
-						'Off by default. Each organizer below also needs its own switch and chat.',
-						'fair-events'
-					) }
-					checked={ draft.enabled }
-					onChange={ ( enabled ) =>
-						setDraft( ( current ) => ( { ...current, enabled } ) )
-					}
-					disabled={ saving }
-				/>
-
-				{ payload.organizers.map( ( organizer ) => {
-					const value = draft.organizers[ organizer.id ];
-					const fieldErrors = serverErrors[ organizer.id ] || {};
-					const error =
-						fieldErrors.chat_id ||
-						fieldErrors.enabled ||
-						errors[ organizer.id ];
-					const timeError =
-						fieldErrors.time_of_day || timeErrors[ organizer.id ];
-					const organizerDirty =
-						JSON.stringify( value ) !==
-						JSON.stringify(
-							toDraft( { ...payload, organizers: [ organizer ] } )
-								.organizers[ organizer.id ]
-						);
-					return (
-						<div
-							key={ organizer.id }
-							className="fair-events-notifications__sale-alert-organizer"
-						>
-							<h3>
-								{ organizer.sitewide
-									? sprintf(
-											/* translators: %s: organizer name */
-											__(
-												'%s (sitewide organizer)',
-												'fair-events'
-											),
-											organizer.name
-										)
-									: organizer.name }
-							</h3>
-							<div className="fair-events-notifications__fields">
-								<ToggleControl
-									__nextHasNoMarginBottom
-									label={ __(
-										'Send this organizer’s sales',
-										'fair-events'
-									) }
-									checked={ value.enabled }
-									onChange={ updateOrganizer(
-										organizer.id,
-										'enabled'
-									) }
-									disabled={ saving }
-								/>
-								<TextControl
-									__nextHasNoMarginBottom
-									__next40pxDefaultSize
-									label={ __(
-										'Chat or channel',
-										'fair-events'
-									) }
-									help={
-										error ||
-										__(
-											'A private chat or channel ID such as -1001234567890, or @channelname. Add the bot to it first. Only administrators see it.',
-											'fair-events'
-										)
-									}
-									className={
-										error ? 'has-error' : undefined
-									}
-									value={ value.chat_id }
-									onChange={ updateOrganizer(
-										organizer.id,
-										'chat_id'
-									) }
-									disabled={ saving }
-								/>
-								<SelectControl
-									__nextHasNoMarginBottom
-									__next40pxDefaultSize
-									label={ __( 'How often', 'fair-events' ) }
-									help={ fieldErrors.frequency }
-									className={
-										fieldErrors.frequency
-											? 'has-error'
-											: undefined
-									}
-									value={ value.frequency }
-									options={ FREQUENCIES }
-									onChange={ updateOrganizer(
-										organizer.id,
-										'frequency'
-									) }
-									disabled={ saving }
-								/>
-								{ 'weekly' === value.frequency && (
-									<SelectControl
-										__nextHasNoMarginBottom
-										__next40pxDefaultSize
-										label={ __( 'Weekday', 'fair-events' ) }
-										help={ fieldErrors.day_of_week }
-										className={
-											fieldErrors.day_of_week
-												? 'has-error'
-												: undefined
-										}
-										value={ String( value.day_of_week ) }
-										options={ DAYS }
-										onChange={ ( day ) =>
-											updateOrganizer(
-												organizer.id,
-												'day_of_week'
-											)( Number.parseInt( day, 10 ) )
-										}
-										disabled={ saving }
-									/>
+				<p>
+					{ sending.length
+						? sprintf(
+								/* translators: %s: comma-separated organizer names */
+								__(
+									'Sending the sales of: %s.',
+									'fair-events'
+								),
+								sending
+									.map( ( organizer ) => organizer.name )
+									.join( ', ' )
+							)
+						: __(
+								'No organizer sends its sales to Telegram yet.',
+								'fair-events'
+							) }{ ' ' }
+					<a href={ payload.settings_url }>
+						{ payload.organizer_resolution_available
+							? __(
+									'Set up each organizer’s chat or channel, schedule and switch on the Organizers page',
+									'fair-events'
+								)
+							: __(
+									'Set up the organizer’s chat or channel, schedule and switch in Settings → Organizer',
+									'fair-events'
 								) }
-								{ isDigest( value ) && (
-									<TextControl
-										__nextHasNoMarginBottom
-										__next40pxDefaultSize
-										type="time"
-										label={ __(
-											'Delivery time',
-											'fair-events'
-										) }
-										help={
-											timeError ||
-											sprintf(
-												/* translators: %s: site timezone name, for example Europe/Madrid */
-												__(
-													'In the site’s timezone (%s).',
-													'fair-events'
-												),
-												payload.timezone
-											)
-										}
-										className={
-											timeError ? 'has-error' : undefined
-										}
-										value={ value.time_of_day }
-										onChange={ updateOrganizer(
-											organizer.id,
-											'time_of_day'
-										) }
-										disabled={ saving }
-									/>
-								) }
-								<p className="is-wide fair-events-notifications__sale-alert-delivery">
-									{ organizerDirty
-										? __(
-												'Save to see when this organizer’s sales are sent. Sales already waiting for a digest are kept; switching to Immediately sends them in one final digest.',
-												'fair-events'
-											)
-										: deliveryText(
-												organizer,
-												dateFormat,
-												payload.timezone
-											) }
-								</p>
-							</div>
-						</div>
-					);
-				} ) }
-
-				{ notice && (
-					<Notice
-						status={ notice.status }
-						onRemove={ () => setNotice( null ) }
-					>
-						{ notice.message }
-					</Notice>
-				) }
-				<div className="fair-events-notifications__actions">
-					<Button
-						variant="primary"
-						onClick={ save }
-						isBusy={ saving }
-						disabled={ saving || ! isDirty || blocked }
-						accessibleWhenDisabled
-					>
-						{ __( 'Save ticket sale alerts', 'fair-events' ) }
-					</Button>
-					{ isDirty && (
-						<span className="fair-events-notifications__unsaved">
-							{ blocked
-								? __(
-										'Unsaved changes: correct the highlighted fields first.',
-										'fair-events'
-									)
-								: __( 'Unsaved changes', 'fair-events' ) }
-						</span>
-					) }
-				</div>
+					</a>
+				</p>
 
 				<h3>{ __( 'Recent ticket sale alerts', 'fair-events' ) }</h3>
 				{ payload.recent.length ? (
@@ -803,7 +380,7 @@ export default function SaleAlertsSection() {
 				) : (
 					<p className="description">
 						{ __(
-							'No ticket sale alert yet. Sales are listed here once alerts are on.',
+							'No ticket sale alert yet. Sales are listed here once an organizer is switched on.',
 							'fair-events'
 						) }
 					</p>

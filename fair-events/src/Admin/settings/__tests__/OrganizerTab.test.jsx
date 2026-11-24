@@ -3,6 +3,7 @@
  */
 import '@testing-library/jest-dom';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import apiFetch from '@wordpress/api-fetch';
 import OrganizerTab from '../OrganizerTab.js';
 import {
 	loadOrganizerSettings,
@@ -11,6 +12,7 @@ import {
 } from '../settings-api.js';
 
 jest.mock( '../settings-api.js' );
+jest.mock( '@wordpress/api-fetch' );
 
 const baseOrganizer = {
 	name: '',
@@ -33,6 +35,8 @@ beforeEach( () => {
 	loadOrganizerSettings.mockResolvedValue( { ...baseOrganizer } );
 	loadAttachmentUrl.mockResolvedValue( '' );
 	saveSettings.mockResolvedValue( {} );
+	// The sales summary and Telegram cards keep loading unless a test resolves them.
+	apiFetch.mockReturnValue( new Promise( () => {} ) );
 } );
 
 afterEach( () => {
@@ -544,4 +548,48 @@ describe( 'notification email addresses (#2303)', () => {
 		expect( saveButton() ).toBeEnabled();
 		expect( loadOrganizerSettings ).toHaveBeenCalledTimes( 1 );
 	} );
+} );
+
+test( 'holds the sitewide organizer’s Telegram ticket sales while the Organizers page is off', async () => {
+	apiFetch.mockImplementation( ( { path } ) =>
+		'/fair-events/v1/sale-alerts' === path
+			? Promise.resolve( {
+					organizers: [
+						{
+							id: 'default',
+							name: 'Test Site',
+							sitewide: true,
+							settings: {
+								enabled: false,
+								chat_id: '@site_sales',
+								frequency: 'daily',
+								time_of_day: '07:30',
+								day_of_week: 1,
+							},
+							next_digest: null,
+							pending: 0,
+						},
+					],
+					organizer_resolution_available: false,
+					credential_problem: '',
+					connectors_url: '/wp-admin/options-connectors.php',
+					notifications_url:
+						'/wp-admin/admin.php?page=fair-events-event-notifications',
+					settings_url:
+						'/wp-admin/admin.php?page=fair-events-settings&tab=organizer',
+					timezone: 'UTC',
+					recent: [],
+				} )
+			: new Promise( () => {} )
+	);
+
+	render( <OrganizerTab onNotice={ jest.fn() } /> );
+
+	expect(
+		await screen.findByRole( 'textbox', { name: 'Chat or channel' } )
+	).toHaveValue( '@site_sales' );
+	expect( screen.getByLabelText( 'Delivery time' ) ).toHaveValue( '07:30' );
+	expect(
+		screen.getByRole( 'checkbox', { name: 'Send this organizer’s sales' } )
+	).not.toBeChecked();
 } );
