@@ -91,7 +91,7 @@ export default function RowActions( { primary, secondary = [], moreLabel } ) {
 					<Dropdown
 						className="fair-admin-table__more"
 						popoverProps={ { placement: 'bottom-end' } }
-						renderToggle={ ( { isOpen, onToggle } ) => (
+						renderToggle={ ( { isOpen, onToggle, onClose } ) => (
 							<Button
 								ref={ toggleRef }
 								size="small"
@@ -100,6 +100,17 @@ export default function RowActions( { primary, secondary = [], moreLabel } ) {
 								aria-haspopup="true"
 								aria-expanded={ isOpen }
 								onClick={ onToggle }
+								onKeyDown={ ( event ) => {
+									// The popover moves focus into the menu one
+									// task after it opens. Escape pressed before
+									// then reaches the trigger, so close here
+									// too; focus is already on the trigger.
+									if ( isOpen && event.key === 'Escape' ) {
+										event.preventDefault();
+										event.stopPropagation();
+										onClose();
+									}
+								} }
 							/>
 						) }
 						renderContent={ ( { onClose } ) => (

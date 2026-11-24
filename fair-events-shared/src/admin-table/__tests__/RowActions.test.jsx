@@ -160,6 +160,18 @@ it( 'closes the menu on Escape and returns focus to the trigger', async () => {
 	expect( toggle ).toHaveFocus();
 } );
 
+it( 'closes the menu on Escape pressed before focus moves into it', async () => {
+	renderActions( {
+		secondary: [ { label: 'Delete', onClick: jest.fn() } ],
+	} );
+	const { toggle } = await openMenu();
+	expect( toggle ).toHaveFocus();
+	fireEvent.keyDown( toggle, { key: 'Escape' } );
+	await waitForMenuToClose();
+	expect( toggle ).toHaveFocus();
+	expect( toggle ).toHaveAttribute( 'aria-expanded', 'false' );
+} );
+
 it( 'shows a disabled menu item with its reason and does not run it', async () => {
 	const onDuplicate = jest.fn();
 	renderActions( {
