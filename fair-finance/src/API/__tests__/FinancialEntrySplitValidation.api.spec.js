@@ -8,15 +8,8 @@
  * leave the entry and its allocations unchanged.
  */
 
-import { test, expect, request } from '@playwright/test';
-
-const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
-const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
-const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
-
-const adminAuth = Buffer.from( `${ ADMIN_USER }:${ ADMIN_PASSWORD }` ).toString(
-	'base64'
-);
+import { test, expect } from '@playwright/test';
+import { splitFixtures } from './helpers/split-fixtures.js';
 
 const COUNT_ERROR = {
 	code: 'rest_invalid_allocations',
@@ -54,42 +47,15 @@ const INVALID_ALLOCATIONS = [
 ];
 
 test.describe( 'Split allocation validation (#2435)', () => {
-	let api;
 	const STAMP = Date.now().toString( 36 );
 	const TAG = `split-validation-${ STAMP }`;
-	const headers = { Authorization: `Basic ${ adminAuth }` };
-	const API = '/wp-json/fair-finance/v1/financial-entries';
-	const created = [];
-
-	const createEntry = async ( amount = 100 ) => {
-		const res = await api.post( API, {
-			headers,
-			data: {
-				amount,
-				entry_type: 'cost',
-				entry_date: '2033-06-06',
-				description: `Split validation entry ${ STAMP }`,
-				tag: TAG,
-			},
-		} );
-		expect( res.ok(), await res.text() ).toBeTruthy();
-		const { id } = await res.json();
-		created.push( id );
-		return id;
-	};
-
-	const split = ( id, allocations, method = 'post' ) =>
-		api[ method ]( `${ API }/${ id }/split`, {
-			headers,
-			data: { allocations },
-		} );
-
-	// The focused list returns a split parent with its allocations.
-	const focused = async ( id ) => {
-		const res = await api.get( `${ API }?entry_id=${ id }`, { headers } );
-		expect( res.ok() ).toBeTruthy();
-		return ( await res.json() ).entries[ 0 ];
-	};
+	const fixtures = splitFixtures( {
+		entry_date: '2033-06-06',
+		description: `Split validation entry ${ STAMP }`,
+		tag: TAG,
+	} );
+	const { split, focused } = fixtures;
+	const createEntry = ( amount = 100 ) => fixtures.createEntry( { amount } );
 
 	const createSplit = async ( amounts = [ 60, 40 ] ) => {
 		const id = await createEntry(
@@ -112,17 +78,8 @@ test.describe( 'Split allocation validation (#2435)', () => {
 		expect( await res.json() ).toMatchObject( expected );
 	};
 
-	test.beforeAll( async () => {
-		api = await request.newContext( { baseURL: BASE_URL } );
-	} );
-
-	test.afterAll( async () => {
-		for ( const id of created ) {
-			await api.delete( `${ API }/${ id }/split`, { headers } );
-			await api.delete( `${ API }/${ id }`, { headers } );
-		}
-		await api.dispose();
-	} );
+	test.beforeAll( () => fixtures.open() );
+	test.afterAll( () => fixtures.close() );
 
 	test( 'POST rejects invalid allocations without changing the entry', async () => {
 		const id = await createEntry();
