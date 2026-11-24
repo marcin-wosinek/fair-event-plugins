@@ -8,6 +8,11 @@
  */
 
 import { test, expect, request } from '@playwright/test';
+import {
+	ADMIN_HEADERS,
+	ENTRIES_API,
+	splitFixtures,
+} from './helpers/split-fixtures.js';
 
 const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
 const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
@@ -126,7 +131,6 @@ test.describe( 'FinancialEntry tag routes', () => {
 } );
 
 test.describe( 'Split allocation tags (#2341)', () => {
-	let api;
 	const STAMP = Date.now().toString( 36 );
 	// A date no other spec uses keeps the untagged listing to our entries.
 	const DATE = '2033-05-05';
@@ -134,40 +138,14 @@ test.describe( 'Split allocation tags (#2341)', () => {
 	const TAG_A = `split-a-${ STAMP }`;
 	const TAG_B = `split-b-${ STAMP }`;
 	const TAG_FILTER = `split-filter-${ STAMP }`;
-	const headers = { Authorization: `Basic ${ adminAuth }` };
-	const API = '/wp-json/fair-finance/v1/financial-entries';
-	const created = [];
-
-	const createEntry = async ( data = {} ) => {
-		const res = await api.post( API, {
-			headers,
-			data: {
-				amount: 100,
-				entry_type: 'cost',
-				entry_date: DATE,
-				description: `Split tag entry ${ STAMP }`,
-				tag: PARENT_TAG,
-				...data,
-			},
-		} );
-		expect( res.ok(), await res.text() ).toBeTruthy();
-		const { id } = await res.json();
-		created.push( id );
-		return id;
-	};
-
-	const split = ( id, allocations, method = 'post' ) =>
-		api[ method ]( `${ API }/${ id }/split`, {
-			headers,
-			data: { allocations },
-		} );
-
-	// The focused list returns a split parent with its allocations.
-	const focused = async ( id ) => {
-		const res = await api.get( `${ API }?entry_id=${ id }`, { headers } );
-		expect( res.ok() ).toBeTruthy();
-		return ( await res.json() ).entries[ 0 ];
-	};
+	const headers = ADMIN_HEADERS;
+	const API = ENTRIES_API;
+	const fixtures = splitFixtures( {
+		entry_date: DATE,
+		description: `Split tag entry ${ STAMP }`,
+		tag: PARENT_TAG,
+	} );
+	const { createEntry, split, focused } = fixtures;
 
 	const childTags = async ( id ) => {
 		const entry = await focused( id );
@@ -178,7 +156,7 @@ test.describe( 'Split allocation tags (#2341)', () => {
 	};
 
 	const list = async ( query ) => {
-		const res = await api.get(
+		const res = await fixtures.api.get(
 			`${ API }?date_from=${ DATE }&date_to=${ DATE }&per_page=100&${ query }`,
 			{ headers }
 		);
@@ -187,7 +165,7 @@ test.describe( 'Split allocation tags (#2341)', () => {
 	};
 
 	const totals = async ( query ) => {
-		const res = await api.get(
+		const res = await fixtures.api.get(
 			`${ API }/totals?date_from=${ DATE }&date_to=${ DATE }&${ query }`,
 			{ headers }
 		);
@@ -195,17 +173,8 @@ test.describe( 'Split allocation tags (#2341)', () => {
 		return res.json();
 	};
 
-	test.beforeAll( async () => {
-		api = await request.newContext( { baseURL: BASE_URL } );
-	} );
-
-	test.afterAll( async () => {
-		for ( const id of created ) {
-			await api.delete( `${ API }/${ id }/split`, { headers } );
-			await api.delete( `${ API }/${ id }`, { headers } );
-		}
-		await api.dispose();
-	} );
+	test.beforeAll( () => fixtures.open() );
+	test.afterAll( () => fixtures.close() );
 
 	test( 'creates allocations with explicit, cleared and inherited tags', async () => {
 		const id = await createEntry();
@@ -321,7 +290,7 @@ test.describe( 'Split allocation tags (#2341)', () => {
 		expect( untagged.total ).toBe( untagged.entries.length );
 
 		const byTag = await (
-			await api.get( `${ API }/totals-by-tag`, { headers } )
+			await fixtures.api.get( `${ API }/totals-by-tag`, { headers } )
 		).json();
 		expect( byTag[ TAG_FILTER ] ).toMatchObject( {
 			total_cost: 50,
