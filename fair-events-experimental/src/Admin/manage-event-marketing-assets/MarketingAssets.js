@@ -306,6 +306,31 @@ export default function MarketingAssets( {
 
 	const editorOpen = !! editing;
 
+	const renderEditor = ( key = 'new' ) => (
+		<AssetEditor
+			key={ key }
+			form={ editing.form }
+			isNew={ null === editing.assetId }
+			imageRemoved={ editing.imageRemoved }
+			options={ options }
+			linkedMembers={ editing.linkedMembers }
+			linkedScheduleItem={ editing.linkedScheduleItem }
+			saving={ saving }
+			error={ saveError }
+			onChange={ ( form ) => setEditing( { ...editing, form } ) }
+			onMediaUnavailable={ () =>
+				setSaveError( {
+					message: __(
+						'The Media Library could not be opened. Reload the page and try again.',
+						'fair-events-experimental'
+					),
+				} )
+			}
+			onSave={ save }
+			onCancel={ close }
+		/>
+	);
+
 	return (
 		<VStack
 			spacing={ 4 }
@@ -359,29 +384,7 @@ export default function MarketingAssets( {
 				</Notice>
 			) }
 
-			{ editing && null === editing.assetId && (
-				<AssetEditor
-					form={ editing.form }
-					isNew
-					imageRemoved={ false }
-					options={ options }
-					linkedMembers={ [] }
-					linkedScheduleItem={ null }
-					saving={ saving }
-					error={ saveError }
-					onChange={ ( form ) => setEditing( { ...editing, form } ) }
-					onMediaUnavailable={ () =>
-						setSaveError( {
-							message: __(
-								'The Media Library could not be opened. Reload the page and try again.',
-								'fair-events-experimental'
-							),
-						} )
-					}
-					onSave={ save }
-					onCancel={ close }
-				/>
-			) }
+			{ editing && null === editing.assetId && renderEditor() }
 
 			{ assets.length === 0 && ! editorOpen && (
 				<Card>
@@ -398,30 +401,7 @@ export default function MarketingAssets( {
 
 			{ assets.map( ( asset ) =>
 				editing?.assetId === asset.id ? (
-					<AssetEditor
-						key={ asset.id }
-						form={ editing.form }
-						isNew={ false }
-						imageRemoved={ editing.imageRemoved }
-						options={ options }
-						linkedMembers={ editing.linkedMembers }
-						linkedScheduleItem={ editing.linkedScheduleItem }
-						saving={ saving }
-						error={ saveError }
-						onChange={ ( form ) =>
-							setEditing( { ...editing, form } )
-						}
-						onMediaUnavailable={ () =>
-							setSaveError( {
-								message: __(
-									'The Media Library could not be opened. Reload the page and try again.',
-									'fair-events-experimental'
-								),
-							} )
-						}
-						onSave={ save }
-						onCancel={ close }
-					/>
+					renderEditor( asset.id )
 				) : (
 					<AssetCard
 						key={ asset.id }
