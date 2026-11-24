@@ -404,7 +404,9 @@ test.describe( 'Supported upgrade path after the payment history migration', () 
 		expect( alert.mail ).toHaveLength( 1 );
 		const [ mail ] = alert.mail;
 		expect( mail.subject ).toContain( 'Fair Events is paused' );
-		expect( mail.body ).toContain( 'Fair Events is paused on your website' );
+		expect( mail.body ).toContain(
+			'Fair Events is paused on your website'
+		);
 		expect( mail.body ).toContain( BASE_URL );
 		expect( mail.body ).toContain(
 			'Payment records were not switched to Fair Events.'
