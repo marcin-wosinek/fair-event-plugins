@@ -397,3 +397,108 @@ describe( 'SubmissionDetail — changing the event (#1778)', () => {
 		expect( await screen.findByText( 'Workshop' ) ).toBeInTheDocument();
 	} );
 } );
+
+describe( 'SubmissionDetail — copy markdown (#2433)', () => {
+	let writeText;
+
+	beforeEach( () => {
+		writeText = jest.fn().mockResolvedValue( undefined );
+		Object.defineProperty( navigator, 'clipboard', {
+			value: { writeText },
+			configurable: true,
+		} );
+	} );
+
+	afterEach( () => {
+		delete navigator.clipboard;
+	} );
+
+	it( 'copies the participant-linked submission as Markdown', async () => {
+		apiFetch.mockResolvedValue( {
+			...SUBMISSION,
+			participant_id: 7,
+			answers: [
+				...SUBMISSION.answers,
+				{
+					question_key: 'agree',
+					question_text: 'Agree to terms',
+					question_type: 'checkbox',
+					answer_value: '1',
+				},
+				{
+					question_key: 'photo',
+					question_text: 'Photo',
+					question_type: 'file_upload',
+					answer_value: '99',
+					file_url: 'https://example.test/a.jpg',
+					is_image: true,
+				},
+			],
+		} );
+		render( <SubmissionDetail /> );
+
+		await screen.findByText( 'Google' );
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Copy markdown' } )
+			);
+		} );
+
+		expect( writeText ).toHaveBeenCalledTimes( 1 );
+		expect( writeText.mock.calls[ 0 ][ 0 ] ).toBe(
+			[
+				'## [Jane Doe](http://localhost/wp-admin/admin.php?page=fair-audience-participant-detail&participant_id=7)',
+				'',
+				'_Submitted 2026-01-15 10:00:00_',
+				'',
+				'### How did you hear about us?',
+				'',
+				'Google',
+				'',
+				'### Agree to terms',
+				'',
+				'Yes',
+				'',
+				'### Photo',
+				'',
+				'![Photo](https://example.test/a.jpg)',
+				'',
+			].join( '\n' )
+		);
+		expect(
+			await screen.findByText(
+				'Markdown copied to clipboard. Paste into Google Docs.',
+				{ selector: '.components-notice__content' }
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'copies an anonymous submission under its ID heading', async () => {
+		apiFetch.mockResolvedValue( {
+			...SUBMISSION,
+			participant_name: '',
+			participant_email: '',
+		} );
+		render( <SubmissionDetail /> );
+
+		await screen.findByText( 'Google' );
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Copy markdown' } )
+			);
+		} );
+
+		expect( writeText.mock.calls[ 0 ][ 0 ] ).toBe(
+			[
+				'## #117',
+				'',
+				'_Submitted 2026-01-15 10:00:00_',
+				'',
+				'### How did you hear about us?',
+				'',
+				'Google',
+				'',
+			].join( '\n' )
+		);
+	} );
+} );
