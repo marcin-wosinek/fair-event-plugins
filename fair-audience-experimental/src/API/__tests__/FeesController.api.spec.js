@@ -9,14 +9,19 @@
  *
  * Fixtures (a group, its members, and two fees) are created through the admin
  * REST API and torn down at the end of the suite. Outgoing mail is captured by
- * e2e/mu-plugins/fair-e2e-support.php; the routes in
- * e2e/mu-plugins/fair-e2e-fee-reminders.php read that log, make delivery to
- * one address fail, and store an address the participant routes would reject.
+ * e2e/mu-plugins/fair-e2e-support.php into a log shared by every request,
+ * including WP-Cron runs that deliver earlier specs' deferred mail (#2441).
+ * Each reminder request here therefore carries its own capture token, and
+ * e2e/mu-plugins/fair-e2e-fee-reminders.php records the mail attempted while
+ * that request is handled. Its routes also put unrelated mail in the shared
+ * log, make delivery to one address fail, and store an address the
+ * participant routes would reject.
  *
  * Not covered here: a send that succeeds while recording it fails, which needs
  * a database fault this harness cannot inject.
  */
 
+import { randomUUID } from 'node:crypto';
 import { test, expect, request } from '@playwright/test';
 
 const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
@@ -37,6 +42,22 @@ function uniqueEmail( prefix ) {
 	return `${ prefix }+${ Date.now() }-${ Math.floor(
 		Math.random() * 1e6
 	) }@example.test`;
+}
+
+const MAIL_CAPTURE_HEADER = 'X-Fair-E2E-Mail-Capture';
+
+/** The mail captured for one request held nothing. */
+function expectNoMail( mail ) {
+	expect( mail ).toEqual( [] );
+}
+
+/** The mail captured for one request is a single reminder to `email` alone. */
+function expectOneReminderTo( mail, email ) {
+	expect( mail ).toHaveLength( 1 );
+	expect( mail[ 0 ].to ).toEqual( [ email ] );
+	expect( mail[ 0 ].cc ).toEqual( [] );
+	expect( mail[ 0 ].bcc ).toEqual( [] );
+	expect( mail[ 0 ].subject ).toContain( 'Payment reminder' );
 }
 
 test.describe( 'FeesController: send a payment reminder to one member', () => {
@@ -65,15 +86,76 @@ test.describe( 'FeesController: send a payment reminder to one member', () => {
 		return res.json();
 	};
 
-	const sendReminder = async (
+	// Tokens whose capture may still be stored, removed in afterAll.
+	const captureTokens = new Set();
+
+	/**
+	 * Make one request with its own mail capture, and return the response
+	 * with the mail attempted while it was handled. A capture that was never
+	 * recorded fails the test rather than reading as "no mail".
+	 */
+	const withMailCapture = async ( send ) => {
+		const token = randomUUID();
+		captureTokens.add( token );
+		const res = await send( { [ MAIL_CAPTURE_HEADER ]: token } );
+		const result = { status: res.status(), body: await res.json() };
+
+		const capture = await api.get(
+			`/wp-json/fair-e2e/v1/fee-reminders/mail-capture/${ token }`,
+			{ headers: adminHeaders }
+		);
+		expect(
+			capture.status(),
+			`mail capture: ${ await capture.text() }`
+		).toBe( 200 );
+		result.mail = ( await capture.json() ).mail;
+
+		const removed = await api.delete(
+			`/wp-json/fair-e2e/v1/fee-reminders/mail-capture/${ token }`,
+			{ headers: adminHeaders }
+		);
+		expect( removed.ok() ).toBeTruthy();
+		captureTokens.delete( token );
+
+		return result;
+	};
+
+	const sendReminder = (
 		paymentId,
 		{ fee = feeId, headers = adminHeaders } = {}
-	) => {
-		const res = await api.post(
-			`/wp-json/fair-audience/v1/fees/${ fee }/payments/${ paymentId }/send-reminder`,
-			{ headers }
+	) =>
+		withMailCapture( ( captureHeader ) =>
+			api.post(
+				`/wp-json/fair-audience/v1/fees/${ fee }/payments/${ paymentId }/send-reminder`,
+				{ headers: { ...headers, ...captureHeader } }
+			)
 		);
-		return { status: res.status(), body: await res.json() };
+
+	/**
+	 * Send one message per address through wp_mail(), outside any reminder:
+	 * into the shared log only, or captured when `captured` is set.
+	 */
+	const probeMail = ( to, { captured = false } = {} ) => {
+		const data = { to, subject: 'Payment reminder (mail probe)' };
+		if ( ! captured ) {
+			return adminPost( '/fair-e2e/v1/fee-reminders/mail-probe', data );
+		}
+		return withMailCapture( ( captureHeader ) =>
+			api.post( '/wp-json/fair-e2e/v1/fee-reminders/mail-probe', {
+				headers: { ...adminHeaders, ...captureHeader },
+				data,
+			} )
+		);
+	};
+
+	/**
+	 * Put mail that no reminder sent into the shared log, addressed to a
+	 * stranger and to each given member, and return the stranger's address.
+	 */
+	const seedUnrelatedMail = async ( ...memberEmails ) => {
+		const stranger = uniqueEmail( 'reminder-unrelated' );
+		await probeMail( [ stranger, ...memberEmails ] );
+		return stranger;
 	};
 
 	const paymentRow = async ( paymentId ) => {
@@ -90,19 +172,14 @@ test.describe( 'FeesController: send a payment reminder to one member', () => {
 		return entries.filter( ( entry ) => entry.action === 'reminder_sent' );
 	};
 
-	const capturedMail = async ( email ) => {
+	/** Mail to one address in the shared log, from any request. */
+	const sharedMailTo = async ( email ) => {
 		const res = await api.get( '/wp-json/fair-e2e/v1/fee-reminders/mail', {
 			headers: adminHeaders,
-			params: email ? { to: email } : {},
+			params: { to: email },
 		} );
 		expect( res.ok() ).toBeTruthy();
 		return res.json();
-	};
-
-	const clearMail = async () => {
-		await api.delete( '/wp-json/fair-e2e/v1/fee-reminders/mail', {
-			headers: adminHeaders,
-		} );
 	};
 
 	const failMailTo = async ( email ) => {
@@ -203,13 +280,16 @@ test.describe( 'FeesController: send a payment reminder to one member', () => {
 			{ headers: adminHeaders }
 		);
 		expect( removed.ok() ).toBeTruthy();
-
-		await clearMail();
 	} );
 
 	test.afterAll( async () => {
 		await failMailTo( '' );
-		await clearMail();
+		for ( const token of captureTokens ) {
+			await api.delete(
+				`/wp-json/fair-e2e/v1/fee-reminders/mail-capture/${ token }`,
+				{ headers: adminHeaders }
+			);
+		}
 		for ( const id of [ feeId, otherFeeId ] ) {
 			if ( id ) {
 				await api.delete( `/wp-json/fair-audience/v1/fees/${ id }`, {
@@ -236,6 +316,7 @@ test.describe( 'FeesController: send a payment reminder to one member', () => {
 			headers: {},
 		} );
 		expect( anonymous.status ).toBe( 401 );
+		expectNoMail( anonymous.mail );
 
 		const username = `fee-reminder-subscriber-${ Date.now() }`;
 		const password = 'Fee-reminder-test-1770!';
@@ -253,9 +334,9 @@ test.describe( 'FeesController: send a payment reminder to one member', () => {
 			{ headers: adminHeaders }
 		);
 		expect( forbidden.status ).toBe( 403 );
+		expectNoMail( forbidden.mail );
 
 		await expectNothingSent( payments.target );
-		expect( await capturedMail( members.target.email ) ).toHaveLength( 0 );
 	} );
 
 	test( 'a missing fee, a missing payment, and a payment of another fee are not found', async () => {
@@ -264,17 +345,18 @@ test.describe( 'FeesController: send a payment reminder to one member', () => {
 		} );
 		expect( missingFee.status ).toBe( 404 );
 		expect( missingFee.body.code ).toBe( 'fee_not_found' );
+		expectNoMail( missingFee.mail );
 
 		const missingPayment = await sendReminder( 999999999 );
 		expect( missingPayment.status ).toBe( 404 );
 		expect( missingPayment.body.code ).toBe( 'payment_not_found' );
+		expectNoMail( missingPayment.mail );
 
 		// A real pending payment, addressed through the wrong fee.
 		const mismatched = await sendReminder( otherFeePaymentId );
 		expect( mismatched.status ).toBe( 404 );
 		expect( mismatched.body.code ).toBe( 'payment_not_found' );
-
-		expect( await capturedMail() ).toHaveLength( 0 );
+		expectNoMail( mismatched.mail );
 	} );
 
 	test( 'paid and canceled payments are refused', async () => {
@@ -282,31 +364,35 @@ test.describe( 'FeesController: send a payment reminder to one member', () => {
 			const res = await sendReminder( payments[ key ] );
 			expect( res.status, key ).toBe( 409 );
 			expect( res.body.code, key ).toBe( 'payment_not_pending' );
+			expectNoMail( res.mail );
 			await expectNothingSent( payments[ key ] );
-			expect( await capturedMail( members[ key ].email ) ).toHaveLength(
-				0
-			);
 		}
 	} );
 
 	test( 'a member without a usable email address is refused', async () => {
+		// Mail no reminder sent, including to another member of the fee.
+		const stranger = await seedUnrelatedMail( members.target.email );
+
 		for ( const key of [ 'noEmail', 'invalidEmail' ] ) {
 			const res = await sendReminder( payments[ key ] );
 			expect( res.status, key ).toBe( 400 );
 			expect( res.body.code, key ).toBe( 'invalid_recipient_email' );
+			expectNoMail( res.mail );
 			await expectNothingSent( payments[ key ] );
 		}
-		expect( await capturedMail() ).toHaveLength( 0 );
+
+		// The unrelated mail is still in the shared log, outside the capture.
+		expect( await sharedMailTo( stranger ) ).toHaveLength( 1 );
 	} );
 
 	test( 'a payment whose member no longer exists is refused', async () => {
 		const res = await sendReminder( payments.removed );
 		expect( res.status ).toBe( 404 );
 		expect( res.body.code ).toBe( 'participant_not_found' );
+		expectNoMail( res.mail );
 		expect( await reminderLogEntries( payments.removed ) ).toHaveLength(
 			0
 		);
-		expect( await capturedMail( members.removed.email ) ).toHaveLength( 0 );
 	} );
 
 	test( 'a mail failure is reported and records nothing', async () => {
@@ -316,11 +402,16 @@ test.describe( 'FeesController: send a payment reminder to one member', () => {
 
 		expect( res.status ).toBe( 500 );
 		expect( res.body.code ).toBe( 'reminder_send_failed' );
+		// The one attempt was made, and delivery refused it.
+		expectOneReminderTo( res.mail, members.undeliverable.email );
 		await expectNothingSent( payments.undeliverable );
 	} );
 
 	test( 'a pending payment gets one reminder, sent to that member only', async () => {
-		await clearMail();
+		// Mail no reminder sent, including to the member about to be reminded.
+		const sharedBefore = ( await sharedMailTo( members.target.email ) )
+			.length;
+		const stranger = await seedUnrelatedMail( members.target.email );
 
 		const res = await sendReminder( payments.target );
 		expect( res.status ).toBe( 200 );
@@ -330,10 +421,13 @@ test.describe( 'FeesController: send a payment reminder to one member', () => {
 		expect( res.body.reminder_sent_at ).toBeTruthy();
 
 		// Exactly one message left, and it went to the chosen member.
-		const all = await capturedMail();
-		expect( all ).toHaveLength( 1 );
-		expect( all[ 0 ].to ).toEqual( [ members.target.email ] );
-		expect( all[ 0 ].subject ).toContain( 'Payment reminder' );
+		expectOneReminderTo( res.mail, members.target.email );
+
+		// The seeded mail stays in the shared log, next to the reminder.
+		expect( await sharedMailTo( stranger ) ).toHaveLength( 1 );
+		expect( await sharedMailTo( members.target.email ) ).toHaveLength(
+			sharedBefore + 2
+		);
 
 		// The reminder date and the audit entry land on that payment.
 		const row = await paymentRow( payments.target );
@@ -345,7 +439,7 @@ test.describe( 'FeesController: send a payment reminder to one member', () => {
 
 		// The other pending member is untouched.
 		await expectNothingSent( payments.bystander );
-		expect( await capturedMail( members.bystander.email ) ).toHaveLength(
+		expect( await sharedMailTo( members.bystander.email ) ).toHaveLength(
 			0
 		);
 	} );
@@ -354,12 +448,39 @@ test.describe( 'FeesController: send a payment reminder to one member', () => {
 		await adminPost(
 			`/fair-audience/v1/fees/${ feeId }/payments/${ payments.bystander }/mark-paid`
 		);
-		await clearMail();
+		// Mail no reminder sent, including to the member whose payment settled.
+		const stranger = await seedUnrelatedMail( members.bystander.email );
 
 		const res = await sendReminder( payments.bystander );
 		expect( res.status ).toBe( 409 );
 		expect( res.body.code ).toBe( 'payment_not_pending' );
+		expectNoMail( res.mail );
 		await expectNothingSent( payments.bystander );
-		expect( await capturedMail() ).toHaveLength( 0 );
+
+		expect( await sharedMailTo( stranger ) ).toHaveLength( 1 );
+	} );
+
+	test( 'the captured-mail checks catch duplicate and misaddressed reminders', async () => {
+		const target = members.target.email;
+
+		// One message to the member passes.
+		const single = await probeMail( [ target ], { captured: true } );
+		expectOneReminderTo( single.mail, target );
+		expect( () => expectNoMail( single.mail ) ).toThrow();
+
+		// A second copy fails.
+		const duplicate = await probeMail( [ target, target ], {
+			captured: true,
+		} );
+		expect( duplicate.mail ).toHaveLength( 2 );
+		expect( () => expectOneReminderTo( duplicate.mail, target ) ).toThrow();
+
+		// A message to another member fails.
+		const misaddressed = await probeMail( [ members.bystander.email ], {
+			captured: true,
+		} );
+		expect( () =>
+			expectOneReminderTo( misaddressed.mail, target )
+		).toThrow();
 	} );
 } );
