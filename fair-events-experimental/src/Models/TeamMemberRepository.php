@@ -39,7 +39,7 @@ class TeamMemberRepository {
 	/**
 	 * Schema version.
 	 */
-	public const DB_VERSION = '1';
+	public const DB_VERSION = '2';
 
 	/**
 	 * Option holding the installed schema version.
@@ -54,7 +54,7 @@ class TeamMemberRepository {
 	/**
 	 * Profile text columns, in response order.
 	 */
-	public const TEXT_FIELDS = array( 'name', 'surname', 'instagram', 'email', 'facebook_url', 'phone' );
+	public const TEXT_FIELDS = array( 'name', 'surname', 'instagram', 'email', 'facebook_url', 'phone', 'website_url', 'bio' );
 
 	/**
 	 * Profile table name.
@@ -102,6 +102,11 @@ class TeamMemberRepository {
 	/**
 	 * Install or upgrade the tables.
 	 *
+	 * Version 2 (#2421) adds `website_url`, `bio` and
+	 * `portrait_attachment_id`; dbDelta adds them to an existing table and
+	 * leaves every row, ID and membership as it was. `bio` is nullable
+	 * because a TEXT column cannot have a default; a NULL reads as blank.
+	 *
 	 * @return void
 	 */
 	public static function install() {
@@ -121,6 +126,9 @@ class TeamMemberRepository {
 				facebook_url varchar(500) NOT NULL DEFAULT '',
 				phone varchar(64) NOT NULL DEFAULT '',
 				gender varchar(16) DEFAULT NULL,
+				website_url varchar(500) NOT NULL DEFAULT '',
+				bio text DEFAULT NULL,
+				portrait_attachment_id bigint(20) unsigned NOT NULL DEFAULT 0,
 				created_at datetime NOT NULL,
 				updated_at datetime NOT NULL,
 				PRIMARY KEY  (id),
@@ -357,6 +365,49 @@ class TeamMemberRepository {
 	}
 
 	/**
+	 * The promotional columns of the given profiles, for
+	 * {@see \FairEventsExperimental\Services\PromotionalTeamProfiles}.
+	 * Contact details and the grammatical gender are never selected.
+	 *
+	 * Unlike {@see self::names_for()}, a failed query is an error rather
+	 * than an empty result.
+	 *
+	 * @param int[] $ids Positive profile IDs.
+	 * @return array[]|\WP_Error Rows keyed by ID, or `fair_events_source_unavailable`.
+	 */
+	public function promotional_rows_checked( array $ids ) {
+		global $wpdb;
+
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $ids ) ) ) );
+		if ( ! $ids ) {
+			return array();
+		}
+
+		$placeholders = implode( ', ', array_fill( 0, count( $ids ), '%d' ) );
+		$rows         = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, name, surname, instagram, website_url, bio, portrait_attachment_id FROM %i WHERE id IN ( $placeholders )", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Placeholders only.
+				array_merge( array( self::members_table() ), $ids )
+			),
+			ARRAY_A
+		);
+
+		if ( ! empty( $wpdb->last_error ) || ! is_array( $rows ) ) {
+			return new \WP_Error(
+				'fair_events_source_unavailable',
+				__( 'Team member profiles could not be read.', 'fair-events-experimental' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$out = array();
+		foreach ( $rows as $row ) {
+			$out[ (int) $row['id'] ] = $row;
+		}
+		return $out;
+	}
+
+	/**
 	 * Link a member to an owning event date. A repeated link is a no-op.
 	 *
 	 * Locks the profile row, like {@see self::delete()}, so a profile
@@ -473,6 +524,9 @@ class TeamMemberRepository {
 		if ( array_key_exists( 'gender', $data ) ) {
 			$row['gender'] = in_array( $data['gender'], self::GENDERS, true ) ? $data['gender'] : null;
 		}
+		if ( array_key_exists( 'portrait_attachment_id', $data ) ) {
+			$row['portrait_attachment_id'] = max( 0, (int) $data['portrait_attachment_id'] );
+		}
 		return $row;
 	}
 
@@ -499,10 +553,12 @@ class TeamMemberRepository {
 	private static function normalize( array $row ) {
 		$profile = array( 'id' => (int) $row['id'] );
 		foreach ( self::TEXT_FIELDS as $field ) {
-			$profile[ $field ] = (string) $row[ $field ];
+			$profile[ $field ] = isset( $row[ $field ] ) ? (string) $row[ $field ] : '';
 		}
-		$profile['gender']      = in_array( $row['gender'], self::GENDERS, true ) ? $row['gender'] : null;
-		$profile['event_count'] = isset( $row['event_count'] ) ? (int) $row['event_count'] : 0;
+		$portrait                          = isset( $row['portrait_attachment_id'] ) ? (int) $row['portrait_attachment_id'] : 0;
+		$profile['gender']                 = in_array( $row['gender'], self::GENDERS, true ) ? $row['gender'] : null;
+		$profile['portrait_attachment_id'] = $portrait > 0 ? $portrait : null;
+		$profile['event_count']            = isset( $row['event_count'] ) ? (int) $row['event_count'] : 0;
 		return $profile;
 	}
 }

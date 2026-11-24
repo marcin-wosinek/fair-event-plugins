@@ -31,7 +31,7 @@ class SaleAlertSettingsTest extends TestCase {
 	 * @return void
 	 */
 	public function test_starts_off() {
-		$this->assertFalse( SaleAlertSettings::any_enabled() );
+		$this->assertFalse( SaleAlertSettings::enabled() );
 		$this->assertSame( array(), SaleAlertSettings::get()['organizers'] );
 		$this->assertSame(
 			array(
@@ -53,6 +53,7 @@ class SaleAlertSettingsTest extends TestCase {
 	public function test_accepts_valid_destinations() {
 		$validated = SaleAlertSettings::validate(
 			array(
+				'enabled'    => true,
 				'organizers' => array(
 					'default'       => array(
 						'enabled' => true,
@@ -79,6 +80,7 @@ class SaleAlertSettingsTest extends TestCase {
 	public function test_rejects_invalid_input() {
 		$validated = SaleAlertSettings::validate(
 			array(
+				'enabled'    => 'yes',
 				'organizers' => array(
 					'default'       => array(
 						'enabled' => true,
@@ -96,6 +98,7 @@ class SaleAlertSettingsTest extends TestCase {
 			)
 		);
 
+		$this->assertArrayHasKey( 'enabled', $validated['errors'] );
 		$this->assertArrayHasKey( 'organizers.default.chat_id', $validated['errors'] );
 		$this->assertArrayHasKey( 'organizers.' . self::ORGANIZER . '.chat_id', $validated['errors'] );
 		$this->assertArrayHasKey( 'organizers', $validated['errors'] );
@@ -110,6 +113,7 @@ class SaleAlertSettingsTest extends TestCase {
 	public function test_save_keeps_other_organizers() {
 		SaleAlertSettings::save(
 			array(
+				'enabled'    => true,
 				'organizers' => array(
 					self::ORGANIZER => array(
 						'enabled' => true,
@@ -120,6 +124,7 @@ class SaleAlertSettingsTest extends TestCase {
 		);
 		SaleAlertSettings::save(
 			array(
+				'enabled'    => true,
 				'organizers' => array(
 					'default' => array(
 						'enabled' => false,
@@ -130,7 +135,7 @@ class SaleAlertSettingsTest extends TestCase {
 		);
 
 		$saved = SaleAlertSettings::get();
-		$this->assertArrayNotHasKey( 'enabled', $saved );
+		$this->assertTrue( $saved['enabled'] );
 		$this->assertSame( '@studio_sales', $saved['organizers'][ self::ORGANIZER ]['chat_id'] );
 		$this->assertFalse( $saved['organizers']['default']['enabled'] );
 	}
@@ -157,7 +162,7 @@ class SaleAlertSettingsTest extends TestCase {
 			)
 		);
 
-		$this->assertArrayNotHasKey( 'enabled', $sanitized );
+		$this->assertFalse( $sanitized['enabled'] );
 		$this->assertSame(
 			array(
 				'default' => array(
@@ -202,6 +207,7 @@ class SaleAlertSettingsTest extends TestCase {
 	public function test_validates_frequency_time_and_weekday() {
 		$valid = SaleAlertSettings::validate(
 			array(
+				'enabled'    => true,
 				'organizers' => array(
 					self::ORGANIZER => array(
 						'enabled'     => true,
@@ -221,6 +227,7 @@ class SaleAlertSettingsTest extends TestCase {
 
 		$invalid = SaleAlertSettings::validate(
 			array(
+				'enabled'    => true,
 				'organizers' => array(
 					'default' => array(
 						'enabled'     => false,
@@ -236,101 +243,5 @@ class SaleAlertSettingsTest extends TestCase {
 			array( 'organizers.default.frequency', 'organizers.default.time_of_day', 'organizers.default.day_of_week' ),
 			array_keys( $invalid['errors'] )
 		);
-	}
-
-	/**
-	 * Settings saved while the former sitewide switch was off keep every
-	 * organizer off, with its destination and schedule; the migration
-	 * saves them without that switch, once.
-	 *
-	 * @return void
-	 */
-	public function test_legacy_switch_off_turns_every_organizer_off() {
-		$GLOBALS['_fair_test_options'][ SaleAlertSettings::OPTION ] = array(
-			'enabled'    => false,
-			'organizers' => array(
-				'default'       => array(
-					'enabled' => true,
-					'chat_id' => '-100001',
-				),
-				self::ORGANIZER => array(
-					'enabled'     => true,
-					'chat_id'     => '@studio_sales',
-					'frequency'   => 'weekly',
-					'time_of_day' => '18:30',
-					'day_of_week' => 5,
-				),
-			),
-		);
-
-		$this->assertFalse( SaleAlertSettings::any_enabled() );
-		$this->assertTrue( SaleAlertSettings::migrate() );
-
-		$stored = $GLOBALS['_fair_test_options'][ SaleAlertSettings::OPTION ];
-		$this->assertArrayNotHasKey( 'enabled', $stored );
-		$this->assertSame(
-			array(
-				'enabled'     => false,
-				'chat_id'     => '@studio_sales',
-				'frequency'   => 'weekly',
-				'time_of_day' => '18:30',
-				'day_of_week' => 5,
-			),
-			$stored['organizers'][ self::ORGANIZER ]
-		);
-		$this->assertFalse( $stored['organizers']['default']['enabled'] );
-		$this->assertSame( '-100001', $stored['organizers']['default']['chat_id'] );
-
-		// Once migrated, an organizer turned back on stays on.
-		$this->assertFalse( SaleAlertSettings::migrate() );
-		SaleAlertSettings::save(
-			array(
-				'organizers' => array(
-					'default' => array_merge( $stored['organizers']['default'], array( 'enabled' => true ) ),
-				),
-			)
-		);
-		$this->assertTrue( SaleAlertSettings::organizer( 'default' )['enabled'] );
-		$this->assertFalse( SaleAlertSettings::organizer( self::ORGANIZER )['enabled'] );
-	}
-
-	/**
-	 * Settings saved while the former sitewide switch was on keep each
-	 * organizer's own switch.
-	 *
-	 * @return void
-	 */
-	public function test_legacy_switch_on_keeps_organizer_switches() {
-		$GLOBALS['_fair_test_options'][ SaleAlertSettings::OPTION ] = array(
-			'enabled'    => true,
-			'organizers' => array(
-				'default'       => array(
-					'enabled' => true,
-					'chat_id' => '-100001',
-				),
-				self::ORGANIZER => array(
-					'enabled' => false,
-					'chat_id' => '@studio_sales',
-				),
-			),
-		);
-
-		$this->assertTrue( SaleAlertSettings::migrate() );
-		$stored = $GLOBALS['_fair_test_options'][ SaleAlertSettings::OPTION ];
-		$this->assertArrayNotHasKey( 'enabled', $stored );
-		$this->assertTrue( $stored['organizers']['default']['enabled'] );
-		$this->assertFalse( $stored['organizers'][ self::ORGANIZER ]['enabled'] );
-		$this->assertTrue( SaleAlertSettings::any_enabled() );
-	}
-
-	/**
-	 * A site that never saved ticket sale alerts has nothing to migrate.
-	 *
-	 * @return void
-	 */
-	public function test_fresh_site_has_nothing_to_migrate() {
-		$this->assertFalse( SaleAlertSettings::migrate() );
-		$this->assertArrayNotHasKey( SaleAlertSettings::OPTION, $GLOBALS['_fair_test_options'] );
-		$this->assertFalse( SaleAlertSettings::any_enabled() );
 	}
 }

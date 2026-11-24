@@ -9,7 +9,6 @@ import { Card, CardBody } from '@wordpress/components';
  * Internal dependencies
  */
 import OrganizerForm, { toSavePayload } from './OrganizerForm.js';
-import SaleAlertCard from './SaleAlertCard.js';
 import SalesSummaryCard from './SalesSummaryCard.js';
 import { loadOrganizerSettings, saveSettings } from './settings-api.js';
 
@@ -38,8 +37,7 @@ function saveErrorMessage( error ) {
  * Organizer Tab Component
  *
  * Sitewide organizer identity (name, address, type, social/profile links)
- * plus private notification recipients, the sales summary and the
- * Telegram ticket sales of the sitewide organizer. The identity is used to build the
+ * plus private notification recipients. The identity is used to build the
  * sitewide Organization JSON-LD block and the single-event `organizer`
  * reference; the recipients are never part of public output.
  *
@@ -137,9 +135,6 @@ export default function OrganizerTab( { onNotice } ) {
 						'fair-events'
 					) }
 				/>
-			</div>
-			<div style={ { marginTop: '16px' } }>
-				<SaleAlertCard organizer="default" />
 			</div>
 		</>
 	);

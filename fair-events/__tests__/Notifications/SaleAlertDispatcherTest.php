@@ -89,6 +89,7 @@ class SaleAlertDispatcherTest extends TestCase {
 
 		SaleAlertSettings::save(
 			array(
+				'enabled'    => true,
 				'organizers' => array(
 					'default'    => array(
 						'enabled' => true,
@@ -219,26 +220,16 @@ class SaleAlertDispatcherTest extends TestCase {
 	}
 
 	/**
-	 * Nothing is queued while every organizer is switched off, so a site
-	 * that never turned one on sends nothing.
+	 * Nothing is queued while alerts are off, so a site that never turned
+	 * them on sends nothing.
 	 *
 	 * @return void
 	 */
 	public function test_nothing_is_queued_while_off() {
-		$GLOBALS['_fair_test_options'] = array();
 		SaleAlertSettings::save(
 			array(
-				'organizers' => array(
-					'default'    => array(
-						'enabled' => false,
-						'chat_id' => '-100001',
-					),
-					self::STUDIO => array(
-						'enabled'   => false,
-						'chat_id'   => '-100002',
-						'frequency' => 'daily',
-					),
-				),
+				'enabled'    => false,
+				'organizers' => array(),
 			)
 		);
 		$this->sale( 1, 10, array( 10 ) );
@@ -394,6 +385,7 @@ class SaleAlertDispatcherTest extends TestCase {
 
 		SaleAlertSettings::save(
 			array(
+				'enabled'    => true,
 				'organizers' => array(
 					self::DANCE => array(
 						'enabled' => false,
@@ -419,8 +411,7 @@ class SaleAlertDispatcherTest extends TestCase {
 	}
 
 	/**
-	 * An organizer never set up has no destination: a warning reason,
-	 * recorded while another organizer sends its sales.
+	 * An organizer never set up has no destination: a warning reason.
 	 *
 	 * @return void
 	 */
@@ -428,12 +419,8 @@ class SaleAlertDispatcherTest extends TestCase {
 		$GLOBALS['_fair_test_options'] = array();
 		SaleAlertSettings::save(
 			array(
-				'organizers' => array(
-					self::STUDIO => array(
-						'enabled' => true,
-						'chat_id' => '-100002',
-					),
-				),
+				'enabled'    => true,
+				'organizers' => array(),
 			)
 		);
 		$this->sale( 1, 10, array( 10 ) );
@@ -444,8 +431,8 @@ class SaleAlertDispatcherTest extends TestCase {
 	}
 
 	/**
-	 * An organizer switched off after queueing, and a missing bot token,
-	 * send nothing.
+	 * Alerts turned off after queueing, and a missing bot token, send
+	 * nothing.
 	 *
 	 * @return void
 	 */
@@ -464,16 +451,12 @@ class SaleAlertDispatcherTest extends TestCase {
 
 		SaleAlertSettings::save(
 			array(
-				'organizers' => array(
-					'default' => array(
-						'enabled' => false,
-						'chat_id' => '-100001',
-					),
-				),
+				'enabled'    => false,
+				'organizers' => array(),
 			)
 		);
 		$this->assertSame( SaleAlertLog::SKIPPED, $this->dispatcher()->process( 2 ) );
-		$this->assertSame( SaleAlertDispatcher::REASON_ORGANIZER_DISABLED, $this->log->rows[2]['reason'] );
+		$this->assertSame( SaleAlertDispatcher::REASON_DISABLED, $this->log->rows[2]['reason'] );
 		$this->assertSame( array(), $this->telegram->sent );
 	}
 

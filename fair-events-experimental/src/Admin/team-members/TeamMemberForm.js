@@ -7,9 +7,15 @@ import {
 	Card,
 	CardBody,
 	SelectControl,
+	TextareaControl,
 	TextControl,
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
+
+/**
+ * Internal dependencies
+ */
+import PortraitField from './PortraitField.js';
 
 /**
  * Help text, or the field's error in its place.
@@ -139,7 +145,13 @@ export default function TeamMemberForm( {
 								) }
 								value={ value.instagram }
 								onChange={ set( 'instagram' ) }
-								help={ helpOrError( errors.instagram, '' ) }
+								help={ helpOrError(
+									errors.instagram,
+									__(
+										'Up to 30 letters, numbers, periods or underscores, e.g. @ana.dances.',
+										'fair-events-experimental'
+									)
+								) }
 								autoComplete="off"
 								__next40pxDefaultSize
 								__nextHasNoMarginBottom
@@ -156,6 +168,25 @@ export default function TeamMemberForm( {
 									errors.facebook_url,
 									__(
 										'The full address, e.g. https://www.facebook.com/name.',
+										'fair-events-experimental'
+									)
+								) }
+								autoComplete="off"
+								__next40pxDefaultSize
+								__nextHasNoMarginBottom
+							/>
+							<TextControl
+								label={ __(
+									'Website',
+									'fair-events-experimental'
+								) }
+								type="url"
+								value={ value.website_url }
+								onChange={ set( 'website_url' ) }
+								help={ helpOrError(
+									errors.website_url,
+									__(
+										'The full address, e.g. https://example.com.',
 										'fair-events-experimental'
 									)
 								) }
@@ -211,6 +242,26 @@ export default function TeamMemberForm( {
 								__nextHasNoMarginBottom
 							/>
 						</div>
+						<TextareaControl
+							label={ __( 'Bio', 'fair-events-experimental' ) }
+							value={ value.bio }
+							onChange={ set( 'bio' ) }
+							rows={ 5 }
+							help={ helpOrError(
+								errors.bio,
+								__(
+									'Plain text for promotional material. Line breaks are kept.',
+									'fair-events-experimental'
+								)
+							) }
+							__nextHasNoMarginBottom
+						/>
+						<PortraitField
+							value={ value.portrait_attachment_id }
+							onChange={ set( 'portrait_attachment_id' ) }
+							disabled={ isSaving }
+							error={ errors.portrait_attachment_id }
+						/>
 						<p className="description" style={ { margin: 0 } }>
 							{ __(
 								'Contact details are visible to administrators only. Adding someone to an event does not publish anything about them.',

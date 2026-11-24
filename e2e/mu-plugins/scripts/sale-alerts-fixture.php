@@ -24,12 +24,6 @@
  *   cleanup    {transactionIds, chatIds}  Remove those records, every
  *                  queued digest and the double's log entries for those
  *                  chats.
- *   legacy     {settings}  Store settings as a site saved them before the
- *                  organizer switch became the only one (with a sitewide
- *                  `enabled`), run the upgrade migration and return what
- *                  is stored afterwards.
- *   stored     {}  The settings option exactly as stored.
- *   token      {token}  Save that bot token, or remove it when null.
  *
  * Prints one `E2E_SALE_ALERTS:{json}` line.
  *
@@ -189,28 +183,6 @@ switch ( $fixture_action ) {
 			false
 		);
 		$result = array( 'cleaned' => true );
-		break;
-
-	case 'legacy':
-		update_option( SaleAlertSettings::OPTION, (array) ( $data['settings'] ?? array() ), false );
-		$migrated = SaleAlertSettings::migrate();
-		$result   = array(
-			'migrated' => $migrated,
-			'stored'   => get_option( SaleAlertSettings::OPTION, null ),
-		);
-		break;
-
-	case 'stored':
-		$result = array( 'stored' => get_option( SaleAlertSettings::OPTION, null ) );
-		break;
-
-	case 'token':
-		if ( null === ( $data['token'] ?? null ) ) {
-			delete_option( TelegramSettings::TOKEN_OPTION );
-		} else {
-			update_option( TelegramSettings::TOKEN_OPTION, (string) $data['token'], false );
-		}
-		$result = array( 'token' => null !== ( $data['token'] ?? null ) );
 		break;
 
 	default:
