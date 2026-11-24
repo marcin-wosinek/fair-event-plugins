@@ -10,6 +10,7 @@ import {
 	waitFor,
 	within,
 } from '@testing-library/react';
+import apiFetch from '@wordpress/api-fetch';
 import OrganizersPage from '../OrganizersPage.js';
 import {
 	createOrganizer,
@@ -29,6 +30,7 @@ jest.mock( '../organizers-api.js', () => ( {
 } ) );
 jest.mock( 'fair-events/src/Admin/settings/settings-api.js' );
 jest.mock( 'fair-events/src/Admin/settings/sales-summary-api.js' );
+jest.mock( '@wordpress/api-fetch' );
 
 const record = ( overrides ) => ( {
 	id: 'default',
@@ -69,6 +71,8 @@ beforeEach( () => {
 	loadAttachmentUrl.mockResolvedValue( '' );
 	// The sales summary cards keep loading unless a test resolves them.
 	loadSalesSummary.mockReturnValue( new Promise( () => {} ) );
+	// So do the Telegram ticket sales cards.
+	apiFetch.mockReturnValue( new Promise( () => {} ) );
 } );
 
 afterEach( () => {
@@ -323,4 +327,68 @@ test( 'each saved organizer has its own sales summary; a new one has none yet', 
 	expect(
 		screen.queryByRole( 'heading', { name: 'Sales summary' } )
 	).not.toBeInTheDocument();
+} );
+
+test( 'each organizer’s editor holds its own Telegram ticket sales', async () => {
+	const settings = ( chat ) => ( {
+		enabled: true,
+		chat_id: chat,
+		frequency: 'immediate',
+		time_of_day: '08:00',
+		day_of_week: 1,
+	} );
+	apiFetch.mockResolvedValue( {
+		organizers: [
+			{
+				id: 'default',
+				name: 'Test Site',
+				sitewide: true,
+				settings: settings( '-1001234567890' ),
+				next_digest: null,
+				pending: 0,
+			},
+			{
+				id: NORTH_ID,
+				name: 'North Club',
+				sitewide: false,
+				settings: settings( '@north_sales' ),
+				next_digest: null,
+				pending: 0,
+			},
+		],
+		organizer_resolution_available: true,
+		credential_problem: '',
+		connectors_url: '/wp-admin/options-connectors.php',
+		notifications_url:
+			'/wp-admin/admin.php?page=fair-events-event-notifications',
+		settings_url: '/wp-admin/admin.php?page=fair-events-organizers',
+		timezone: 'Europe/Madrid',
+		recent: [],
+	} );
+	await renderTab();
+
+	await openEditor( 'Edit “North Club”' );
+	expect(
+		screen.getByRole( 'heading', { name: 'Telegram ticket sales' } )
+	).toBeInTheDocument();
+	expect(
+		await screen.findByRole( 'textbox', { name: 'Chat or channel' } )
+	).toHaveValue( '@north_sales' );
+
+	fireEvent.click(
+		screen.getByRole( 'button', { name: '← All organizers' } )
+	);
+	await openEditor( 'Edit “Test Site”' );
+	expect(
+		await screen.findByRole( 'textbox', { name: 'Chat or channel' } )
+	).toHaveValue( '-1001234567890' );
+} );
+
+test( 'adding an organizer shows no Telegram ticket sales until it is saved', async () => {
+	await renderTab();
+
+	await openEditor( 'Add organizer' );
+	expect(
+		screen.queryByRole( 'heading', { name: 'Telegram ticket sales' } )
+	).toBeNull();
 } );

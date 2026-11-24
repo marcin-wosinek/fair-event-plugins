@@ -141,7 +141,6 @@ class SaleAlertDigestTest extends TestCase {
 		$organizers[ $organizer ] = array_merge( $organizers[ $organizer ], array( 'frequency' => $frequency ), $overrides );
 		SaleAlertSettings::save(
 			array(
-				'enabled'    => true,
 				'organizers' => $organizers,
 			)
 		);

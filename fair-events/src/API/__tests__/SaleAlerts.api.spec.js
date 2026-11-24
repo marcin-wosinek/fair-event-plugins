@@ -3,7 +3,12 @@
  * and one alert per paid Get Tickets checkout.
  *
  * - Administrators only; subscribers and visitors are refused.
- * - Alerts start off; a destination is validated before it is saved.
+ * - Every organizer starts off; its own switch is the only one. A
+ *   destination is validated before it is saved.
+ * - A test message goes to the chat in the request, saved or not, while
+ *   alerts are off, and changes no settings; refusals, timeouts and a
+ *   missing bot token are reported.
+ * - Upgrading from the former sitewide switch keeps effective delivery.
  * - A paid checkout queues one alert, sent to the event's organizer as
  *   Telegram HTML naming the event (entities decoded once), each ticket
  *   type with its quantity and the charged total. Replays send nothing
@@ -92,7 +97,6 @@ test.describe.serial( 'Telegram ticket sale alerts', () => {
 
 	async function sitewideChat( chatId ) {
 		const res = await save( {
-			enabled: true,
 			organizers: { default: { enabled: true, chat_id: chatId } },
 		} );
 		expect( res.status(), await res.text() ).toBe( 200 );
@@ -276,7 +280,14 @@ test.describe.serial( 'Telegram ticket sale alerts', () => {
 		const guest = await request.newContext( { baseURL: BASE_URL } );
 		expect( ( await guest.get( PATH ) ).status() ).toBe( 401 );
 		expect(
-			( await guest.put( PATH, { data: { enabled: true } } ) ).status()
+			( await guest.put( PATH, { data: { organizers: {} } } ) ).status()
+		).toBe( 401 );
+		expect(
+			(
+				await guest.post( `${ PATH }/test`, {
+					data: { chat_id: CHAT },
+				} )
+			).status()
 		).toBe( 401 );
 		await guest.dispose();
 
@@ -287,17 +298,27 @@ test.describe.serial( 'Telegram ticket sale alerts', () => {
 			(
 				await api.put( PATH, {
 					headers: subscriberHeaders,
-					data: { enabled: true },
+					data: { organizers: {} },
 				} )
 			).status()
 		).toBe( 403 );
+		expect(
+			(
+				await api.post( `${ PATH }/test`, {
+					headers: subscriberHeaders,
+					data: { chat_id: CHAT },
+				} )
+			).status()
+		).toBe( 403 );
+		expect( await telegram() ).toHaveLength( 0 );
 	} );
 
 	test( 'starts off and validates destinations', async () => {
 		const res = await api.get( PATH, { headers: adminHeaders } );
 		expect( res.status() ).toBe( 200 );
 		const body = await res.json();
-		expect( body.enabled ).toBe( false );
+		expect( body ).not.toHaveProperty( 'enabled' );
+		expect( body.settings_url ).toContain( 'page=fair-events-' );
 		expect( body.organizers[ 0 ] ).toMatchObject( {
 			id: 'default',
 			sitewide: true,
@@ -306,7 +327,6 @@ test.describe.serial( 'Telegram ticket sale alerts', () => {
 		expect( JSON.stringify( body ) ).not.toContain( 'notification_emails' );
 
 		const invalid = await save( {
-			enabled: true,
 			organizers: {
 				default: { enabled: true, chat_id: 'https://t.me/x' },
 			},
@@ -317,7 +337,6 @@ test.describe.serial( 'Telegram ticket sale alerts', () => {
 		] );
 
 		const withoutChat = await save( {
-			enabled: true,
 			organizers: { default: { enabled: true, chat_id: '' } },
 		} );
 		expect( withoutChat.status() ).toBe( 400 );
@@ -326,8 +345,87 @@ test.describe.serial( 'Telegram ticket sale alerts', () => {
 				await api
 					.get( PATH, { headers: adminHeaders } )
 					.then( ( r ) => r.json() )
-			).enabled
+			).organizers[ 0 ].settings.enabled
 		).toBe( false );
+	} );
+
+	test( 'a test message goes to the unsaved chat and changes nothing', async () => {
+		const before = ( await alerts( 'stored' ) ).stored;
+		const sent = ( await telegram() ).length;
+
+		const res = await api.post( `${ PATH }/test`, {
+			headers: adminHeaders,
+			data: { chat_id: ` ${ CHAT } ` },
+		} );
+		expect( res.status(), await res.text() ).toBe( 200 );
+		expect( await res.json() ).toEqual( { sent: true } );
+
+		const requests = ( await telegram() ).slice( sent );
+		expect( requests ).toHaveLength( 1 );
+		expect( requests[ 0 ].chat_id ).toBe( CHAT );
+		expect( requests[ 0 ].parse_mode ).toBe( 'HTML' );
+		expect( requests[ 0 ].text.split( '\n' )[ 0 ] ).toBe(
+			'<b>Test message</b>'
+		);
+		expect( requests[ 0 ].text ).not.toContain( 'Total' );
+		expect( ( await alerts( 'stored' ) ).stored ).toEqual( before );
+		expect(
+			( await alerts( 'digests', { organizer: 'default' } ) ).digests
+		).toEqual( [] );
+
+		const invalid = await api.post( `${ PATH }/test`, {
+			headers: adminHeaders,
+			data: { chat_id: 'https://t.me/x' },
+		} );
+		expect( invalid.status() ).toBe( 400 );
+		expect( ( await invalid.json() ).data.params ).toHaveProperty(
+			'chat_id'
+		);
+		const empty = await api.post( `${ PATH }/test`, {
+			headers: adminHeaders,
+			data: { chat_id: '' },
+		} );
+		expect( empty.status() ).toBe( 400 );
+
+		const refused = await api.post( `${ PATH }/test`, {
+			headers: adminHeaders,
+			data: { chat_id: '@e2e_missing_chat' },
+		} );
+		const refusedBody = await refused.json();
+		expect( refused.status() ).toBe( 502 );
+		expect( refusedBody.code ).toBe( 'fair_events_telegram_refused' );
+		expect( refusedBody.message ).toContain( 'chat not found' );
+		expect( refusedBody.message ).not.toContain( 'AAEabcdefghijklmnop' );
+
+		const timeout = await api.post( `${ PATH }/test`, {
+			headers: adminHeaders,
+			data: { chat_id: '@e2e_timeout_chat' },
+		} );
+		expect( timeout.status() ).toBe( 504 );
+		expect( ( await timeout.json() ).code ).toBe(
+			'fair_events_telegram_uncertain'
+		);
+
+		await alerts( 'token', { token: null } );
+		const withoutToken = await api.post( `${ PATH }/test`, {
+			headers: adminHeaders,
+			data: { chat_id: CHAT },
+		} );
+		await alerts( 'token', {
+			token: '123456789:AAEabcdefghijklmnopqrstuvwxyz012345',
+		} );
+		const tokenBody = await withoutToken.json();
+		expect( withoutToken.status() ).toBe( 409 );
+		expect( tokenBody.code ).toBe( 'fair_events_telegram_credential' );
+		expect( tokenBody.data.connectors_url ).toContain(
+			'options-connectors.php'
+		);
+
+		// Only the accepted, refused and timed-out tests reached Telegram.
+		expect( ( await telegram() ).slice( sent ) ).toHaveLength( 3 );
+		expect( ( await alerts( 'stored' ) ).stored ).toEqual( before );
+		// Later tests count only the alerts they send.
+		await alerts( 'cleanup', { transactionIds: [], chatIds: chats } );
 	} );
 
 	test( 'a paid checkout sends one alert to the sitewide organizer', async () => {
@@ -473,7 +571,6 @@ test.describe.serial( 'Telegram ticket sale alerts', () => {
 
 	test( 'a daily digest collects sales and sends them once', async () => {
 		const res = await save( {
-			enabled: true,
 			organizers: {
 				default: {
 					enabled: true,
@@ -639,5 +736,83 @@ test.describe.serial( 'Telegram ticket sale alerts', () => {
 		expect(
 			( await alerts( 'digests', { organizer: 'default' } ) ).digests
 		).toEqual( [] );
+	} );
+	test( 'switching an organizer off skips its queued sale', async () => {
+		await sitewideChat( CHAT );
+		const sent = ( await telegram() ).length;
+		const sale = await checkout();
+		await lifecycle( 'settle', {
+			transactionId: sale.transactionId,
+			status: 'paid',
+		} );
+		expect(
+			(
+				await alerts( 'rows', {
+					transactionIds: [ sale.transactionId ],
+				} )
+			).rows[ sale.transactionId ].state
+		).toBe( 'queued' );
+
+		const off = await save( {
+			organizers: { default: { enabled: false } },
+		} );
+		expect( off.status() ).toBe( 200 );
+		expect(
+			( await alerts( 'run', { transactionId: sale.transactionId } ) ).row
+		).toMatchObject( {
+			state: 'skipped',
+			reason: 'organizer_disabled',
+		} );
+		expect( await telegram() ).toHaveLength( sent );
+
+		// Every organizer off: a new sale queues nothing at all.
+		const later = await checkout();
+		await lifecycle( 'settle', {
+			transactionId: later.transactionId,
+			status: 'paid',
+		} );
+		expect(
+			(
+				await alerts( 'rows', {
+					transactionIds: [ later.transactionId ],
+				} )
+			).rows[ later.transactionId ]
+		).toBeNull();
+	} );
+
+	test( 'upgrading keeps each site’s effective delivery', async () => {
+		const organizer = ( enabled ) => ( {
+			enabled,
+			chat_id: CHAT,
+			frequency: 'weekly',
+			time_of_day: '18:30',
+			day_of_week: 5,
+		} );
+
+		const wasOff = await alerts( 'legacy', {
+			settings: {
+				enabled: false,
+				organizers: { default: organizer( true ) },
+			},
+		} );
+		expect( wasOff.migrated ).toBe( true );
+		expect( wasOff.stored ).toEqual( {
+			organizers: { default: organizer( false ) },
+		} );
+
+		const wasOn = await alerts( 'legacy', {
+			settings: {
+				enabled: true,
+				organizers: { default: organizer( true ) },
+			},
+		} );
+		expect( wasOn.stored ).toEqual( {
+			organizers: { default: organizer( true ) },
+		} );
+		const body = await (
+			await api.get( PATH, { headers: adminHeaders } )
+		).json();
+		expect( body.organizers[ 0 ].settings ).toEqual( organizer( true ) );
+		expect( body ).not.toHaveProperty( 'enabled' );
 	} );
 } );
