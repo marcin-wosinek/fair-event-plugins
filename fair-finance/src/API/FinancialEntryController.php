@@ -919,6 +919,53 @@ class FinancialEntryController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Validate the allocations of a split being created or edited.
+	 *
+	 * A split needs at least two allocations, each with a nonzero amount
+	 * (negative amounts are allowed), and the allocations must add up to the
+	 * original entry amount within a 0.01 tolerance. Operation-specific checks,
+	 * such as eligibility of the entry or allocation IDs on edit, stay with
+	 * each operation.
+	 *
+	 * @param mixed $allocations  Requested allocations.
+	 * @param float $entry_amount Amount of the entry being split.
+	 * @return WP_Error|null Error, or null when the allocations are valid.
+	 */
+	private static function validate_split_allocations( $allocations, $entry_amount ) {
+		if ( empty( $allocations ) || ! is_array( $allocations ) || count( $allocations ) < 2 ) {
+			return new WP_Error(
+				'rest_invalid_allocations',
+				__( 'At least 2 allocations are required.', 'fair-finance' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$total_allocated = 0;
+		foreach ( $allocations as $allocation ) {
+			$amount = isset( $allocation['amount'] ) ? (float) $allocation['amount'] : 0;
+			if ( 0.0 === $amount ) {
+				return new WP_Error(
+					'rest_invalid_allocation_amount',
+					__( 'Each allocation amount must be nonzero.', 'fair-finance' ),
+					array( 'status' => 400 )
+				);
+			}
+			$total_allocated += $amount;
+		}
+
+		// Check total matches original (with 0.01 tolerance).
+		if ( abs( $total_allocated - $entry_amount ) > 0.01 ) {
+			return new WP_Error(
+				'rest_allocation_mismatch',
+				__( 'Total allocations must match the original entry amount.', 'fair-finance' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return null;
+	}
+
+	/**
 	 * Resolve and validate the payment source and payer of an entry being
 	 * created or updated.
 	 *
@@ -1663,35 +1710,9 @@ class FinancialEntryController extends WP_REST_Controller {
 			);
 		}
 
-		// Validate allocations.
-		if ( empty( $allocations ) || ! is_array( $allocations ) || count( $allocations ) < 2 ) {
-			return new WP_Error(
-				'rest_invalid_allocations',
-				__( 'At least 2 allocations are required.', 'fair-finance' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		$total_allocated = 0;
-		foreach ( $allocations as $allocation ) {
-			$amount = isset( $allocation['amount'] ) ? (float) $allocation['amount'] : 0;
-			if ( 0.0 === $amount ) {
-				return new WP_Error(
-					'rest_invalid_allocation_amount',
-					__( 'Each allocation amount must be nonzero.', 'fair-finance' ),
-					array( 'status' => 400 )
-				);
-			}
-			$total_allocated += $amount;
-		}
-
-		// Check total matches original (with 0.01 tolerance).
-		if ( abs( $total_allocated - $entry->amount ) > 0.01 ) {
-			return new WP_Error(
-				'rest_allocation_mismatch',
-				__( 'Total allocations must match the original entry amount.', 'fair-finance' ),
-				array( 'status' => 400 )
-			);
+		$allocation_error = self::validate_split_allocations( $allocations, $entry->amount );
+		if ( $allocation_error ) {
+			return $allocation_error;
 		}
 
 		$child_ids = FinancialEntry::split_entry( $id, $allocations );
@@ -1758,35 +1779,9 @@ class FinancialEntryController extends WP_REST_Controller {
 			);
 		}
 
-		// Validate allocations.
-		if ( empty( $allocations ) || ! is_array( $allocations ) || count( $allocations ) < 2 ) {
-			return new WP_Error(
-				'rest_invalid_allocations',
-				__( 'At least 2 allocations are required.', 'fair-finance' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		$total_allocated = 0;
-		foreach ( $allocations as $allocation ) {
-			$amount = isset( $allocation['amount'] ) ? (float) $allocation['amount'] : 0;
-			if ( 0.0 === $amount ) {
-				return new WP_Error(
-					'rest_invalid_allocation_amount',
-					__( 'Each allocation amount must be nonzero.', 'fair-finance' ),
-					array( 'status' => 400 )
-				);
-			}
-			$total_allocated += $amount;
-		}
-
-		// Check total matches original (with 0.01 tolerance).
-		if ( abs( $total_allocated - $entry->amount ) > 0.01 ) {
-			return new WP_Error(
-				'rest_allocation_mismatch',
-				__( 'Total allocations must match the original entry amount.', 'fair-finance' ),
-				array( 'status' => 400 )
-			);
+		$allocation_error = self::validate_split_allocations( $allocations, $entry->amount );
+		if ( $allocation_error ) {
+			return $allocation_error;
 		}
 
 		$id_error = FinancialEntry::split_id_error( $id, $allocations );
