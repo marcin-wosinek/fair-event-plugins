@@ -47,20 +47,132 @@ class CampaignFacts {
 	 * @return array|WP_Error Facts, or an error (404 when the event date doesn't exist).
 	 */
 	public static function read( $event_date_id ) {
+		$event_date = self::event_date( $event_date_id );
+		if ( is_wp_error( $event_date ) ) {
+			return $event_date;
+		}
+
+		$event = self::event_facts( $event_date );
+		if ( is_wp_error( $event ) ) {
+			return $event;
+		}
+
+		$event_url = $event_date->get_event_page_url_checked();
+		if ( is_wp_error( $event_url ) ) {
+			return $event_url;
+		}
+
+		$venue = self::venue_of( $event_date );
+		if ( is_wp_error( $venue ) ) {
+			return $venue;
+		}
+
+		return array(
+			'eventDateId' => (int) $event_date->id,
+			'event'       => array(
+				'title'             => $event['title'],
+				// No authoritative source yet; never inferred from the site locale.
+				'contentLanguage'   => null,
+				'status'            => $event['status'],
+				'publicationStatus' => $event['publicationStatus'],
+				'attendanceMode'    => $event['attendanceMode'],
+				'timing'            => $event['timing'],
+				'venueId'           => $venue ? $venue['id'] : null,
+				'urls'              => array(
+					'event'   => $event_url,
+					// No authoritative source yet; never derived from another URL.
+					'booking' => null,
+				),
+			),
+			'venues'      => $venue ? array( $venue ) : array(),
+		);
+	}
+
+	/**
+	 * Read the public facts of one published event date.
+	 *
+	 * A draft, including a generated occurrence of a draft series, answers
+	 * exactly like a missing ID, and is rejected before its page or venue is
+	 * read. The response holds only public-facing fields:
+	 *
+	 *     eventDateId  int
+	 *     event        title, status, attendanceMode, timing (as read()),
+	 *                  urls { event }: the linked page when it is publicly
+	 *                  viewable and not password protected, else null
+	 *     venue        { name, address, coordinates }, or null
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return array|WP_Error Public facts, or an error (404 when the event date doesn't exist or isn't published).
+	 */
+	public static function read_public( $event_date_id ) {
+		$event_date = self::event_date( $event_date_id );
+		if ( is_wp_error( $event_date ) ) {
+			return $event_date;
+		}
+
+		if ( 'publish' !== $event_date->publication_status ) {
+			return self::not_found();
+		}
+
+		$event = self::event_facts( $event_date );
+		if ( is_wp_error( $event ) ) {
+			return $event;
+		}
+
+		$event_url = $event_date->get_event_page_url_checked( true );
+		if ( is_wp_error( $event_url ) ) {
+			return $event_url;
+		}
+
+		$venue = self::venue_of( $event_date );
+		if ( is_wp_error( $venue ) ) {
+			return $venue;
+		}
+
+		return array(
+			'eventDateId' => (int) $event_date->id,
+			'event'       => array(
+				'title'          => $event['title'],
+				'status'         => $event['status'],
+				'attendanceMode' => $event['attendanceMode'],
+				'timing'         => $event['timing'],
+				'urls'           => array(
+					'event' => $event_url,
+				),
+			),
+			'venue'       => $venue
+				? array(
+					'name'        => $venue['name'],
+					'address'     => $venue['address'],
+					'coordinates' => $venue['coordinates'],
+				)
+				: null,
+		);
+	}
+
+	/**
+	 * The resolved event date.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return EventDates|WP_Error Event date, or an error (404 when it doesn't exist).
+	 */
+	private static function event_date( $event_date_id ) {
 		$event_date = EventDates::get_by_id_checked( (int) $event_date_id );
 
 		if ( is_wp_error( $event_date ) ) {
 			return $event_date;
 		}
 
-		if ( ! $event_date ) {
-			return new WP_Error(
-				'rest_event_date_not_found',
-				__( 'Event date not found.', 'fair-events' ),
-				array( 'status' => 404 )
-			);
-		}
+		return $event_date ? $event_date : self::not_found();
+	}
 
+	/**
+	 * Title, status, publication status, attendance mode and timing.
+	 *
+	 * @param EventDates $event_date Resolved event date.
+	 * @return array|WP_Error Facts keyed by snapshot field, or an error.
+	 */
+	private static function event_facts( EventDates $event_date ) {
 		$title = self::title( $event_date->get_display_title() );
 		if ( is_wp_error( $title ) ) {
 			return $title;
@@ -76,48 +188,48 @@ class CampaignFacts {
 			return $choices;
 		}
 
-		$event_url = $event_date->get_event_page_url_checked();
-		if ( is_wp_error( $event_url ) ) {
-			return $event_url;
-		}
-
-		$venues = array();
-		if ( $event_date->venue_id ) {
-			$venue = Venue::get_by_id_checked( $event_date->venue_id );
-			if ( is_wp_error( $venue ) ) {
-				return $venue;
-			}
-
-			if ( ! $venue ) {
-				return self::invalid( 'fair_events_venue_missing', __( 'The venue of this event could not be found.', 'fair-events' ), 500 );
-			}
-
-			$venue = self::venue( $venue );
-			if ( is_wp_error( $venue ) ) {
-				return $venue;
-			}
-
-			$venues[] = $venue;
-		}
-
-		return array(
-			'eventDateId' => (int) $event_date->id,
-			'event'       => array(
-				'title'             => $title,
-				// No authoritative source yet; never inferred from the site locale.
-				'contentLanguage'   => null,
-				'status'            => $choices['status'],
-				'publicationStatus' => $choices['publicationStatus'],
-				'attendanceMode'    => $choices['attendanceMode'],
-				'timing'            => $timing,
-				'venueId'           => $venues ? $venues[0]['id'] : null,
-				'urls'              => array(
-					'event'   => $event_url,
-					// No authoritative source yet; never derived from another URL.
-					'booking' => null,
-				),
+		return array_merge(
+			array(
+				'title'  => $title,
+				'timing' => $timing,
 			),
-			'venues'      => $venues,
+			$choices
+		);
+	}
+
+	/**
+	 * The registry entry of the event's venue.
+	 *
+	 * @param EventDates $event_date Resolved event date.
+	 * @return array|null|WP_Error Entry, null without a venue, or an error.
+	 */
+	private static function venue_of( EventDates $event_date ) {
+		if ( ! $event_date->venue_id ) {
+			return null;
+		}
+
+		$venue = Venue::get_by_id_checked( $event_date->venue_id );
+		if ( is_wp_error( $venue ) ) {
+			return $venue;
+		}
+
+		if ( ! $venue ) {
+			return self::invalid( 'fair_events_venue_missing', __( 'The venue of this event could not be found.', 'fair-events' ), 500 );
+		}
+
+		return self::venue( $venue );
+	}
+
+	/**
+	 * The error for a missing (or, on the public read, unpublished) event date.
+	 *
+	 * @return WP_Error
+	 */
+	private static function not_found() {
+		return new WP_Error(
+			'rest_event_date_not_found',
+			__( 'Event date not found.', 'fair-events' ),
+			array( 'status' => 404 )
 		);
 	}
 

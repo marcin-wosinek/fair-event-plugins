@@ -1,7 +1,8 @@
 <?php
 /**
- * CampaignFacts unit tests (#2420): normalization of the facts, and source
- * read failures staying errors instead of becoming unknown values.
+ * CampaignFacts unit tests (#2420): normalization of the facts, source read
+ * failures staying errors instead of becoming unknown values, and the public
+ * read's published-only field list.
  *
  * @package FairEvents
  */
@@ -260,16 +261,112 @@ class CampaignFactsTest extends TestCase {
 
 	#[DataProvider( 'source_failures' )]
 	public function test_source_failures_are_errors( $failing_table, array $columns, $code ) {
+		$this->assert_source_failure( 'read', $failing_table, $columns, $code );
+	}
+
+	private function assert_source_failure( $method, $failing_table, array $columns, $code ) {
 		$this->event_date( 1, $columns );
 		$this->venue( 7 );
 		if ( $failing_table ) {
 			$this->db->failing[] = $failing_table;
 		}
 
-		$result = CampaignFacts::read( 1 );
+		$result = CampaignFacts::$method( 1 );
 
 		$this->assertInstanceOf( WP_Error::class, $result );
 		$this->assertSame( $code, $result->get_error_code() );
+	}
+
+	public function test_public_read_returns_only_public_fields() {
+		$this->event_date(
+			1,
+			array(
+				'status'          => 'cancelled',
+				'attendance_mode' => 'hybrid',
+				'venue_id'        => 7,
+			)
+		);
+		$this->venue(
+			7,
+			array(
+				'address'            => 'Gran Via 1',
+				'latitude'           => '39.5',
+				'longitude'          => '-0.4',
+				'website_url'        => 'https://venue.example.com',
+				'instagram_handle'   => '@hall',
+				'facebook_page_link' => 'https://facebook.com/hall',
+			)
+		);
+
+		$this->assertSame(
+			array(
+				'eventDateId' => 1,
+				'event'       => array(
+					'title'          => 'Rock & Roll',
+					'status'         => 'cancelled',
+					'attendanceMode' => 'hybrid',
+					'timing'         => array(
+						'timezone'  => 'Europe/Madrid',
+						'allDay'    => false,
+						'startDate' => '2037-05-10',
+						'endDate'   => '2037-05-10',
+						'startTime' => '10:00:00',
+						'endTime'   => '12:00:00',
+					),
+					'urls'           => array( 'event' => null ),
+				),
+				'venue'       => array(
+					'name'        => 'Hall',
+					'address'     => 'Gran Via 1',
+					'coordinates' => array(
+						'latitude'  => 39.5,
+						'longitude' => -0.4,
+					),
+				),
+			),
+			CampaignFacts::read_public( 1 )
+		);
+	}
+
+	public function test_public_read_answers_drafts_like_missing_ids() {
+		// A draft series whose venue is missing and whose page read would
+		// fail: publication is checked before either is read.
+		$this->event_date(
+			1,
+			array(
+				'occurrence_type'    => 'master',
+				'publication_status' => 'draft',
+				'venue_id'           => 8,
+			)
+		);
+		$this->event_date(
+			2,
+			array(
+				'occurrence_type'    => 'generated',
+				'master_id'          => 1,
+				'publication_status' => 'publish',
+			)
+		);
+		$this->db->failing[] = 'wp_fair_event_date_posts';
+
+		$missing = CampaignFacts::read_public( 99 );
+		foreach ( array( 1, 2 ) as $id ) {
+			$draft = CampaignFacts::read_public( $id );
+
+			$this->assertInstanceOf( WP_Error::class, $draft );
+			$this->assertSame( $missing->get_error_code(), $draft->get_error_code() );
+			$this->assertSame( $missing->get_error_message(), $draft->get_error_message() );
+			$this->assertSame( array( 'status' => 404 ), $draft->get_error_data() );
+		}
+
+		// The authenticated read still answers the draft occurrence's facts
+		// with its errors, here the failed page read.
+		$this->assertSame( 'fair_events_source_unavailable', CampaignFacts::read( 2 )->get_error_code() );
+	}
+
+	#[DataProvider( 'source_failures' )]
+	public function test_public_source_failures_are_errors( $failing_table, array $columns, $code ) {
+		$this->assert_source_failure( 'read_public', $failing_table, $columns, $code );
 	}
 
 	public function test_master_read_failure_is_an_error() {

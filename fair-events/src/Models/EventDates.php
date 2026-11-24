@@ -2258,9 +2258,41 @@ class EventDates {
 	 * linked page" apart from a failed read or a linked page that no longer
 	 * resolves.
 	 *
-	 * @return string|null|\WP_Error The page URL, null when no post is linked, or an error.
+	 * @param bool $public_only Whether a linked page that isn't publicly viewable, or is password protected, reads as no page.
+	 * @return string|null|\WP_Error The page URL, null when no (public) post is linked, or an error.
 	 */
-	public function get_event_page_url_checked() {
+	public function get_event_page_url_checked( $public_only = false ) {
+		$post_id = $this->get_event_page_post_id_checked();
+		if ( ! $post_id || is_wp_error( $post_id ) ) {
+			return $post_id;
+		}
+
+		if ( $public_only ) {
+			$post = get_post( $post_id );
+			if ( ! $post ) {
+				return self::linked_page_missing();
+			}
+
+			if ( ! is_post_publicly_viewable( $post ) || '' !== (string) $post->post_password ) {
+				return null;
+			}
+		}
+
+		$url = get_permalink( $post_id );
+		if ( ! $url ) {
+			return self::linked_page_missing();
+		}
+
+		return $this->with_occurrence_arg( $url );
+	}
+
+	/**
+	 * The ID of this event's own page (see get_primary_linked_post_id()),
+	 * telling "no linked page" apart from a failed read.
+	 *
+	 * @return int|null|\WP_Error The linked post ID, null when no post is linked, or an error.
+	 */
+	private function get_event_page_post_id_checked() {
 		global $wpdb;
 
 		$post_ids = $wpdb->get_col(
@@ -2279,20 +2311,20 @@ class EventDates {
 			);
 		}
 
-		if ( empty( $post_ids ) ) {
-			return null;
-		}
+		return empty( $post_ids ) ? null : (int) $post_ids[0];
+	}
 
-		$url = get_permalink( (int) $post_ids[0] );
-		if ( ! $url ) {
-			return new \WP_Error(
-				'fair_events_linked_page_missing',
-				__( 'The page linked to this event could not be found.', 'fair-events' ),
-				array( 'status' => 500 )
-			);
-		}
-
-		return $this->with_occurrence_arg( $url );
+	/**
+	 * The error for a linked page that no longer exists.
+	 *
+	 * @return \WP_Error
+	 */
+	private static function linked_page_missing() {
+		return new \WP_Error(
+			'fair_events_linked_page_missing',
+			__( 'The page linked to this event could not be found.', 'fair-events' ),
+			array( 'status' => 500 )
+		);
 	}
 
 	/**
