@@ -9,11 +9,12 @@ import { test, expect } from '@playwright/test';
 import { loginAsAdmin } from './support/wp-cli.js';
 
 const SOURCES_PAGE = '/wp-admin/admin.php?page=fair-events-sources';
-const suffix = Date.now();
-const KEEP = `E2E list feed ${ suffix }`;
-const KEEP_SLUG = `e2e-list-feed-${ suffix }`;
-const DOOMED = `E2E feed to delete ${ suffix }`;
-const created = [];
+// Fresh per run: with --repeat-each, beforeAll/afterAll run for every
+// repetition inside one loaded module, so fixtures can't share one suffix.
+let KEEP;
+let KEEP_SLUG;
+let DOOMED;
+let created = [];
 
 /** Call the REST API from an admin page, so apiFetch sends the nonce. */
 const adminApiFetch = ( page, options ) =>
@@ -33,7 +34,12 @@ const moreButton = ( page, name ) =>
 	page.getByRole( 'button', { name: `More actions for “${ name }”` } );
 
 test.describe( 'Fair Events Experimental — Event Feeds list', () => {
-	test.beforeAll( async ( { browser } ) => {
+	test.beforeAll( async ( { browser }, testInfo ) => {
+		const suffix = `${ Date.now() }-${ testInfo.repeatEachIndex }`;
+		KEEP = `E2E list feed ${ suffix }`;
+		KEEP_SLUG = `e2e-list-feed-${ suffix }`;
+		DOOMED = `E2E feed to delete ${ suffix }`;
+		created = [];
 		const page = await browser.newPage();
 		await loginAsAdmin( page );
 		await page.goto( SOURCES_PAGE );
@@ -64,20 +70,35 @@ test.describe( 'Fair Events Experimental — Event Feeds list', () => {
 		await page.waitForFunction(
 			() => typeof window.wp?.apiFetch === 'function'
 		);
-		for ( const id of created ) {
-			await adminApiFetch( page, {
-				path: `/fair-events/v1/sources/${ id }`,
-				method: 'DELETE',
-			} ).catch( () => {} );
-		}
+		// The deletion test may already have removed its feed; any other
+		// failure would leave rows behind for the next repetition.
+		const failures = await page.evaluate( async ( ids ) => {
+			const errors = [];
+			for ( const id of ids ) {
+				try {
+					await window.wp.apiFetch( {
+						path: `/fair-events/v1/sources/${ id }`,
+						method: 'DELETE',
+					} );
+				} catch ( error ) {
+					if ( error?.code !== 'rest_source_not_found' ) {
+						errors.push(
+							`${ id }: ${ error?.code } ${ error?.message }`
+						);
+					}
+				}
+			}
+			return errors;
+		}, created );
 		await page.close();
+		expect( failures ).toEqual( [] );
 	} );
 
 	test.beforeEach( async ( { page } ) => {
 		await loginAsAdmin( page );
 	} );
 
-	test( 'shows identity and status, and copies a URL from the keyboard menu', async ( {
+	test( 'shows identity and status, and copies both URLs from the keyboard menu', async ( {
 		page,
 		context,
 	} ) => {
@@ -110,9 +131,34 @@ test.describe( 'Fair Events Experimental — Event Feeds list', () => {
 			'Delete',
 		] );
 
+		await expect( trigger ).toHaveAttribute( 'aria-expanded', 'true' );
+
+		// Escape straight away, without waiting for focus to enter the menu:
+		// the popover moves focus one task after opening, and an Escape that
+		// arrived first used to be lost on the trigger (#2440).
 		await page.keyboard.press( 'Escape' );
 		await expect( menu ).toBeHidden();
 		await expect( trigger ).toBeFocused();
+		await expect( trigger ).toHaveAttribute( 'aria-expanded', 'false' );
+
+		await page.keyboard.press( 'Enter' );
+		await expect(
+			menu.getByRole( 'menuitem', { name: 'Copy iCal feed URL' } )
+		).toBeFocused();
+		await page.keyboard.press( 'Enter' );
+
+		await expect(
+			page
+				.locator( '.components-notice__content' )
+				.getByText( `iCal feed URL for “${ KEEP }” copied.` )
+		).toBeVisible();
+		await expect( menu ).toBeHidden();
+		await expect( trigger ).toBeFocused();
+		expect(
+			await page.evaluate( () => navigator.clipboard.readText() )
+		).toMatch(
+			new RegExp( `fair-events/v1/sources/${ KEEP_SLUG }/ical$` )
+		);
 
 		await page.keyboard.press( 'Enter' );
 		await expect(
