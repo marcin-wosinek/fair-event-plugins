@@ -859,6 +859,9 @@ if ( ! function_exists( 'wp_mail' ) ) {
 		if ( ! empty( $GLOBALS['_fair_test_mail_throws'] ) ) {
 			throw new \RuntimeException( 'mail transport down' );
 		}
+		if ( ! empty( $GLOBALS['_fair_test_mail_fails'] ) ) {
+			return false;
+		}
 		if ( ! isset( $GLOBALS['_fair_test_sent_emails'] ) ) {
 			$GLOBALS['_fair_test_sent_emails'] = array();
 		}
@@ -1166,5 +1169,52 @@ if ( ! function_exists( 'wp_salt' ) ) {
 	 */
 	function wp_salt( $scheme = 'auth' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- signature matches WordPress.
 		return 'test-salt';
+	}
+}
+
+if ( ! function_exists( 'did_action' ) ) {
+	/**
+	 * Stub of WordPress did_action(), backed by $GLOBALS['_fair_test_did_action'].
+	 *
+	 * @param string $hook_name Action name.
+	 * @return int Times the action ran.
+	 */
+	function did_action( $hook_name ) {
+		return (int) ( $GLOBALS['_fair_test_did_action'][ $hook_name ] ?? 0 );
+	}
+}
+
+if ( ! function_exists( 'doing_action' ) ) {
+	/**
+	 * Stub of WordPress doing_action() — no action is running in unit tests.
+	 *
+	 * @param string|null $hook_name Action name.
+	 * @return bool Always false.
+	 */
+	function doing_action( $hook_name = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- signature matches WordPress.
+		return false;
+	}
+}
+
+if ( ! function_exists( 'is_admin' ) ) {
+	/**
+	 * Stub of WordPress is_admin(), backed by $GLOBALS['_fair_test_is_admin'].
+	 *
+	 * @return bool
+	 */
+	function is_admin() {
+		return ! empty( $GLOBALS['_fair_test_is_admin'] );
+	}
+}
+
+if ( ! function_exists( 'admin_url' ) ) {
+	/**
+	 * Stub of WordPress admin_url().
+	 *
+	 * @param string $path Path relative to the admin URL.
+	 * @return string
+	 */
+	function admin_url( $path = '' ) {
+		return home_url( '/wp-admin/' . ltrim( $path, '/' ) );
 	}
 }

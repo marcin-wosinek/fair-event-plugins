@@ -43,8 +43,10 @@ class Plugin {
 		// administrator how to get back (PAYMENT_HISTORY_MIGRATION.md §8.17).
 		if ( ! \FairEvents\Services\PaymentHistoryUpgrade::allows_initialization() ) {
 			\FairEvents\Services\PaymentHistoryUpgrade::refuse_initialization();
+			PauseAlert::observe_migration_refusal( \FairEvents\Services\PaymentHistoryUpgrade::refusal_blockers() );
 			return;
 		}
+		PauseAlert::observe_migration_allowed();
 
 		\FairEvents\Database\Installer::maybe_upgrade();
 

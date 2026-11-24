@@ -227,16 +227,30 @@ class EmailService {
 	}
 
 	/**
-	 * Send an email — the only wp_mail() call site in fair-events.
+	 * Send a plain-text email. Uses no shared-library class, so it works
+	 * while Fair Events is paused (see Core\PauseAlert).
 	 *
 	 * @param string $to      Recipient email address.
 	 * @param string $subject Email subject.
-	 * @param string $message Full HTML body.
+	 * @param string $text    Plain-text body.
+	 * @return bool True when the mail stack accepted it.
+	 */
+	public function send_plain_text( $to, $subject, $text ) {
+		return $this->deliver( $to, $subject, $text, 'text/plain' );
+	}
+
+	/**
+	 * Send an email — the only wp_mail() call site in fair-events.
+	 *
+	 * @param string $to           Recipient email address.
+	 * @param string $subject      Email subject.
+	 * @param string $message      Full body.
+	 * @param string $content_type MIME type of the body: text/html or text/plain.
 	 * @return bool True on success.
 	 */
-	private function deliver( $to, $subject, $message ) {
-		$content_type = static function () {
-			return 'text/html';
+	private function deliver( $to, $subject, $message, $content_type = 'text/html' ) {
+		$content_type = static function () use ( $content_type ) {
+			return $content_type;
 		};
 
 		add_filter( 'wp_mail_content_type', $content_type );

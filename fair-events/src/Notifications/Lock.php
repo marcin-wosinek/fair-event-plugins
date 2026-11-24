@@ -13,12 +13,14 @@ defined( 'WPINC' ) || die;
  * Named MySQL session locks, unique per site on a shared database server.
  *
  * Used where two requests must not interleave: the takeover and upgrade of
- * notification data, and adding, changing or deleting a configuration.
+ * notification data, adding, changing or deleting a configuration, and
+ * the bookkeeping of the administrator alert while Fair Events is paused.
  */
 class Lock {
 	// MySQL rejects lock names over 64 characters; name() appends 33.
 	public const MIGRATION      = 'fair_events_notif_migration';
 	public const CONFIGURATIONS = 'fair_events_notif_configs';
+	public const PAUSE_ALERT    = 'fair_events_pause_alert';
 
 	/**
 	 * Take a lock.

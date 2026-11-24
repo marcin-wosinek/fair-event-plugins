@@ -165,3 +165,115 @@ test.describe( 'Shared library selection', () => {
 		expect( body.started[ 'fair-events' ] ).toBe( true );
 	} );
 } );
+
+/*
+ * The administrator email while a conflict pauses Fair Events (#2445). Mail
+ * is captured by e2e/mu-plugins/fair-e2e-support.php. A request without the
+ * legacy headers is healthy in its context, so state is read from a request
+ * that still sees the conflict where the incident must stay open.
+ */
+test.describe( 'Paused-site alert for a shared-library conflict', () => {
+	test.describe.configure( { mode: 'serial' } );
+
+	const CONFLICT = legacyHeaders( '0.8.0', 'last', true );
+
+	async function reset( request ) {
+		const response = await request.delete(
+			`${ BASE_URL }${ REPORT }/pause-alert`,
+			{ headers: AUTH }
+		);
+		expect( response.status() ).toBe( 200 );
+	}
+
+	// Anonymous requests: no login, so nothing but the fixture headers.
+	const frontend = ( request, headers = {} ) =>
+		request.get( `${ BASE_URL }/`, { headers } );
+	const admin = ( request, headers = {} ) =>
+		request.get(
+			`${ BASE_URL }/wp-admin/admin-ajax.php?action=fair_e2e_noop`,
+			{ headers }
+		);
+
+	test( 'a frontend conflict emails the administration address once', async ( {
+		request,
+	} ) => {
+		await reset( request );
+
+		// Simultaneous requests: only one claims the first attempt.
+		const pages = await Promise.all(
+			Array.from( { length: 5 }, () => frontend( request, CONFLICT ) )
+		);
+		for ( const page of pages ) {
+			expect( page.ok() ).toBe( true );
+		}
+
+		const body = await report( request, CONFLICT );
+		expect( body.loader.state ).toBe( 'conflict' );
+		expect( body.diagnostics ).toEqual( [] );
+		expect( body.pause_alert.mail ).toHaveLength( 1 );
+		expect( body.pause_alert.state.library_conflict ).toMatchObject( {
+			attempts: 1,
+			sent: true,
+			contexts: { frontend: true },
+		} );
+		const [ mail ] = body.pause_alert.mail;
+		expect( mail.subject ).toContain( 'Fair Events is paused' );
+		expect( mail.body ).toContain( BASE_URL );
+		expect( mail.body ).toContain(
+			'another plugin loaded an outdated copy of the Fair Event Plugins shared library'
+		);
+		expect( mail.body ).toContain( 'ticket purchases are unavailable' );
+		expect( mail.body ).toContain( '1. Update all Fair plugins.' );
+		expect( mail.body ).not.toContain( 'legacy-shared' );
+		expect( mail.body ).not.toContain( 'vendor' );
+		expect( mail.body ).not.toContain( 'FairEventsShared' );
+
+		// A healthy frontend request closes the frontend-only incident.
+		const healthy = await report( request );
+		expect( healthy.pause_alert.state ).toBeNull();
+		expect( healthy.pause_alert.mail ).toHaveLength( 1 );
+	} );
+
+	test( 'an outdated copy that only warns sends nothing', async ( {
+		request,
+	} ) => {
+		await reset( request );
+		const body = await report(
+			request,
+			legacyHeaders( '0.8.0', 'last', false )
+		);
+
+		expect( body.loader.state ).toBe( 'selected' );
+		expect( body.outdated ).not.toEqual( [] );
+		expect( body.pause_alert.state ).toBeNull();
+		expect( body.pause_alert.mail ).toEqual( [] );
+	} );
+
+	test( 'an admin-only conflict stays open through healthy frontend requests and alerts again after recovery', async ( {
+		request,
+	} ) => {
+		await reset( request );
+
+		await admin( request, CONFLICT );
+		let body = await report( request );
+		expect( body.pause_alert.state.library_conflict.contexts ).toEqual( {
+			admin: true,
+		} );
+		expect( body.pause_alert.mail ).toHaveLength( 1 );
+
+		await admin( request, CONFLICT );
+		await frontend( request );
+		body = await report( request );
+		expect( body.pause_alert.mail ).toHaveLength( 1 );
+
+		// A healthy admin request is the recovery that closes it.
+		await admin( request );
+		body = await report( request );
+		expect( body.pause_alert.state ).toBeNull();
+
+		await admin( request, CONFLICT );
+		body = await report( request );
+		expect( body.pause_alert.mail ).toHaveLength( 2 );
+		expect( body.pause_alert.state.library_conflict.attempts ).toBe( 1 );
+	} );
+} );

@@ -45,6 +45,9 @@
  *                   `ledger_row` findings' detail, a checksum of every kept
  *                   table, the audit and the cleanup record.
  *   unmigrated  is also used after the cleanup: it removes the evidence.
+ *   pause-alert {reset?: bool}  The paused-site alert state (#2445) and
+ *                   the captured mail sent to the administration address,
+ *                   oldest first. With reset, both are cleared first.
  *
  * Writes go to the options and tables directly, so no hook runs. Prints
  * one `E2E_PAYMENT_UPGRADE:{json}` line.
@@ -467,6 +470,40 @@ switch ( $fixture_action ) {
 			'cleanup'  => $raw_option( \FairEvents\Services\PaymentHistoryCleanup::RECORD_OPTION ),
 			'evidence' => $raw_option( PaymentHistoryUpgrade::EVIDENCE_OPTION ),
 			'staging'  => $raw_option( PaymentHistoryUpgrade::STAGING_OPTION ),
+		);
+		break;
+
+	case 'pause-alert':
+		$admin_email = (string) get_option( 'admin_email' );
+		if ( ! empty( $data['reset'] ) ) {
+			delete_option( \FairEvents\Core\PauseAlert::OPTION );
+			$log = (array) get_option( 'fair_e2e_captured_mail', array() );
+			update_option(
+				'fair_e2e_captured_mail',
+				array_values(
+					array_filter(
+						$log,
+						static function ( $entry ) use ( $admin_email ) {
+							return ! in_array( $admin_email, (array) ( $entry['to'] ?? array() ), true );
+						}
+					)
+				),
+				false
+			);
+		}
+		$mail = array();
+		foreach ( (array) $raw_option( 'fair_e2e_captured_mail' ) as $entry ) {
+			if ( in_array( $admin_email, (array) ( $entry['to'] ?? array() ), true ) ) {
+				$mail[] = array(
+					'subject' => (string) ( $entry['subject'] ?? '' ),
+					'body'    => (string) ( $entry['body'] ?? '' ),
+				);
+			}
+		}
+		$result = array(
+			'adminEmail' => $admin_email,
+			'state'      => $raw_option( \FairEvents\Core\PauseAlert::OPTION ),
+			'mail'       => $mail,
 		);
 		break;
 
