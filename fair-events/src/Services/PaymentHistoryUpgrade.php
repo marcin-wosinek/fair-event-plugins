@@ -988,6 +988,45 @@ class PaymentHistoryUpgrade {
 	}
 
 	/**
+	 * Readable labels for the refusal blockers, keyed by code.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function refusal_labels() {
+		return array(
+			'storage_unavailable'         => __( 'The payment history migration’s records are missing: Fair Events 2.2.0 hasn’t run on this site.', 'fair-events' ),
+			'ownership_cutover_missing'   => __( 'Payment records were not switched to Fair Events.', 'fair-events' ),
+			'readers_missing'             => __( 'Statistics were not switched to Fair Events records.', 'fair-events' ),
+			'migration_unverified'        => __( 'The migration has no clean verification.', 'fair-events' ),
+			'migration_work_outstanding'  => __( 'Some payment records still wait to be moved.', 'fair-events' ),
+			'findings_open'               => __( 'Some migration findings are still open.', 'fair-events' ),
+			'source_history_found'        => __( 'This site has earlier payments, registrations or activity choices that need the migration.', 'fair-events' ),
+			'source_history_unverifiable' => __( 'Fair Events couldn’t read every earlier payment or registration record, so it can’t confirm that nothing needs migrating.', 'fair-events' ),
+		);
+	}
+
+	/**
+	 * The steps back to a supported state, in order.
+	 *
+	 * @return string[]
+	 */
+	public static function recovery_steps() {
+		$versions = self::INTERMEDIATE_VERSIONS;
+		return array(
+			sprintf(
+				/* translators: 1: Fair Payments Connector version, 2: Fair Events version, 3: Fair Audience version, 4: release name */
+				__( 'Back up the database, then reinstall Fair Payments Connector %1$s, Fair Events %2$s and Fair Audience %3$s, in that order, from the %4$s release.', 'fair-events' ),
+				$versions['fair-payments-connector'],
+				$versions['fair-events'],
+				$versions['fair-audience'],
+				self::INTERMEDIATE_RELEASE
+			),
+			__( 'On Fair Events → Payment history, finish the migration: verify it, switch payment records and then statistics to Fair Events, and resolve every open finding.', 'fair-events' ),
+			__( 'Update Fair Payments Connector, Fair Events and Fair Audience again, in that order.', 'fair-events' ),
+		);
+	}
+
+	/**
 	 * Explain to administrators why Fair Events didn't start, and how to
 	 * get back to a supported state.
 	 *
@@ -998,18 +1037,7 @@ class PaymentHistoryUpgrade {
 			return;
 		}
 
-		$labels = array(
-			'storage_unavailable'         => __( 'The payment history migration’s records are missing: Fair Events 2.2.0 hasn’t run on this site.', 'fair-events' ),
-			'ownership_cutover_missing'   => __( 'Payment records were not switched to Fair Events.', 'fair-events' ),
-			'readers_missing'             => __( 'Statistics were not switched to Fair Events records.', 'fair-events' ),
-			'migration_unverified'        => __( 'The migration has no clean verification.', 'fair-events' ),
-			'migration_work_outstanding'  => __( 'Some payment records still wait to be moved.', 'fair-events' ),
-			'findings_open'               => __( 'Some migration findings are still open.', 'fair-events' ),
-			'source_history_found'        => __( 'This site has earlier payments, registrations or activity choices that need the migration.', 'fair-events' ),
-			'source_history_unverifiable' => __( 'Fair Events couldn’t read every earlier payment or registration record, so it can’t confirm that nothing needs migrating.', 'fair-events' ),
-		);
-
-		$versions = self::INTERMEDIATE_VERSIONS;
+		$labels = self::refusal_labels();
 		echo '<div class="notice notice-error"><p><strong>';
 		echo esc_html__( 'Fair Events is paused: this site hasn’t finished the payment history migration.', 'fair-events' );
 		echo '</strong></p><p>';
@@ -1019,18 +1047,9 @@ class PaymentHistoryUpgrade {
 			echo '<li>' . esc_html( $labels[ $code ] ?? $code ) . '</li>';
 		}
 		echo '</ul><ol>';
-		echo '<li>' . esc_html(
-			sprintf(
-				/* translators: 1: Fair Payments Connector version, 2: Fair Events version, 3: Fair Audience version, 4: release name */
-				__( 'Back up the database, then reinstall Fair Payments Connector %1$s, Fair Events %2$s and Fair Audience %3$s, in that order, from the %4$s release.', 'fair-events' ),
-				$versions['fair-payments-connector'],
-				$versions['fair-events'],
-				$versions['fair-audience'],
-				self::INTERMEDIATE_RELEASE
-			)
-		) . '</li>';
-		echo '<li>' . esc_html__( 'On Fair Events → Payment history, finish the migration: verify it, switch payment records and then statistics to Fair Events, and resolve every open finding.', 'fair-events' ) . '</li>';
-		echo '<li>' . esc_html__( 'Update Fair Payments Connector, Fair Events and Fair Audience again, in that order.', 'fair-events' ) . '</li>';
+		foreach ( self::recovery_steps() as $step ) {
+			echo '<li>' . esc_html( $step ) . '</li>';
+		}
 		echo '</ol><p>';
 		printf(
 			'<a href="%1$s">%2$s</a> · <a href="%3$s">%4$s</a>',

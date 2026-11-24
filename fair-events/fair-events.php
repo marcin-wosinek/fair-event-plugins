@@ -70,6 +70,19 @@ namespace FairEvents {
 		}
 	);
 
+	// Email the administrator when an outdated shared-library copy pauses
+	// Fair Events (#2445). Runs whether or not init() above starts, and
+	// only on normal loads: a late activation hasn't selected yet.
+	if ( ! did_action( 'plugins_loaded' ) ) {
+		add_action(
+			'plugins_loaded',
+			static function () {
+				\FairEvents\Core\PauseAlert::observe_library( __FILE__ );
+			},
+			0
+		);
+	}
+
 	/**
 	 * Plugin activation hook
 	 *

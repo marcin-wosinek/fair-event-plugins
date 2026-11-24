@@ -25,8 +25,10 @@
  *   loads on admin requests.
  *
  * GET /fair-e2e/v1/shared-loader reports the selection, where shared classes
- * actually loaded from, whether updated plugins started, and every PHP
- * diagnostic the request raised.
+ * actually loaded from, whether updated plugins started, every PHP
+ * diagnostic the request raised, and the paused-site alert (#2445): its
+ * stored state and the captured mail sent to the administration address.
+ * DELETE /fair-e2e/v1/shared-loader/pause-alert clears both.
  *
  * @package FairE2E
  */
@@ -106,8 +108,60 @@ add_action(
 				'callback'            => 'fair_e2e_shared_loader_report',
 			)
 		);
+		register_rest_route(
+			'fair-e2e/v1',
+			'/shared-loader/pause-alert',
+			array(
+				'methods'             => 'DELETE',
+				'permission_callback' => static function () {
+					return current_user_can( 'manage_options' );
+				},
+				'callback'            => 'fair_e2e_shared_loader_reset_pause_alert',
+			)
+		);
 	}
 );
+
+/**
+ * The paused-site alert: stored state and the mail sent to the
+ * administration address, oldest first.
+ *
+ * @return array
+ */
+function fair_e2e_shared_loader_pause_alert() {
+	$admin_email = (string) get_option( 'admin_email' );
+	$mail        = array();
+	foreach ( (array) get_option( 'fair_e2e_captured_mail', array() ) as $entry ) {
+		if ( in_array( $admin_email, (array) ( $entry['to'] ?? array() ), true ) ) {
+			$mail[] = array(
+				'subject' => (string) ( $entry['subject'] ?? '' ),
+				'body'    => (string) ( $entry['body'] ?? '' ),
+			);
+		}
+	}
+	return array(
+		'state' => get_option( 'fair_events_pause_alert', null ),
+		'mail'  => $mail,
+	);
+}
+
+/**
+ * Forget the paused-site alert and the mail it sent.
+ *
+ * @return WP_REST_Response
+ */
+function fair_e2e_shared_loader_reset_pause_alert() {
+	$admin_email = (string) get_option( 'admin_email' );
+	delete_option( 'fair_events_pause_alert' );
+	$kept = array();
+	foreach ( (array) get_option( 'fair_e2e_captured_mail', array() ) as $entry ) {
+		if ( ! in_array( $admin_email, (array) ( $entry['to'] ?? array() ), true ) ) {
+			$kept[] = $entry;
+		}
+	}
+	update_option( 'fair_e2e_captured_mail', $kept, false );
+	return new WP_REST_Response( fair_e2e_shared_loader_pause_alert() );
+}
 
 /**
  * Report what this request selected and loaded.
@@ -154,6 +208,7 @@ function fair_e2e_shared_loader_report() {
 				'fair-payments-connector' => in_array( '/fair-payments-connector/v1', $routes, true ),
 			),
 			'diagnostics' => $GLOBALS['fair_e2e_legacy_shared']['diagnostics'],
+			'pause_alert' => fair_e2e_shared_loader_pause_alert(),
 		)
 	);
 }

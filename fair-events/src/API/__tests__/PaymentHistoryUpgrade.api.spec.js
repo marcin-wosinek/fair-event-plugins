@@ -218,6 +218,11 @@ test.describe( 'Supported upgrade path after the payment history migration', () 
 			events: true,
 			audience: true,
 		} );
+
+		// A healthy start sends no pause alert (#2445).
+		const alert = await fixture( 'pause-alert' );
+		expect( alert.state ).toBeNull();
+		expect( alert.mail ).toEqual( [] );
 	} );
 
 	test( 'the staging verification is for administrators and validated', async () => {
@@ -348,8 +353,17 @@ test.describe( 'Supported upgrade path after the payment history migration', () 
 			eventId: event.eventId,
 			eventDateId: event.eventDateId,
 		} );
+		await fixture( 'pause-alert', { reset: true } );
 		await fixture( 'unmigrated', { dbVersion: '3.52.0' } );
 		const before = await fixture( 'storage' );
+
+		// Simultaneous anonymous frontend requests: one alert (#2445).
+		const pages = await Promise.all(
+			Array.from( { length: 6 }, () => anonymous.get( '/' ) )
+		);
+		for ( const page of pages ) {
+			expect( page.ok() ).toBeTruthy();
+		}
 
 		for ( let attempt = 0; attempt < 2; attempt++ ) {
 			expect( await routesRegistered() ).toEqual( {
@@ -384,6 +398,26 @@ test.describe( 'Supported upgrade path after the payment history migration', () 
 		expect( cleanup.status() ).toBe( 404 );
 		expect( await fixture( 'storage' ) ).toEqual( before );
 		expect( before.tables ).toEqual( { ledger: true, comparisons: true } );
+
+		// The administration address got exactly one alert for the pause.
+		const alert = await fixture( 'pause-alert' );
+		expect( alert.mail ).toHaveLength( 1 );
+		const [ mail ] = alert.mail;
+		expect( mail.subject ).toContain( 'Fair Events is paused' );
+		expect( mail.body ).toContain( 'Fair Events is paused on your website' );
+		expect( mail.body ).toContain( BASE_URL );
+		expect( mail.body ).toContain(
+			'Payment records were not switched to Fair Events.'
+		);
+		expect( mail.body ).toContain( 'ticket purchases are unavailable' );
+		expect( mail.body ).toContain( '1. Back up the database' );
+		expect( mail.body ).toContain( 'releases/tag/build-2.2.0' );
+		expect( mail.body ).toContain( 'DEPLOYMENT.md#upgrade-notes' );
+		expect( alert.state.migration ).toMatchObject( {
+			attempts: 1,
+			sent: true,
+		} );
+		expect( alert.state.library_conflict ).toBeUndefined();
 	} );
 
 	test( 'a finished migration with a blocking finding or failed work stays refused', async () => {
@@ -404,6 +438,16 @@ test.describe( 'Supported upgrade path after the payment history migration', () 
 			'Payment records were not switched to Fair Events.'
 		);
 		expect( ( await fixture( 'state' ) ).evidence ).toBeNull();
+
+		// Still the same incident: its diagnosis changes, no second alert.
+		const alert = await fixture( 'pause-alert' );
+		expect( alert.mail ).toHaveLength( 1 );
+		expect( alert.state.migration.diagnosis.blockers ).toEqual(
+			expect.arrayContaining( [
+				'findings_open',
+				'migration_work_outstanding',
+			] )
+		);
 
 		// An informational finding doesn't block; failed work still does.
 		await fixture( 'migrated', {
@@ -444,6 +488,11 @@ test.describe( 'Supported upgrade path after the payment history migration', () 
 		expect( state.eventsDbVersion ).toBe( currentDbVersion );
 		// The staging verification recorded earlier is still there.
 		expect( state.staging.verified_on ).toBe( '2026-11-04' );
+
+		// Starting again closes the pause incident (#2445).
+		const alert = await fixture( 'pause-alert' );
+		expect( alert.state ).toBeNull();
+		expect( alert.mail ).toHaveLength( 1 );
 
 		const statistics = await admin.get(
 			`/wp-json/fair-events/v1/event-dates/${ event.eventDateId }/statistics`
@@ -664,5 +713,10 @@ test.describe( 'Supported upgrade path after the payment history migration', () 
 		expect( html ).toContain(
 			'Payment records were not switched to Fair Events.'
 		);
+
+		// A pause after recovery is a new incident with its own alert.
+		const alert = await fixture( 'pause-alert' );
+		expect( alert.mail ).toHaveLength( 2 );
+		expect( alert.state.migration.attempts ).toBe( 1 );
 	} );
 } );
