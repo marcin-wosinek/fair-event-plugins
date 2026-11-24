@@ -82,6 +82,31 @@ class SaleAlertFormatter {
 	}
 
 	/**
+	 * The sample an administrator sends to check a destination: labelled as
+	 * a test, naming the site, with no sale and no buyer.
+	 *
+	 * @return string Telegram HTML.
+	 */
+	public static function test_html() {
+		$site = DisplayText::decode( (string) get_bloginfo( 'name' ) );
+
+		return implode(
+			"\n",
+			array(
+				'<b>' . self::text( __( 'Test message', 'fair-events' ) ) . '</b>',
+				DisplayText::html(
+					sprintf(
+						/* translators: %s: site name */
+						__( 'Ticket sale alerts from %s will be posted here.', 'fair-events' ),
+						'' !== trim( $site ) ? $site : __( 'this site', 'fair-events' )
+					)
+				),
+				self::text( __( 'This is only a test: no ticket was sold.', 'fair-events' ) ),
+			)
+		);
+	}
+
+	/**
 	 * The digest of several sales (#2449): every event with its dates, the
 	 * tickets sold per type, its number of sales and their total, then the
 	 * overall total. Events are listed in the order of their first sale;

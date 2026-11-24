@@ -13,8 +13,6 @@ import {
 import apiFetch from '@wordpress/api-fetch';
 import SaleAlertsSection, {
 	SALE_ALERTS_PATH,
-	deliveryText,
-	draftErrors,
 	outcomeLabel,
 } from '../SaleAlertsSection.js';
 
@@ -26,7 +24,6 @@ const STUDIO = '0f5e6a3c-1d2b-4c3d-8e9f-0a1b2c3d4e5f';
 
 function payload( overrides = {} ) {
 	return {
-		enabled: false,
 		organizers: [
 			{
 				id: 'default',
@@ -44,24 +41,30 @@ function payload( overrides = {} ) {
 		organizer_resolution_available: true,
 		credential_problem: '',
 		connectors_url: '/wp-admin/options-connectors.php',
+		settings_url: '/wp-admin/admin.php?page=fair-events-organizers',
 		timezone: 'Europe/Madrid',
 		recent: [],
 		...overrides,
 	};
 }
 
+function sending( organizers = [ STUDIO ] ) {
+	return payload().organizers.map( ( organizer ) =>
+		organizers.includes( organizer.id )
+			? {
+					...organizer,
+					settings: { enabled: true, chat_id: '@studio_sales' },
+				}
+			: organizer
+	);
+}
+
 async function renderSection( initial = payload() ) {
 	apiFetch.mockResolvedValueOnce( initial );
 	render( <SaleAlertsSection /> );
-	await screen.findByRole( 'checkbox', {
-		name: 'Send ticket sale alerts to Telegram',
+	await screen.findByText( /Recent ticket sale alerts/, {
+		selector: 'h3',
 	} );
-}
-
-function organizer( name ) {
-	return within(
-		screen.getByRole( 'heading', { level: 3, name } ).parentElement
-	);
 }
 
 afterEach( () => {
@@ -69,129 +72,35 @@ afterEach( () => {
 } );
 
 describe( 'SaleAlertsSection', () => {
-	it( 'starts off with every organizer listed and nothing to save', async () => {
+	it( 'has no editable settings and links to the organizers', async () => {
 		await renderSection();
 
+		expect( apiFetch ).toHaveBeenCalledWith( { path: SALE_ALERTS_PATH } );
+		expect( screen.queryByRole( 'checkbox' ) ).toBeNull();
+		expect( screen.queryByRole( 'textbox' ) ).toBeNull();
+		expect( screen.queryByRole( 'button' ) ).toBeNull();
 		expect(
-			screen.getByRole( 'checkbox', {
-				name: 'Send ticket sale alerts to Telegram',
-			} )
-		).not.toBeChecked();
-		expect(
-			screen.getByRole( 'heading', {
-				name: 'Fair Site (sitewide organizer)',
-			} )
+			screen.getByText( /No organizer sends its sales to Telegram yet\./ )
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole( 'heading', { name: 'Studio' } )
-		).toBeInTheDocument();
-		expect(
-			screen.getByRole( 'button', { name: 'Save ticket sale alerts' } )
-		).toHaveAttribute( 'aria-disabled', 'true' );
+			screen.getByRole( 'link', {
+				name: 'Set up each organizer’s chat or channel, schedule and switch on the Organizers page',
+			} )
+		).toHaveAttribute(
+			'href',
+			'/wp-admin/admin.php?page=fair-events-organizers'
+		);
 		expect(
 			screen.getByText( /No ticket sale alert yet/ )
 		).toBeInTheDocument();
 	} );
 
-	it( 'blocks saving an organizer turned on without a valid chat', async () => {
-		await renderSection();
-		const studio = organizer( 'Studio' );
+	it( 'names the organizers sending and those without a chat', async () => {
+		await renderSection( payload( { organizers: sending() } ) );
 
-		fireEvent.click(
-			studio.getByRole( 'checkbox', {
-				name: 'Send this organizer’s sales',
-			} )
-		);
 		expect(
-			studio.getByText(
-				'Enter a chat or channel before turning the organizer’s alerts on.'
-			)
+			screen.getByText( /Sending the sales of: Studio\./ )
 		).toBeInTheDocument();
-		expect(
-			screen.getByRole( 'button', { name: 'Save ticket sale alerts' } )
-		).toHaveAttribute( 'aria-disabled', 'true' );
-
-		fireEvent.change(
-			studio.getByRole( 'textbox', { name: 'Chat or channel' } ),
-			{ target: { value: 'https://t.me/studio' } }
-		);
-		expect( studio.getByText( /Enter one chat ID/ ) ).toBeInTheDocument();
-	} );
-
-	it( 'saves the switches and trimmed chats, then shows the saved state', async () => {
-		await renderSection();
-		const saved = payload( {
-			enabled: true,
-			organizers: [
-				{
-					...payload().organizers[ 0 ],
-					settings: { enabled: false, chat_id: '' },
-				},
-				{
-					...payload().organizers[ 1 ],
-					settings: { enabled: true, chat_id: '@studio_sales' },
-				},
-			],
-		} );
-		apiFetch.mockResolvedValueOnce( saved );
-
-		fireEvent.click(
-			screen.getByRole( 'checkbox', {
-				name: 'Send ticket sale alerts to Telegram',
-			} )
-		);
-		const studio = organizer( 'Studio' );
-		fireEvent.click(
-			studio.getByRole( 'checkbox', {
-				name: 'Send this organizer’s sales',
-			} )
-		);
-		fireEvent.change(
-			studio.getByRole( 'textbox', { name: 'Chat or channel' } ),
-			{ target: { value: ' @studio_sales ' } }
-		);
-		expect( screen.getByText( 'Unsaved changes' ) ).toBeInTheDocument();
-
-		const save = screen.getByRole( 'button', {
-			name: 'Save ticket sale alerts',
-		} );
-		await act( async () => {
-			fireEvent.click( save );
-			fireEvent.click( save );
-		} );
-
-		const puts = apiFetch.mock.calls.filter(
-			( [ options ] ) => 'PUT' === options.method
-		);
-		expect( puts ).toHaveLength( 1 );
-		expect( puts[ 0 ][ 0 ] ).toEqual( {
-			path: SALE_ALERTS_PATH,
-			method: 'PUT',
-			data: {
-				enabled: true,
-				organizers: {
-					default: {
-						enabled: false,
-						chat_id: '',
-						frequency: 'immediate',
-						time_of_day: '08:00',
-						day_of_week: 1,
-					},
-					[ STUDIO ]: {
-						enabled: true,
-						chat_id: '@studio_sales',
-						frequency: 'immediate',
-						time_of_day: '08:00',
-						day_of_week: 1,
-					},
-				},
-			},
-		} );
-		expect(
-			await screen.findByText( 'Ticket sale alerts saved.' )
-		).toBeInTheDocument();
-		expect( screen.queryByText( 'Unsaved changes' ) ).toBeNull();
-		// The sitewide organizer has no chat, so its sales are not sent.
 		expect(
 			screen.getByText(
 				'These organizers have no chat or channel, so their sales are not sent: Fair Site.'
@@ -199,45 +108,33 @@ describe( 'SaleAlertsSection', () => {
 		).toBeInTheDocument();
 	} );
 
-	it( 'keeps the edits and shows the server’s field message when saving fails', async () => {
-		await renderSection();
-		apiFetch.mockRejectedValueOnce( {
-			message: 'Enter one chat ID.',
-			data: {
-				params: {
-					[ `organizers.${ STUDIO }.chat_id` ]:
-						'Chat rejected by the server.',
-				},
-			},
-		} );
-		const studio = organizer( 'Studio' );
-		fireEvent.change(
-			studio.getByRole( 'textbox', { name: 'Chat or channel' } ),
-			{ target: { value: '@studio_sales' } }
-		);
-		await act( async () => {
-			fireEvent.click(
-				screen.getByRole( 'button', {
-					name: 'Save ticket sale alerts',
-				} )
-			);
-		} );
-
-		expect(
-			studio.getByText( 'Chat rejected by the server.' )
-		).toBeInTheDocument();
-		expect(
-			studio.getByRole( 'textbox', { name: 'Chat or channel' } )
-		).toHaveValue( '@studio_sales' );
-		expect( screen.getByText( 'Enter one chat ID.' ) ).toBeInTheDocument();
-	} );
-
-	it( 'warns about the bot token and unavailable organizers', async () => {
+	it( 'links to Settings while organizer management is off', async () => {
 		await renderSection(
 			payload( {
-				enabled: true,
-				credential_problem: 'No Telegram bot token is configured.',
 				organizer_resolution_available: false,
+				settings_url:
+					'/wp-admin/admin.php?page=fair-events-settings&tab=organizer',
+			} )
+		);
+
+		expect(
+			screen.getByRole( 'link', {
+				name: 'Set up the organizer’s chat or channel, schedule and switch in Settings → Organizer',
+			} )
+		).toHaveAttribute(
+			'href',
+			'/wp-admin/admin.php?page=fair-events-settings&tab=organizer'
+		);
+		expect(
+			screen.getByText( /Organizer management is off/ )
+		).toBeInTheDocument();
+	} );
+
+	it( 'warns about the bot token while an organizer is sending', async () => {
+		await renderSection(
+			payload( {
+				organizers: sending(),
+				credential_problem: 'No Telegram bot token is configured.',
 			} )
 		);
 
@@ -247,9 +144,6 @@ describe( 'SaleAlertsSection', () => {
 		expect(
 			screen.getByRole( 'link', { name: 'Open Connectors' } )
 		).toHaveAttribute( 'href', '/wp-admin/options-connectors.php' );
-		expect(
-			screen.getByText( /Organizer management is off/ )
-		).toBeInTheDocument();
 	} );
 
 	it( 'lists recent outcomes with their meaning', async () => {
@@ -299,7 +193,7 @@ describe( 'SaleAlertsSection', () => {
 		).toBeInTheDocument();
 	} );
 
-	it( 'offers a retry when the settings cannot be loaded', async () => {
+	it( 'offers a retry when the alerts cannot be loaded', async () => {
 		apiFetch.mockRejectedValueOnce( { message: 'Sorry, not allowed.' } );
 		apiFetch.mockResolvedValueOnce( payload() );
 		render( <SaleAlertsSection /> );
@@ -313,25 +207,8 @@ describe( 'SaleAlertsSection', () => {
 			);
 		} );
 		expect(
-			screen.getByRole( 'checkbox', {
-				name: 'Send ticket sale alerts to Telegram',
-			} )
+			screen.getByText( /No ticket sale alert yet/ )
 		).toBeInTheDocument();
-	} );
-} );
-
-describe( 'draftErrors', () => {
-	it( 'accepts chat IDs and channel names, and empty chats while off', () => {
-		expect(
-			draftErrors( {
-				enabled: true,
-				organizers: {
-					a: { enabled: true, chat_id: '-1001234567890' },
-					b: { enabled: true, chat_id: '@fair_channel' },
-					c: { enabled: false, chat_id: '' },
-				},
-			} )
-		).toEqual( {} );
 	} );
 } );
 
@@ -347,129 +224,6 @@ describe( 'outcomeLabel', () => {
 			outcomeLabel( { state: 'skipped', reason: 'organizer_disabled' } )
 				.tone
 		).toBe( 'neutral' );
-	} );
-
-	it( 'sends existing organizers immediately until a digest is chosen', async () => {
-		await renderSection();
-		const studio = organizer( 'Studio' );
-
-		expect(
-			studio.getByRole( 'combobox', { name: 'How often' } )
-		).toHaveValue( 'immediate' );
-		expect(
-			studio.getByText(
-				'Each sale is sent as soon as its payment is confirmed.'
-			)
-		).toBeInTheDocument();
-		expect( studio.queryByLabelText( 'Delivery time' ) ).toBeNull();
-		expect( studio.queryByLabelText( 'Weekday' ) ).toBeNull();
-	} );
-
-	it( 'saves a weekly digest with its weekday and time, then shows the next digest', async () => {
-		await renderSection();
-		const saved = payload( {
-			organizers: [
-				payload().organizers[ 0 ],
-				{
-					...payload().organizers[ 1 ],
-					settings: {
-						enabled: false,
-						chat_id: '',
-						frequency: 'weekly',
-						time_of_day: '18:30',
-						day_of_week: 5,
-					},
-					next_digest: '2026-11-27T17:30:00+00:00',
-					pending: 2,
-				},
-			],
-		} );
-		apiFetch.mockResolvedValueOnce( saved );
-		const studio = organizer( 'Studio' );
-
-		fireEvent.change(
-			studio.getByRole( 'combobox', { name: 'How often' } ),
-			{ target: { value: 'weekly' } }
-		);
-		fireEvent.change( studio.getByRole( 'combobox', { name: 'Weekday' } ), {
-			target: { value: '5' },
-		} );
-		fireEvent.change( studio.getByLabelText( 'Delivery time' ), {
-			target: { value: '18:30' },
-		} );
-		expect(
-			studio.getByText( /Save to see when this organizer’s sales/ )
-		).toBeInTheDocument();
-		expect(
-			studio.getByText( 'In the site’s timezone (Europe/Madrid).' )
-		).toBeInTheDocument();
-
-		await act( async () => {
-			fireEvent.click(
-				screen.getByRole( 'button', {
-					name: 'Save ticket sale alerts',
-				} )
-			);
-		} );
-
-		const put = apiFetch.mock.calls.find(
-			( [ options ] ) => 'PUT' === options.method
-		)[ 0 ];
-		expect( put.data.organizers[ STUDIO ] ).toEqual( {
-			enabled: false,
-			chat_id: '',
-			frequency: 'weekly',
-			time_of_day: '18:30',
-			day_of_week: 5,
-		} );
-		expect(
-			await studio.findByText(
-				/^Next digest: .+ \(Europe\/Madrid\)\. 2 sales are waiting for it\. Days without sales send nothing\.$/
-			)
-		).toBeInTheDocument();
-	} );
-
-	it( 'blocks saving a digest without a delivery time', async () => {
-		await renderSection();
-		const studio = organizer( 'Studio' );
-
-		fireEvent.change(
-			studio.getByRole( 'combobox', { name: 'How often' } ),
-			{ target: { value: 'daily' } }
-		);
-		fireEvent.change( studio.getByLabelText( 'Delivery time' ), {
-			target: { value: '' },
-		} );
-
-		expect(
-			studio.getByText(
-				'Enter the delivery time as hours and minutes, for example 08:00.'
-			)
-		).toBeInTheDocument();
-		expect(
-			screen.getByRole( 'button', { name: 'Save ticket sale alerts' } )
-		).toHaveAttribute( 'aria-disabled', 'true' );
-		expect(
-			screen.getByText(
-				'Unsaved changes: correct the highlighted fields first.'
-			)
-		).toBeInTheDocument();
-	} );
-
-	it( 'explains a digest that is not scheduled', () => {
-		expect(
-			deliveryText(
-				{
-					settings: { frequency: 'daily' },
-					next_digest: null,
-					pending: 1,
-				},
-				'Y-m-d H:i',
-				'Europe/Madrid'
-			)
-		).toBe(
-			'No digest is scheduled while alerts are off for this organizer or sitewide. Sales already waiting are kept for the next digest. 1 sale is waiting for it.'
-		);
 	} );
 
 	it( 'labels digest outcomes', () => {
