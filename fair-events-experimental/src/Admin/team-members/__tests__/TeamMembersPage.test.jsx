@@ -241,6 +241,10 @@ describe( 'TeamMembersPage', () => {
 					title: 'Weekly class',
 					start_date: '2035-09-10',
 					is_series: true,
+					programme_items: [
+						{ schedule_item_id: 4, title: 'Salsa &amp; more' },
+						{ schedule_item_id: 5, title: '' },
+					],
 				},
 			],
 		} );
@@ -264,7 +268,13 @@ describe( 'TeamMembersPage', () => {
 		).toBeVisible();
 		expect(
 			within( dialog ).getByText(
-				'Marek Nowak is on the team of 2 events.',
+				'— programme items: Salsa & more, (untitled item)',
+				{ exact: false }
+			)
+		).toBeVisible();
+		expect(
+			within( dialog ).getByText(
+				'Marek Nowak is assigned to 2 events, on their teams or programme items.',
 				{ exact: false }
 			)
 		).toBeVisible();

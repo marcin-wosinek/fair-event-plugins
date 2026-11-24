@@ -324,10 +324,12 @@ class EventSchedule {
 	 * @param int             $destination_id Destination event date ID.
 	 * @param array<int, int> $option_map     Old-to-new ticket option ID map.
 	 * @param \DateInterval   $date_shift     Site-local shift from source to destination.
-	 * @return void
+	 * @return array<int, int> Old-to-new schedule item ID map, so companions can
+	 *                         copy what they keep per item (#2422).
 	 * @throws \RuntimeException When an entry cannot be copied or its workshop was not copied.
 	 */
 	public static function copy( $source_id, $destination_id, array $option_map, $date_shift ) {
+		$item_map = array();
 		foreach ( ScheduleItem::get_all_by_event_date_id( (int) $source_id ) as $item ) {
 			if ( $item->ticket_option_id && ! isset( $option_map[ $item->ticket_option_id ] ) ) {
 				throw new \RuntimeException( 'Could not remap a schedule entry.' );
@@ -350,7 +352,11 @@ class EventSchedule {
 			if ( ! $new_id ) {
 				throw new \RuntimeException( 'Could not copy a schedule entry.' );
 			}
+
+			$item_map[ (int) $item->id ] = (int) $new_id;
 		}
+
+		return $item_map;
 	}
 
 	/**
@@ -531,6 +537,22 @@ class EventSchedule {
 				continue;
 			}
 			if ( ! ScheduleItem::delete( $stored_id ) ) {
+				return false;
+			}
+
+			/**
+			 * Filters whether companion plugins removed the data they keep
+			 * for a schedule item the save removes (#2422).
+			 *
+			 * Runs inside the save's transaction, whether or not the
+			 * companion's feature is enabled. Anything but `true` fails the
+			 * save, which then changes nothing.
+			 *
+			 * @param bool|\WP_Error $result        True so far.
+			 * @param int            $item_id       Removed schedule item ID.
+			 * @param int            $event_date_id Event date the schedule is stored on.
+			 */
+			if ( true !== apply_filters( 'fair_events_schedule_item_removed', true, (int) $stored_id, (int) $config_id ) ) {
 				return false;
 			}
 

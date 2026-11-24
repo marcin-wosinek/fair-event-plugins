@@ -217,11 +217,12 @@ class EventCopyService {
 			 * copy, which then removes the partial copy, firing
 			 * `fair_events_event_date_deleted` for the new event date.
 			 *
-			 * @param bool|\WP_Error $result               True so far.
-			 * @param int            $source_owner_id      Source single event or series master.
-			 * @param int            $destination_owner_id The copy's event date ID.
+			 * @param bool|\WP_Error   $result               True so far.
+			 * @param int              $source_owner_id      Source single event or series master.
+			 * @param int              $destination_owner_id The copy's event date ID.
+			 * @param array<int, int>  $schedule_item_id_map Old-to-new schedule item IDs (#2422).
 			 */
-			if ( true !== apply_filters( 'fair_events_event_copy_extensions', true, (int) $master->id, (int) $new_event_date_id ) ) {
+			if ( true !== apply_filters( 'fair_events_event_copy_extensions', true, (int) $master->id, (int) $new_event_date_id, $copy_result['schedule_item_id_map'] ?? array() ) ) {
 				throw new \RuntimeException( 'extensions' );
 			}
 			$this->assert_checkpoint( 'extension_copying' );

@@ -488,12 +488,44 @@ test.describe( 'MarketingAssetsController', () => {
 			( await badItem.json() ).data.details.schedule_item_id.code
 		).toBe( 'marketing_asset_schedule_item_not_found' );
 
-		// Removing the member from the team and the item from the schedule
-		// drops the links and keeps the asset.
+		const teamPath = `${ EVENT_DATES_PATH }/${ series.id }/team-assignments`;
+		const added = await api.post( teamPath, {
+			headers: adminHeaders,
+			data: { member_id: onTeam, role: 'teacher' },
+		} );
+		expect( added.status() ).toBe( 201 );
+		const { assignments } = await added.json();
+		const teacher = assignments.find(
+			( entry ) => entry.role === 'teacher'
+		);
+
+		const programme = await api.post(
+			`${ EVENT_DATES_PATH }/${ series.id }/schedule-items/${ workshop }/contributors`,
+			{
+				headers: adminHeaders,
+				data: { member_id: onTeam, role: 'teacher' },
+			}
+		);
+		expect( programme.status() ).toBe( 201 );
+
 		await api.delete(
 			`${ EVENT_DATES_PATH }/${ series.id }/team-members/${ onTeam }`,
 			{ headers: adminHeaders }
 		);
+		const stillLinked = await ( await read( first, asset.id ) ).json();
+		expect( stillLinked.member_ids ).toEqual( [ onTeam ] );
+
+		const removed = await api.delete( `${ teamPath }/${ teacher.id }`, {
+			headers: adminHeaders,
+		} );
+		expect( removed.status() ).toBe( 200 );
+		const afterTeamRemoval = await ( await read( first, asset.id ) ).json();
+		expect( afterTeamRemoval.member_ids ).toEqual( [] );
+		const programmeOnly = await patch( first, asset.id, {
+			member_ids: [ onTeam ],
+		} );
+		expect( programmeOnly.status() ).toBe( 400 );
+
 		await saveSchedule( series.id, [] );
 		const after = await ( await read( first, asset.id ) ).json();
 		expect( after ).toMatchObject( {

@@ -36,6 +36,7 @@ import {
 	toPayload,
 	validateEntries,
 } from './scheduleModel.js';
+import ScheduleContributors from './ScheduleContributors.js';
 
 const TAB_NAME = 'schedule';
 
@@ -60,6 +61,9 @@ export default function EventSchedule( {
 	// Server warnings by saved item ID (e.g. outside the event's dates).
 	const [ warnings, setWarnings ] = useState( {} );
 	const [ removeTarget, setRemoveTarget ] = useState( null );
+	// Bumped after each save, so the contributors follow removed items.
+	const [ savedVersion, setSavedVersion ] = useState( 0 );
+	const contributorsEnabled = !! window.fairEventsScheduleData?.teamMembers;
 
 	const applyResponse = useCallback( ( data ) => {
 		const loaded = ( data.items || [] ).map( entryFromItem );
@@ -237,6 +241,7 @@ export default function EventSchedule( {
 				data: { items: toPayload( entries ) },
 			} );
 			applyResponse( data );
+			setSavedVersion( ( version ) => version + 1 );
 			setSuccess( __( 'Schedule saved.', 'fair-events-experimental' ) );
 		} catch ( err ) {
 			// The entries stay exactly as typed: nothing was saved.
@@ -316,7 +321,7 @@ export default function EventSchedule( {
 		);
 	};
 
-	return (
+	const content = (
 		<VStack
 			spacing={ 4 }
 			className="fair-events-schedule"
@@ -747,6 +752,13 @@ export default function EventSchedule( {
 									__nextHasNoMarginBottom
 								/>
 							</div>
+
+							{ contributorsEnabled && (
+								<ScheduleContributors.Slot
+									entry={ entry }
+									readOnly={ readOnly }
+								/>
+							) }
 						</CardBody>
 					</Card>
 				);
@@ -765,5 +777,16 @@ export default function EventSchedule( {
 				{ removeMessage() }
 			</ConfirmDialog>
 		</VStack>
+	);
+
+	return contributorsEnabled ? (
+		<ScheduleContributors
+			eventDateId={ eventDateId }
+			version={ savedVersion }
+		>
+			{ content }
+		</ScheduleContributors>
+	) : (
+		content
 	);
 }

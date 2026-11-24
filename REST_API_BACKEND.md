@@ -1544,6 +1544,13 @@ tab fair-events-experimental registers on Manage Event.
     (`$schedule_item_id, $config_event_date_id`) inside the save's
     transaction; fair-events-experimental's marketing assets clear their
     link to it.
+    `EventSchedule::copy()` returns the old-to-new item ID map, which the
+    copy passes to companions as the fourth argument of
+    `fair_events_event_copy_extensions`. A save that removes an entry runs
+    the `fair_events_schedule_item_removed` filter (`true`, item ID, event
+    date ID) inside its transaction; anything but `true` fails the save.
+    Fair Events Experimental keeps programme contributors per item this way
+    (#2422).
 
 ### Campaign facts
 

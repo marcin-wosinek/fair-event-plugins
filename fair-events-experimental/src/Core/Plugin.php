@@ -222,6 +222,19 @@ class Plugin {
 		);
 
 		wp_set_script_translations( 'fair-events-experimental-manage-event-schedule', 'fair-events-experimental', Features::script_translations_path() );
+
+		// Programme contributors come from the team directory, which only
+		// administrators manage (#2422).
+		wp_add_inline_script(
+			'fair-events-experimental-manage-event-schedule',
+			'window.fairEventsScheduleData = ' . wp_json_encode(
+				array(
+					'teamMembers'  => self::team_members_available() && current_user_can( 'manage_options' ),
+					'directoryUrl' => admin_url( 'admin.php?page=fair-events-team-members' ),
+				)
+			) . ';',
+			'before'
+		);
 	}
 
 	/**
@@ -407,16 +420,19 @@ class Plugin {
 	/**
 	 * Load the team member directory (#2394).
 	 *
-	 * Event deletion and copies keep memberships in step whether or not the
-	 * `team-members` bundle is on, so nothing is left behind or lost while
-	 * it is off. The tables are installed, and the REST routes registered,
-	 * only while it is on; turning it off keeps every profile and
-	 * membership.
+	 * Event deletion, schedule item removal and copies keep assignments in
+	 * step whether or not the `team-members` bundle is on, so nothing is
+	 * left behind or lost while it is off. The tables are installed, and the
+	 * REST routes registered, only while it is on; turning it off keeps
+	 * every profile and assignment.
 	 *
 	 * @return void
 	 */
 	private function load_team_members() {
 		\FairEventsExperimental\Services\TeamMembership::register_lifecycle_hooks();
+		// Tables from an earlier version are upgraded even while the bundle
+		// is off, so lifecycle cleanup runs against the current schema.
+		add_action( 'init', array( \FairEventsExperimental\Models\TeamMemberRepository::class, 'maybe_upgrade' ), 5 );
 
 		if ( ! self::team_members_available() ) {
 			return;
