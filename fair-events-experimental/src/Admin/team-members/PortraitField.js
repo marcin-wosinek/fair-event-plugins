@@ -61,11 +61,12 @@ export default function PortraitField( { value, onChange, disabled, error } ) {
 			return undefined;
 		}
 		let current = true;
-		loadAttachmentUrl( value ).then( ( url ) => {
+		const show = ( url ) => {
 			if ( current ) {
 				setPreview( { id: value, url } );
 			}
-		} );
+		};
+		loadAttachmentUrl( value ).then( show, () => show( null ) );
 		return () => {
 			current = false;
 		};
