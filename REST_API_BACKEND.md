@@ -1557,8 +1557,8 @@ tab fair-events-experimental registers on Manage Event.
 `GET fair-events/v1/event-dates/{id}/campaign-facts` (`edit_posts`; 401
 anonymous, 403 without the capability) returns the occurrence and venue
 facts of an Event Content Studio campaign-facts v1 snapshot (#2420). The
-reader is `FairEvents\Services\CampaignFacts::read()`, reusable by the
-complete snapshot read (#2424). Field names and meanings follow the
+reader is `FairEvents\Services\CampaignFacts::read()`, reused by the
+complete read below. Field names and meanings follow the
 [v1 mapping](https://github.com/marcin-wosinek/event-content-studio/blob/main/docs/campaign-facts.md):
 
 ```json
@@ -1668,6 +1668,133 @@ caller.
     fields neither route exports.
 -   **Errors** for broken references and unusable required facts are the
     same as on the authenticated route.
+
+### Complete campaign facts
+
+`GET fair-events/v1/event-dates/{id}/campaign-facts/complete` (#2424) returns
+every source fact of an Event Content Studio campaign-facts v1 snapshot in one
+coherent read. The importer adds only the metadata it owns. The reader is
+`FairEvents\Services\CompleteCampaignFacts::read()`; contributors, profiles and
+media come from Fair Events Experimental.
+
+**Access.** Logged in (401 otherwise), `edit_posts` and, for a linked event,
+`edit_post` on the linked page, which for a generated occurrence is the series'
+page (403 `rest_forbidden` otherwise; the same model as the event-images read).
+A missing occurrence is 404 `rest_event_date_not_found`. Responses carry
+`Cache-Control: no-store`; WordPress adds its own no-cache headers for
+authenticated requests.
+
+```json
+{
+	"eventDateId": 815,
+	"scheduleEventDateId": 812,
+	"event": {
+		"title": "Rock & Roll",
+		"contentLanguage": null,
+		"status": "active",
+		"publicationStatus": "publish",
+		"attendanceMode": "in_person",
+		"timing": { "timezone": "Europe/Madrid", "allDay": false, "startDate": "2037-03-11", "endDate": "2037-03-11", "startTime": "18:00:00", "endTime": "22:00:00" },
+		"venueId": null,
+		"urls": { "event": "https://example.org/rock/?event_date=2037-03-11", "booking": null },
+		"mediaIds": ["media:60", "media:52"],
+		"focalRegions": { "media:52": { "centerX": 0.3, "centerY": 0.3, "radius": 0.2 } }
+	},
+	"venues": [],
+	"schedule": {
+		"enabled": true,
+		"items": [
+			{
+				"id": "schedule-item:41",
+				"sourceId": 41,
+				"ticketOptionId": 7,
+				"title": "Acro workshop",
+				"description": null,
+				"startsAtLocal": "2037-03-11T18:00:00",
+				"endsAtLocal": "2037-03-11T19:30:00",
+				"location": "Studio A",
+				"languages": null,
+				"bookable": true,
+				"contributors": [{ "memberId": "team-member:9", "role": "teacher" }],
+				"mediaIds": ["media:52"],
+				"focalRegions": { "media:52": { "centerX": 0.6, "centerY": 0.6, "radius": 0.3 } }
+			}
+		]
+	},
+	"team": {
+		"members": [
+			{ "id": "team-member:9", "sourceId": 9, "displayName": "Ana Ruiz", "instagramHandle": "ana.dances", "websiteUrl": null, "bio": null, "portraitMediaId": "media:52" }
+		],
+		"eventContributors": [{ "memberId": "team-member:9", "role": "organizer" }]
+	},
+	"media": [
+		{ "id": "media:52", "sourceId": 52, "sourceUrl": "https://example.org/wp-content/uploads/ana.jpg", "altText": null, "credit": null, "width": 1200, "height": 1200 },
+		{ "id": "media:60", "sourceId": 60, "sourceUrl": "https://example.org/wp-content/uploads/poster.jpg", "altText": "Dancers on stage", "credit": null, "width": 2400, "height": 1600 }
+	]
+}
+```
+
+-   **Mapping to v1.** `event`, `venues`, `team` and `media` are the v1 fields.
+    `eventDateId` and `scheduleEventDateId` are `source.eventDateId` and
+    `source.scheduleEventDateId`. `schedule.items[]` are the v1 items, except
+    that `startsAtLocal` and `endsAtLocal` replace `startsAt` and `endsAt`.
+    The importer owns `schemaVersion`, `source.provider`, `source.siteUrl` and
+    `source.importedAt`, and no transport metadata goes into `facts.json`.
+-   **Event and venue facts** are `CampaignFacts::read()`'s (see Campaign facts
+    above), with `event.mediaIds` and `event.focalRegions` added.
+-   **Programme.** The owner's schedule (`EventSchedule::config_event_date_id()`),
+    resolved for the selected occurrence as `EventSchedule::get_payload()`
+    does. Items come in programme order: start time, then sort order, then
+    ID. A workshop's `title` is its ticket option's current name, otherwise the
+    item's own title (trimmed, and required). `bookable` is the organizer's
+    setting for a workshop, independent of remaining places, and always
+    `false` for a standalone item (`ticketOptionId: null`). Blank descriptions
+    and locations are `null`. `schedule.enabled` is the owner's configuration
+    value; a disabled schedule still lists its items.
+-   **Times.** `startsAtLocal` and `endsAtLocal` are naive site-local times
+    (`YYYY-MM-DDTHH:MM:SS`), shifted from the series master to a generated
+    occurrence. The importer resolves them in `event.timing.timezone` into
+    the offset-bearing `startsAt` and `endsAt`. A local time that is
+    ambiguous or doesn't exist because of a daylight-saving change has no
+    single instant, so the importer must fail rather than pick an offset.
+-   **Teaching languages.** Programme teaching-language entry was dropped
+    with #2423. `languages` is always `null`, and a read without
+    authoritative teaching-language data is a complete v1 read.
+-   **Contributors, profiles and media** follow the provider contracts in
+    `CompleteCampaignFacts` and the Fair Events Experimental docs
+    (`team-members.md`, `event-images.md`). Contributor lists keep assignment
+    order and inherit the series' assignments. `mediaIds` keep attachment
+    order, and each association has its own `focalRegions`. `team.members`
+    and `media` hold each referenced entry once, sorted by `sourceId`.
+-   **Never exported.** Contacts (email, phone), grammatical gender,
+    credentials, attendee data, joining links and the other fields
+    `CampaignFacts` leaves out. Sharing for marketing (#2396) is a separate
+    decision.
+
+**Consistency.** `CampaignSnapshot` runs the whole read inside one
+`REPEATABLE READ` transaction started `READ ONLY, WITH CONSISTENT SNAPSHOT` on
+WordPress's connection, so every source reflects the same committed state even
+if edits are committed during the read. While it runs, `$wp_object_cache` is
+replaced by a private `SnapshotObjectCache`. Posts, post meta and options then
+come from the snapshot rather than from values cached earlier or kept by a
+persistent cache, and nothing read is written back. The original cache is
+restored afterwards. Before starting, the read checks that every existing
+participating table is InnoDB; companions add their tables with
+`fair_events_campaign_snapshot_tables`. The sources' multi-row writers
+(schedule saves, image-list saves, team assignments, profile deletion) commit
+in one transaction, so a snapshot never sees half an edit. Event-date fields
+are written in a single `UPDATE`.
+
+**Errors, never empty values.** On top of `CampaignFacts::read()`'s errors:
+
+| Status | Code | When |
+| --- | --- | --- |
+| 409 | `fair_events_campaign_facts_features_unavailable` | `data.features` lists each unavailable feature, `{ feature: "team-members" \| "event-images", reason: "disabled" \| "not_provided" }`. `disabled`: the bundle is off. `not_provided`: no provider answered, because Fair Events Experimental is inactive. Enabled empty collections are a 200 instead. |
+| 409 | `fair_events_campaign_facts_inconsistent` | Providers disagree about the programme they read. `data.retryable: true`. |
+| 503 | `fair_events_campaign_facts_snapshot_unavailable` | No coherent read possible. `data.reason` is `non_transactional_tables` (with `data.tables`, not retryable), `audit_failed`, `transaction` (retryable) or `object_cache` (not retryable). |
+| 500 | `fair_events_series_master_missing`, `fair_events_schedule_ticket_option_missing`, `fair_events_team_member_missing`, `fair_events_event_image_missing` | A broken reference. |
+| 500 | `fair_events_source_unavailable` | A failed query. |
+| 422 | `fair_events_campaign_facts_item_title_missing`, `fair_events_campaign_facts_invalid_schedule_time`, `fair_events_campaign_facts_media_url_invalid`, `fair_events_campaign_facts_member_name_missing` | A required fact in an unusable form. |
 
 ## Related Documentation
 

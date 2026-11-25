@@ -528,6 +528,11 @@ class Plugin {
 			}
 		);
 
+		// Answered with the bundle off too, so a complete campaign-facts
+		// read reports images as disabled rather than not supplied.
+		add_filter( 'fair_events_campaign_media', array( \FairEventsExperimental\EventImages\CampaignMedia::class, 'filter' ), 10, 3 );
+		add_filter( 'fair_events_campaign_snapshot_tables', array( \FairEventsExperimental\EventImages\CampaignMedia::class, 'filter_snapshot_tables' ) );
+
 		if ( ! self::event_images_available() ) {
 			return;
 		}
