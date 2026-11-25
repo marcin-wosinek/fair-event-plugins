@@ -7,6 +7,7 @@
 
 namespace FairEventsExperimental\Meta;
 
+use FairEventsShared\Security\CredentialResolver;
 use WP_Error;
 
 defined( 'WPINC' ) || die;
@@ -189,28 +190,11 @@ class Connector {
 	public static function credential() {
 		$authentication = self::authentication();
 
-		$name = (string) ( $authentication['env_var_name'] ?? '' );
-		if ( '' !== $name ) {
-			$value = getenv( $name );
-			if ( is_string( $value ) && '' !== trim( $value ) ) {
-				return self::resolved( $value, 'env' );
-			}
-		}
-
-		$name = (string) ( $authentication['constant_name'] ?? '' );
-		if ( '' !== $name && defined( $name ) ) {
-			$value = constant( $name );
-			if ( is_string( $value ) && '' !== trim( $value ) ) {
-				return self::resolved( $value, 'constant' );
-			}
-		}
-
-		$value = get_option( (string) $authentication['setting_name'], '' );
-		if ( is_string( $value ) && '' !== trim( $value ) ) {
-			return self::resolved( $value, 'database' );
-		}
-
-		return self::resolved( '', 'none' );
+		return CredentialResolver::resolve(
+			(string) ( $authentication['env_var_name'] ?? '' ),
+			(string) ( $authentication['constant_name'] ?? '' ),
+			(string) ( $authentication['setting_name'] ?? '' )
+		);
 	}
 
 	/**
@@ -231,12 +215,7 @@ class Connector {
 	 * @return array{configured: bool, source: string}
 	 */
 	public static function status() {
-		$source = self::credential()['source'];
-
-		return array(
-			'configured' => 'none' !== $source,
-			'source'     => $source,
-		);
+		return CredentialResolver::status( self::credential()['source'] );
 	}
 
 	/**
@@ -246,20 +225,6 @@ class Connector {
 	 */
 	public static function admin_url() {
 		return admin_url( 'options-connectors.php' );
-	}
-
-	/**
-	 * Build a credential result.
-	 *
-	 * @param string $token  Access token.
-	 * @param string $source Where it comes from.
-	 * @return array{token: string, source: string}
-	 */
-	private static function resolved( $token, $source ) {
-		return array(
-			'token'  => trim( $token ),
-			'source' => $source,
-		);
 	}
 
 	/**

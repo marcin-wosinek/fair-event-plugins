@@ -7,6 +7,7 @@
 
 namespace FairEvents\Notifications;
 
+use FairEventsShared\Security\CredentialResolver;
 use WP_Error;
 
 defined( 'WPINC' ) || die;
@@ -167,28 +168,11 @@ class TelegramConnector {
 	public static function credential() {
 		$authentication = self::authentication();
 
-		$name = (string) ( $authentication['env_var_name'] ?? '' );
-		if ( '' !== $name ) {
-			$value = getenv( $name );
-			if ( is_string( $value ) && '' !== trim( $value ) ) {
-				return self::resolved( $value, 'env' );
-			}
-		}
-
-		$name = (string) ( $authentication['constant_name'] ?? '' );
-		if ( '' !== $name && defined( $name ) ) {
-			$value = constant( $name );
-			if ( is_string( $value ) && '' !== trim( $value ) ) {
-				return self::resolved( $value, 'constant' );
-			}
-		}
-
-		$value = get_option( (string) $authentication['setting_name'], '' );
-		if ( is_string( $value ) && '' !== trim( $value ) ) {
-			return self::resolved( $value, 'database' );
-		}
-
-		return self::resolved( '', 'none' );
+		return CredentialResolver::resolve(
+			(string) ( $authentication['env_var_name'] ?? '' ),
+			(string) ( $authentication['constant_name'] ?? '' ),
+			(string) ( $authentication['setting_name'] ?? '' )
+		);
 	}
 
 	/**
@@ -210,11 +194,12 @@ class TelegramConnector {
 	 */
 	public static function status() {
 		$credential = self::credential();
+		$status     = CredentialResolver::status( $credential['source'] );
 
 		return array(
-			'configured' => 'none' !== $credential['source'],
+			'configured' => $status['configured'],
 			'valid'      => TelegramSettings::valid_token( $credential['token'] ),
-			'source'     => $credential['source'],
+			'source'     => $status['source'],
 		);
 	}
 
@@ -269,20 +254,6 @@ class TelegramConnector {
 	 */
 	private static function owned() {
 		return Ownership::owns( Ownership::TELEGRAM );
-	}
-
-	/**
-	 * Build a credential result.
-	 *
-	 * @param string $token  Bot token.
-	 * @param string $source Where it comes from.
-	 * @return array{token: string, source: string}
-	 */
-	private static function resolved( $token, $source ) {
-		return array(
-			'token'  => trim( $token ),
-			'source' => $source,
-		);
 	}
 
 	/**
