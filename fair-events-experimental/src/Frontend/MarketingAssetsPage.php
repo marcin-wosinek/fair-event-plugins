@@ -275,20 +275,19 @@ class MarketingAssetsPage {
 	/**
 	 * Output the document head and open the body.
 	 *
-	 * @param string $title  Document title, as plain text.
+	 * @param string $title  Page title, as plain text; the site name is appended.
 	 * @param int    $status HTTP status.
 	 * @return void
 	 */
 	private static function open_document( $title, $status = 200 ) {
-		add_filter(
-			'document_title_parts',
-			static function ( $parts ) use ( $title ) {
-				// The title is decoded text, and wp_get_document_title()
-				// escapes the parts with esc_html(), which keeps entities:
-				// encode `&` so literal entity text stays literal (#2300).
-				$parts['title'] = str_replace( '&', '&amp;', $title );
-				return $parts;
-			}
+		// The page prints its own <title>, whatever the theme supports, so
+		// core's title tag is left out to avoid a second one.
+		remove_action( 'wp_head', '_wp_render_title_tag', 1 );
+		$document_title = sprintf(
+			/* translators: 1: page title, 2: site name */
+			__( '%1$s – %2$s', 'fair-events-experimental' ),
+			$title,
+			DisplayText::decode( get_bloginfo( 'name' ) )
 		);
 
 		status_header( $status );
@@ -299,6 +298,8 @@ class MarketingAssetsPage {
 <head>
 	<meta charset="<?php bloginfo( 'charset' ); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+		<?php // Decoded text: DisplayText::html() escapes it without a second decode (#2300). ?>
+	<title><?php echo DisplayText::html( $document_title ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- DisplayText::html() escapes decoded text. ?></title>
 		<?php wp_head(); ?>
 </head>
 <body <?php body_class( 'fair-marketing-assets-view' ); ?>>
