@@ -681,10 +681,10 @@ export default function EventAudience( {
 	const handleRecordConsent = async () => {
 		const marketingIds = Object.entries( consentChoices )
 			.filter( ( [ , v ] ) => v === 'yes' )
-			.map( ( [ id ] ) => parseInt( id, 10 ) );
+			.map( ( [ id ] ) => Number.parseInt( id, 10 ) );
 		const declinedIds = Object.entries( consentChoices )
 			.filter( ( [ , v ] ) => v === 'no' )
-			.map( ( [ id ] ) => parseInt( id, 10 ) );
+			.map( ( [ id ] ) => Number.parseInt( id, 10 ) );
 		if ( marketingIds.length === 0 && declinedIds.length === 0 ) return;
 		setIsRecordingConsent( true );
 		try {

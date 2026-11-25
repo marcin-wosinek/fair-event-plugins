@@ -184,7 +184,7 @@ export default function EventEditForm( {
 				data: {
 					...buildTiming(),
 					all_day: allDay,
-					venue_id: venueId ? parseInt( venueId, 10 ) : null,
+					venue_id: venueId ? Number.parseInt( venueId, 10 ) : null,
 					address,
 					rrule: buildRRule( recurrence ),
 				},
@@ -222,7 +222,7 @@ export default function EventEditForm( {
 			id: eventDateId,
 			...buildTiming(),
 			all_day: allDay,
-			venue_id: venueId ? parseInt( venueId, 10 ) : null,
+			venue_id: venueId ? Number.parseInt( venueId, 10 ) : null,
 			address,
 			rrule: buildRRule( recurrence ),
 			occurrence_type: recurrence.enabled ? 'master' : 'single',

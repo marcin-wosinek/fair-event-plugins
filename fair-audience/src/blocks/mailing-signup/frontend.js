@@ -99,7 +99,7 @@ const CSS_PREFIX = 'fair-audience-mailing';
 			} else if ( input.name === 'mailing_weekly_feeds[]' ) {
 				state.weekly = setFeedSelected(
 					state.weekly,
-					parseInt( input.value, 10 ),
+					Number.parseInt( input.value, 10 ),
 					input.checked
 				);
 			}
@@ -183,7 +183,7 @@ const CSS_PREFIX = 'fair-audience-mailing';
 			'input[name="mailing_categories[]"]:checked'
 		);
 		const categoryIds = Array.from( categoryCheckboxes ).map( ( cb ) =>
-			parseInt( cb.value, 10 )
+			Number.parseInt( cb.value, 10 )
 		);
 
 		// Build request data

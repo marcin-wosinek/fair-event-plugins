@@ -279,7 +279,7 @@ export default function ConnectionManagementScreen( {
 								value={ cleanupDays }
 								onChange={ ( value ) =>
 									setCleanupDays(
-										parseInt( value ) ||
+										Number.parseInt( value ) ||
 											DEFAULT_CLEANUP_DAYS
 									)
 								}

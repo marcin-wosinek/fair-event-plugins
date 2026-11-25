@@ -41,7 +41,7 @@ export default function PaymentMethodsTab( { onNotice } ) {
 					settings.fair_payment_disable_banktransfer_near_date ||
 						false
 				);
-				const days = parseInt(
+				const days = Number.parseInt(
 					settings.fair_payment_banktransfer_threshold_days,
 					10
 				);
@@ -136,7 +136,7 @@ export default function PaymentMethodsTab( { onNotice } ) {
 						step={ 1 }
 						value={ thresholdDays }
 						onChange={ ( value ) => {
-							const next = parseInt( value, 10 );
+							const next = Number.parseInt( value, 10 );
 							setThresholdDays(
 								Number.isFinite( next ) ? next : 0
 							);

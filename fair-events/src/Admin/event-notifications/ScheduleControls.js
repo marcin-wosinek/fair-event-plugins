@@ -30,7 +30,7 @@ export default function ScheduleControls( { values, weekHelp, onChange } ) {
 				value={ String( values.day_of_week ) }
 				options={ DAYS }
 				onChange={ ( value ) =>
-					onChange( 'day_of_week', parseInt( value, 10 ) )
+					onChange( 'day_of_week', Number.parseInt( value, 10 ) )
 				}
 			/>
 

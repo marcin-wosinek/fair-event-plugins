@@ -134,7 +134,7 @@ export default function EditExtraMessage() {
 					content,
 					is_active: formData.is_active,
 					category_id: formData.category_id
-						? parseInt( formData.category_id, 10 )
+						? Number.parseInt( formData.category_id, 10 )
 						: null,
 				},
 			} );

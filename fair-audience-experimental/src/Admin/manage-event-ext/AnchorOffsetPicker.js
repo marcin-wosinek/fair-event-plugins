@@ -32,7 +32,7 @@ const UNIT_MINUTES = {
  */
 export function toOffsetMinutes( value, unit, direction ) {
 	const magnitude =
-		Math.abs( parseInt( value, 10 ) || 0 ) * UNIT_MINUTES[ unit ];
+		Math.abs( Number.parseInt( value, 10 ) || 0 ) * UNIT_MINUTES[ unit ];
 	return direction === 'before' ? -magnitude : magnitude;
 }
 
@@ -159,7 +159,9 @@ export default function AnchorOffsetPicker( {
 						value: String( d.id ),
 					} ) ) }
 					onChange={ ( value ) =>
-						onChange( { anchorRefId: parseInt( value, 10 ) } )
+						onChange( {
+							anchorRefId: Number.parseInt( value, 10 ),
+						} )
 					}
 					disabled={ disabled }
 					__nextHasNoMarginBottom
@@ -176,7 +178,9 @@ export default function AnchorOffsetPicker( {
 					min={ 0 }
 					value={ offsetValue }
 					onChange={ ( value ) =>
-						onChange( { offsetValue: parseInt( value, 10 ) || 0 } )
+						onChange( {
+							offsetValue: Number.parseInt( value, 10 ) || 0,
+						} )
 					}
 					disabled={ disabled }
 					__nextHasNoMarginBottom

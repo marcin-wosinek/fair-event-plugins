@@ -250,7 +250,7 @@ export default function InstagramChannel( {
 					value={ String( form.page_id || 0 ) }
 					options={ pageOptions }
 					onChange={ ( value ) =>
-						setField( 'page_id', parseInt( value, 10 ) || 0 )
+						setField( 'page_id', Number.parseInt( value, 10 ) || 0 )
 					}
 				/>
 

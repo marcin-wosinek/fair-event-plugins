@@ -230,7 +230,7 @@ const CSS_PREFIX = 'fair-audience-audience';
 
 		// Include participant_id if linked via participant token
 		const participantId = container.dataset.participantId
-			? parseInt( container.dataset.participantId, 10 )
+			? Number.parseInt( container.dataset.participantId, 10 )
 			: null;
 		if ( participantId ) {
 			requestData.participant_id = participantId;
@@ -246,7 +246,7 @@ const CSS_PREFIX = 'fair-audience-audience';
 
 		// Include event_date_id if linked to an event
 		const eventDateId = container.dataset.eventDateId
-			? parseInt( container.dataset.eventDateId, 10 )
+			? Number.parseInt( container.dataset.eventDateId, 10 )
 			: null;
 		if ( eventDateId ) {
 			requestData.event_date_id = eventDateId;
@@ -254,7 +254,7 @@ const CSS_PREFIX = 'fair-audience-audience';
 
 		// Include post_id for answer emails
 		const postId = container.dataset.postId
-			? parseInt( container.dataset.postId, 10 )
+			? Number.parseInt( container.dataset.postId, 10 )
 			: null;
 		if ( postId ) {
 			requestData.post_id = postId;

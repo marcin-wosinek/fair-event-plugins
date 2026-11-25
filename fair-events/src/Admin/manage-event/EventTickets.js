@@ -205,12 +205,14 @@ export default function EventTickets( {
 	const hasPurchasablePrice =
 		Object.values( prices ).some(
 			( cell ) =>
-				cell && cell.enabled !== false && parseFloat( cell.price ) > 0
+				cell &&
+				cell.enabled !== false &&
+				Number.parseFloat( cell.price ) > 0
 		) ||
 		options.some( ( o ) => {
-			if ( parseFloat( o.price ) > 0 ) return true;
+			if ( Number.parseFloat( o.price ) > 0 ) return true;
 			return Object.values( o.period_prices_map || {} ).some(
-				( v ) => parseFloat( v ) > 0
+				( v ) => Number.parseFloat( v ) > 0
 			);
 		} );
 	const showPaymentsWarning = paymentsUnavailable && hasPurchasablePrice;
@@ -329,10 +331,10 @@ export default function EventTickets( {
 				exportPrices.push( {
 					ticket_type_index: tIndex,
 					sale_period_index: pIndex,
-					price: parseFloat( cell.price ) || 0,
+					price: Number.parseFloat( cell.price ) || 0,
 					capacity:
 						cell.capacity !== ''
-							? parseInt( cell.capacity, 10 )
+							? Number.parseInt( cell.capacity, 10 )
 							: null,
 				} );
 			} );
@@ -342,7 +344,7 @@ export default function EventTickets( {
 			version: 1,
 			type: 'fair-events-tickets',
 			exported_at: new Date().toISOString(),
-			capacity: capacity !== '' ? parseInt( capacity, 10 ) : null,
+			capacity: capacity !== '' ? Number.parseInt( capacity, 10 ) : null,
 			settings,
 			ticket_types: ticketTypes.map( ( t ) => ( {
 				name: t.name || '',
@@ -656,7 +658,7 @@ export default function EventTickets( {
 			if ( raw === undefined || raw === '' ) return;
 			const entry = {
 				sale_period_index: pIdx,
-				price: parseFloat( raw ) || 0,
+				price: Number.parseFloat( raw ) || 0,
 			};
 			if ( p.id ) entry.sale_period_id = p.id;
 			out.push( entry );
@@ -928,17 +930,17 @@ export default function EventTickets( {
 				pricesArray.push( {
 					ticket_type_index: tIndex,
 					sale_period_index: pIndex,
-					price: parseFloat( val.price ) || 0,
+					price: Number.parseFloat( val.price ) || 0,
 					capacity:
 						val.capacity !== ''
-							? parseInt( val.capacity, 10 )
+							? Number.parseInt( val.capacity, 10 )
 							: null,
 				} );
 			} );
 		} );
 
 		return {
-			capacity: capacity !== '' ? parseInt( capacity, 10 ) : null,
+			capacity: capacity !== '' ? Number.parseInt( capacity, 10 ) : null,
 			ticket_types: ticketTypes.map(
 				( { client_key: _unusedKey, ...t }, i ) => ( {
 					...t,
@@ -1895,7 +1897,7 @@ export default function EventTickets( {
 																		tIndex,
 																		'capacity',
 																		v !== ''
-																			? parseInt(
+																			? Number.parseInt(
 																					v,
 																					10
 																				)
@@ -2038,7 +2040,7 @@ export default function EventTickets( {
 																						''
 																						? Math.max(
 																								0,
-																								parseInt(
+																								Number.parseInt(
 																									v,
 																									10
 																								) ||
@@ -2514,8 +2516,10 @@ export default function EventTickets( {
 												? 0
 												: Math.max(
 														0,
-														parseInt( value, 10 ) ||
-															0
+														Number.parseInt(
+															value,
+															10
+														) || 0
 													),
 									} ) )
 								}
@@ -2683,7 +2687,7 @@ export default function EventTickets( {
 																					price:
 																						v !==
 																						''
-																							? parseFloat(
+																							? Number.parseFloat(
 																									v
 																								)
 																							: 0,
@@ -2733,7 +2737,7 @@ export default function EventTickets( {
 																				v ===
 																				''
 																					? null
-																					: parseInt(
+																					: Number.parseInt(
 																							v,
 																							10
 																						),

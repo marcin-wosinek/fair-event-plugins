@@ -110,15 +110,16 @@ export default function FeesList() {
 				id: 'amount',
 				label: __( 'Amount', 'fair-audience-experimental' ),
 				render: ( { item } ) => {
-					const amountText = `${ parseFloat( item.amount ).toFixed(
-						2
-					) } ${ item.currency }`;
-					const memberCount = parseInt( item.member_count ) || 0;
+					const amountText = `${ Number.parseFloat(
+						item.amount
+					).toFixed( 2 ) } ${ item.currency }`;
+					const memberCount =
+						Number.parseInt( item.member_count ) || 0;
 					if ( memberCount > 0 ) {
 						const totalAmount = (
-							parseFloat( item.amount ) * memberCount
+							Number.parseFloat( item.amount ) * memberCount
 						).toFixed( 2 );
-						const tooltipText = `${ parseFloat(
+						const tooltipText = `${ Number.parseFloat(
 							item.amount
 						).toFixed( 2 ) } ${
 							item.currency
@@ -137,7 +138,7 @@ export default function FeesList() {
 					return amountText;
 				},
 				enableSorting: true,
-				getValue: ( { item } ) => parseFloat( item.amount ),
+				getValue: ( { item } ) => Number.parseFloat( item.amount ),
 			},
 			{
 				id: 'due_date',
@@ -173,7 +174,7 @@ export default function FeesList() {
 					</div>
 				),
 				enableSorting: false,
-				getValue: ( { item } ) => parseInt( item.pending_count ),
+				getValue: ( { item } ) => Number.parseInt( item.pending_count ),
 			},
 			{
 				id: 'paid_count',
@@ -184,7 +185,7 @@ export default function FeesList() {
 					</div>
 				),
 				enableSorting: false,
-				getValue: ( { item } ) => parseInt( item.paid_count ),
+				getValue: ( { item } ) => Number.parseInt( item.paid_count ),
 			},
 		],
 		[]
@@ -211,7 +212,7 @@ export default function FeesList() {
 
 		apiFetch( { path, parse: false } )
 			.then( ( response ) => {
-				const total = parseInt(
+				const total = Number.parseInt(
 					response.headers.get( 'X-WP-Total' ) || '0',
 					10
 				);
@@ -276,11 +277,11 @@ export default function FeesList() {
 			data: {
 				name: feeName.trim(),
 				description: feeDescription.trim(),
-				group_id: parseInt( feeGroupId ),
-				amount: parseFloat( feeAmount ),
+				group_id: Number.parseInt( feeGroupId ),
+				amount: Number.parseFloat( feeAmount ),
 				due_date: feeDueDate || null,
 				budget_id: selectedBudgetId
-					? parseInt( selectedBudgetId, 10 )
+					? Number.parseInt( selectedBudgetId, 10 )
 					: null,
 			},
 		} )
@@ -332,7 +333,7 @@ export default function FeesList() {
 		// Left out unless changed, so the fee keeps the budget it has.
 		if ( editBudgetChanged ) {
 			data.budget_id = selectedEditBudgetId
-				? parseInt( selectedEditBudgetId, 10 )
+				? Number.parseInt( selectedEditBudgetId, 10 )
 				: null;
 		}
 
@@ -516,9 +517,9 @@ export default function FeesList() {
 								'%1$s per member of %2$s.',
 								'fair-audience-experimental'
 							),
-							`${ parseFloat( deleteFee.target.amount ).toFixed(
-								2
-							) } ${ deleteFee.target.currency }`,
+							`${ Number.parseFloat(
+								deleteFee.target.amount
+							).toFixed( 2 ) } ${ deleteFee.target.currency }`,
 							deleteFee.target.group_name || '—'
 						) }
 					</p>
@@ -528,23 +529,28 @@ export default function FeesList() {
 							_n(
 								'This also deletes the payment record of its %d member, including its paid status and change history.',
 								'This also deletes the payment records of its %d members, including their paid status and change history.',
-								parseInt( deleteFee.target.member_count ) || 0,
+								Number.parseInt(
+									deleteFee.target.member_count
+								) || 0,
 								'fair-audience-experimental'
 							),
-							parseInt( deleteFee.target.member_count ) || 0
+							Number.parseInt( deleteFee.target.member_count ) ||
+								0
 						) }
 					</p>
-					{ parseInt( deleteFee.target.paid_count ) > 0 && (
+					{ Number.parseInt( deleteFee.target.paid_count ) > 0 && (
 						<p>
 							{ sprintf(
 								/* translators: %d: number of payment records marked paid */
 								_n(
 									'%d of them is marked paid.',
 									'%d of them are marked paid.',
-									parseInt( deleteFee.target.paid_count ),
+									Number.parseInt(
+										deleteFee.target.paid_count
+									),
 									'fair-audience-experimental'
 								),
-								parseInt( deleteFee.target.paid_count )
+								Number.parseInt( deleteFee.target.paid_count )
 							) }
 						</p>
 					) }

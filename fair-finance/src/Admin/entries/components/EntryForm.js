@@ -87,9 +87,9 @@ const EntryForm = ( {
 		try {
 			const data = {
 				...formData,
-				amount: parseFloat( formData.amount ),
+				amount: Number.parseFloat( formData.amount ),
 				budget_id: formData.budget_id
-					? parseInt( formData.budget_id, 10 )
+					? Number.parseInt( formData.budget_id, 10 )
 					: null,
 				event_url: formData.event_url || null,
 				event_date_id: formData.event_date_id || null,

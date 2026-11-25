@@ -107,7 +107,7 @@ const EditableField = ( {
 
 	const handleSave = () => {
 		setSaving( true );
-		onSave( fieldName, inputValue ? parseInt( inputValue, 10 ) : 0 )
+		onSave( fieldName, inputValue ? Number.parseInt( inputValue, 10 ) : 0 )
 			.then( () => {
 				setEditing( false );
 			} )

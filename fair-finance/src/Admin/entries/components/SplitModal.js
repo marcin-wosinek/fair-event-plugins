@@ -241,15 +241,15 @@ const SplitModal = ( {
 	};
 
 	const totalAllocated = allocations.reduce(
-		( sum, a ) => sum + ( parseFloat( a.amount ) || 0 ),
+		( sum, a ) => sum + ( Number.parseFloat( a.amount ) || 0 ),
 		0
 	);
 	const remaining = entry.amount - totalAllocated;
 	const isBalanced = Math.abs( remaining ) < 0.01;
 	const allAmountsNonzero = allocations.every(
 		( a ) =>
-			! Number.isNaN( parseFloat( a.amount ) ) &&
-			parseFloat( a.amount ) !== 0
+			! Number.isNaN( Number.parseFloat( a.amount ) ) &&
+			Number.parseFloat( a.amount ) !== 0
 	);
 
 	const handleSubmit = async ( e ) => {
@@ -265,9 +265,9 @@ const SplitModal = ( {
 					allocations: allocations.map( ( a ) => ( {
 						...( isEditMode && a.id ? { id: a.id } : {} ),
 						budget_id: a.budget_id
-							? parseInt( a.budget_id, 10 )
+							? Number.parseInt( a.budget_id, 10 )
 							: null,
-						amount: parseFloat( a.amount ),
+						amount: Number.parseFloat( a.amount ),
 						description: a.description,
 						event_url: a.event_url || null,
 						event_date_id: a.event_date_id || null,

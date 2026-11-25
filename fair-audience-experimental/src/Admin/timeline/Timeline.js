@@ -38,7 +38,7 @@ export default function Timeline() {
 				parse: false,
 			} );
 
-			const totalPages = parseInt(
+			const totalPages = Number.parseInt(
 				response.headers.get( 'X-WP-TotalPages' ),
 				10
 			);

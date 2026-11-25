@@ -83,8 +83,8 @@ test.describe( 'Timetable Length E2E Tests', () => {
 		} );
 
 		// Parse heights to numbers for comparison
-		const initialHeightNum = parseFloat( initialHeight );
-		const newHeightNum = parseFloat( newHeight );
+		const initialHeightNum = Number.parseFloat( initialHeight );
+		const newHeightNum = Number.parseFloat( newHeight );
 
 		// Debug: log the height values to understand what's happening
 		console.log(
@@ -103,7 +103,7 @@ test.describe( 'Timetable Length E2E Tests', () => {
 		expect( newHeightNum ).not.toBe( initialHeightNum );
 
 		// Verify the height changed in the expected direction
-		if ( parseInt( newLength ) > parseInt( currentLength ) ) {
+		if ( Number.parseInt( newLength ) > Number.parseInt( currentLength ) ) {
 			// If length increased, height should increase
 			expect( newHeightNum ).toBeGreaterThan( initialHeightNum );
 		} else {
@@ -114,7 +114,7 @@ test.describe( 'Timetable Length E2E Tests', () => {
 		// Verify the height matches the expected calculation
 		// hourHeight default is 4em, so expected height = length * hourHeight
 		const hourHeight = 4; // Default from timetable block
-		const expectedHeight = parseInt( newLength ) * hourHeight;
+		const expectedHeight = Number.parseInt( newLength ) * hourHeight;
 		expect( newHeightNum ).toBe( expectedHeight * 16 );
 
 		// Also verify that the CSS custom property is updated

@@ -49,7 +49,8 @@ export async function fetchHistory( path, query = {} ) {
 		throw error;
 	}
 	const items = await response.json();
-	const header = ( name ) => parseInt( response.headers?.get( name ), 10 );
+	const header = ( name ) =>
+		Number.parseInt( response.headers?.get( name ), 10 );
 	return {
 		items,
 		total: header( 'X-WP-Total' ) || 0,

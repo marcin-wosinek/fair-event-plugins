@@ -220,7 +220,7 @@ export default function EditComponent( {
 		const matchingOption = durationOptions.find(
 			( option ) =>
 				option.value !== 'other' &&
-				parseInt( option.value ) === currentDuration
+				Number.parseInt( option.value ) === currentDuration
 		);
 
 		return matchingOption ? matchingOption.value : 'other';
@@ -241,7 +241,7 @@ export default function EditComponent( {
 		const matchingOption = allDayLengthOptions.find(
 			( option ) =>
 				option.value !== 'other' &&
-				parseInt( option.value ) === currentLength
+				Number.parseInt( option.value ) === currentLength
 		);
 
 		return matchingOption ? matchingOption.value : 'other';
@@ -265,7 +265,7 @@ export default function EditComponent( {
 
 	// Handle repeat count change
 	const handleRepeatCountChange = ( newCount ) => {
-		const count = newCount ? parseInt( newCount ) : null;
+		const count = newCount ? Number.parseInt( newCount ) : null;
 		const newRecurrence = {
 			...recurrence,
 			count,

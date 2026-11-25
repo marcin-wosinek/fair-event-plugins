@@ -166,7 +166,7 @@ test.describe( 'GetTicketsController — irregular (manual) series whole_series 
 			( s ) => s.ticket_type_id === ticketTypeId
 		);
 		expect( signup ).toBeTruthy();
-		expect( parseFloat( signup.amount ) ).toBe( 25 );
+		expect( Number.parseFloat( signup.amount ) ).toBe( 25 );
 		expect( signup.status ).toBe( 'pending_payment' );
 	} );
 } );

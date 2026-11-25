@@ -165,7 +165,7 @@ const ImportModal = ( { onImport, onCancel } ) => {
 					entries: parsedEntries,
 					import_source: file?.name || null,
 					bank_account_id: accountId
-						? parseInt( accountId, 10 )
+						? Number.parseInt( accountId, 10 )
 						: null,
 				},
 			} );

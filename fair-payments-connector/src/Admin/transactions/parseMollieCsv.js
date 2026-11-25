@@ -59,7 +59,7 @@ export const parseMollieCsv = ( text ) => {
 			const rawStatus = ( values[ idxStatus ] || '' ).toLowerCase();
 			return {
 				mollie_payment_id: values[ idxId ] || '',
-				amount: parseFloat( values[ idxAmount ] ) || 0,
+				amount: Number.parseFloat( values[ idxAmount ] ) || 0,
 				currency: values[ idxCurrency ] || 'EUR',
 				status: mollieStatusMap[ rawStatus ] || rawStatus,
 				description:

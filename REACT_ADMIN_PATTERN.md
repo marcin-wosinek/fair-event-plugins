@@ -326,7 +326,7 @@ function initializeApp() {
 
 	// Read bootstrap data from PHP once; component state owns later changes.
 	const initialData = {
-		userId: parseInt(rootElement.dataset.userId, 10),
+		userId: Number.parseInt(rootElement.dataset.userId, 10),
 		// ... other data from PHP
 	};
 

@@ -19,7 +19,7 @@ export function getMessageId( location = window.location ) {
 	if ( value === null || ! /^\d+$/.test( value ) ) {
 		return null;
 	}
-	const id = parseInt( value, 10 );
+	const id = Number.parseInt( value, 10 );
 	return id > 0 ? id : null;
 }
 

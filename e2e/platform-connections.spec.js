@@ -165,8 +165,8 @@ const measureLayout = ( page ) =>
 					const text = select.selectedOptions[ 0 ].textContent;
 					const needed =
 						canvas.measureText( text ).width +
-						parseFloat( style.paddingLeft ) +
-						parseFloat( style.paddingRight );
+						Number.parseFloat( style.paddingLeft ) +
+						Number.parseFloat( style.paddingRight );
 					return select.clientWidth + 1 < needed;
 				} )
 				.map( name ),

@@ -84,7 +84,7 @@ export default function EditComponent( { attributes, setAttributes } ) {
 			options={ venueOptions }
 			onChange={ ( value ) =>
 				setAttributes( {
-					venueId: value ? parseInt( value, 10 ) : undefined,
+					venueId: value ? Number.parseInt( value, 10 ) : undefined,
 				} )
 			}
 		/>

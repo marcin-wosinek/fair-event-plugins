@@ -159,7 +159,9 @@ const ConnectedSitesApp = () => {
 				const data = {
 					label,
 					base_url: baseUrl,
-					budget_id: budgetId ? parseInt( budgetId, 10 ) : null,
+					budget_id: budgetId
+						? Number.parseInt( budgetId, 10 )
+						: null,
 				};
 				if ( token ) {
 					data.token = token;
@@ -183,7 +185,9 @@ const ConnectedSitesApp = () => {
 						label,
 						base_url: baseUrl,
 						token,
-						budget_id: budgetId ? parseInt( budgetId, 10 ) : null,
+						budget_id: budgetId
+							? Number.parseInt( budgetId, 10 )
+							: null,
 					},
 				} );
 				setSuccess(

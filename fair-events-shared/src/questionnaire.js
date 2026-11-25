@@ -616,7 +616,7 @@ export function validateQuestions( form ) {
 		}
 
 		const file = fileInput.files[ 0 ];
-		const maxSizeMB = parseInt( el.dataset.maxFileSize, 10 ) || 5;
+		const maxSizeMB = Number.parseInt( el.dataset.maxFileSize, 10 ) || 5;
 		const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
 		if ( file.size > maxSizeBytes ) {

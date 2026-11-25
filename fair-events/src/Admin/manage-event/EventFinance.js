@@ -146,7 +146,11 @@ export default function EventFinance( {
 			const updated = await apiFetch( {
 				path: `/fair-events/v1/event-dates/${ eventDateId }/budget`,
 				method: 'PUT',
-				data: { budget_id: budgetId ? parseInt( budgetId, 10 ) : null },
+				data: {
+					budget_id: budgetId
+						? Number.parseInt( budgetId, 10 )
+						: null,
+				},
 			} );
 			const newBudgetId = updated.budget_id
 				? String( updated.budget_id )

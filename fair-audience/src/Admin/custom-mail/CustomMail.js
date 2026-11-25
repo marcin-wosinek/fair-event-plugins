@@ -162,7 +162,7 @@ export default function CustomMail( { onOpenMail, focusMailId = null } = {} ) {
 			data.group_ids = groupsKey.split( ',' ).map( Number );
 		}
 		if ( eventSelected ) {
-			data.event_date_id = parseInt( draft.eventDateId, 10 );
+			data.event_date_id = Number.parseInt( draft.eventDateId, 10 );
 			data.labels = labelsKey.split( ',' );
 		}
 
@@ -290,7 +290,7 @@ export default function CustomMail( { onOpenMail, focusMailId = null } = {} ) {
 			data.group_ids = draft.groupIds;
 		}
 		if ( eventSelected ) {
-			data.event_date_id = parseInt( draft.eventDateId, 10 );
+			data.event_date_id = Number.parseInt( draft.eventDateId, 10 );
 			data.labels = selectedLabels;
 		}
 

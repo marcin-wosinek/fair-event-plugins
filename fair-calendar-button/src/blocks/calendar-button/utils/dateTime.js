@@ -33,7 +33,10 @@ export const calculateEndTime = ( startTime, durationMinutes ) => {
 		}
 
 		// Add the duration minutes to get end time
-		const endDate = addMinutes( startDate, parseInt( durationMinutes ) );
+		const endDate = addMinutes(
+			startDate,
+			Number.parseInt( durationMinutes )
+		);
 
 		// Format for datetime-local input (YYYY-MM-DDTHH:mm)
 		return format( endDate, "yyyy-MM-dd'T'HH:mm" );

@@ -41,7 +41,7 @@ const CSS_PREFIX = 'fair-audience-signup';
 			'.fair-audience-event-interest-message'
 		);
 
-		const eventId = parseInt( container.dataset.eventId, 10 );
+		const eventId = Number.parseInt( container.dataset.eventId, 10 );
 		const successMessage =
 			container.dataset.successMessage ||
 			__( 'Thanks! Check your inbox for confirmation.', 'fair-audience' );

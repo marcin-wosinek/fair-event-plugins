@@ -157,7 +157,7 @@ const readFocusFromUrl = () => {
 	if ( ! /^[1-9]\d*$/.test( raw ) ) {
 		return { id: null, invalid: true };
 	}
-	return { id: parseInt( raw, 10 ), invalid: false };
+	return { id: Number.parseInt( raw, 10 ), invalid: false };
 };
 
 /**

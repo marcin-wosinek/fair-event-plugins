@@ -35,7 +35,7 @@ export default function EditComponent( { attributes, context } ) {
 		}
 
 		let cancelled = false;
-		const currentPostId = parseInt( postId, 10 );
+		const currentPostId = Number.parseInt( postId, 10 );
 
 		apiFetch( { path: '/fair-events/v1/event-dates?include_linked=true' } )
 			.then( ( eventDates ) => {

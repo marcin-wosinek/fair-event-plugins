@@ -188,7 +188,7 @@ export default function EditPoll() {
 				path,
 				method,
 				data: {
-					event_id: parseInt( formData.event_id ),
+					event_id: Number.parseInt( formData.event_id ),
 					title: formData.title,
 					question: formData.question,
 					status: formData.status,

@@ -135,7 +135,7 @@ export default function EventLinkModal( {
 				path: `/fair-events/v1/event-dates/${ eventDateId }/link-post`,
 				method: 'POST',
 				data: {
-					post_id: parseInt( linkPostId, 10 ),
+					post_id: Number.parseInt( linkPostId, 10 ),
 				},
 			} );
 			setLinkPostId( '' );

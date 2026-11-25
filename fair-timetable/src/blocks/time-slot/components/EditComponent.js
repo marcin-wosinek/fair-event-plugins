@@ -128,7 +128,7 @@ export default function EditComponent( {
 
 	// Handle length change while keeping start time constant
 	const handleLengthChange = ( newLength ) => {
-		timeSlot.setDuration( parseFloat( newLength ) );
+		timeSlot.setDuration( Number.parseFloat( newLength ) );
 		setAttributes( {
 			endTime: timeSlot.getEndTime(),
 		} );

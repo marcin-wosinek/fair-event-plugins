@@ -61,7 +61,7 @@ export function useEventSync( { enabled, postId, isCurrentPost } ) {
 		setRequest( { postId, phase: 'loading' } );
 
 		apiFetch( {
-			path: `/fair-events/v1/event-dates?event_id=${ parseInt(
+			path: `/fair-events/v1/event-dates?event_id=${ Number.parseInt(
 				postId,
 				10
 			) }`,
@@ -109,7 +109,7 @@ export function useEventSync( { enabled, postId, isCurrentPost } ) {
 		setVenueRequest( { venueId, phase: 'loading' } );
 
 		apiFetch( {
-			path: `/fair-events/v1/venues/${ parseInt( venueId, 10 ) }`,
+			path: `/fair-events/v1/venues/${ Number.parseInt( venueId, 10 ) }`,
 		} )
 			.then( ( venue ) => {
 				if ( ! cancelled ) {

@@ -399,7 +399,7 @@ export default function ManageEventApp() {
 					start_time: timeValue( startTime ),
 					end_time: timeValue( endTime ),
 					all_day: allDay,
-					venue_id: venueId ? parseInt( venueId, 10 ) : null,
+					venue_id: venueId ? Number.parseInt( venueId, 10 ) : null,
 					address,
 					attendance_mode: attendanceMode,
 					joining_link:

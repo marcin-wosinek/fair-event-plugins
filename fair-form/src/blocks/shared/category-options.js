@@ -48,7 +48,8 @@ export async function fetchAllCategories() {
 			parse: false,
 		} );
 		totalPages =
-			parseInt( response.headers.get( 'X-WP-TotalPages' ), 10 ) || 1;
+			Number.parseInt( response.headers.get( 'X-WP-TotalPages' ), 10 ) ||
+			1;
 		categories.push( ...( await response.json() ) );
 		page++;
 	} while ( page <= totalPages );

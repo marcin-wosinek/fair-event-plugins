@@ -61,7 +61,7 @@ const SourceForm = ( { source, onSuccess, onCancel } ) => {
 				slug,
 				data_sources: dataSources,
 				enabled,
-				page_id: pageId ? parseInt( pageId, 10 ) : null,
+				page_id: pageId ? Number.parseInt( pageId, 10 ) : null,
 			};
 
 			if ( source ) {
