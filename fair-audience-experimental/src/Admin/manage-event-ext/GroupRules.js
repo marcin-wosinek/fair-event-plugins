@@ -208,7 +208,8 @@ function EventGroupRules( { eventDateId } ) {
 	const handleAdd = async () => {
 		if ( ! selectedGroupId ) return;
 
-		const hasDiscount = discountValue && parseFloat( discountValue ) > 0;
+		const hasDiscount =
+			discountValue && Number.parseFloat( discountValue ) > 0;
 		const selectedPerms = PERMISSION_TYPES.filter(
 			( p ) => addPermissions[ p ]
 		);
@@ -228,9 +229,9 @@ function EventGroupRules( { eventDateId } ) {
 						path: `/fair-events/v1/event-dates/${ eventDateId }/group-pricing-rules`,
 						method: 'POST',
 						data: {
-							group_id: parseInt( selectedGroupId, 10 ),
+							group_id: Number.parseInt( selectedGroupId, 10 ),
 							discount_type: discountType,
-							discount_value: parseFloat( discountValue ),
+							discount_value: Number.parseFloat( discountValue ),
 						},
 					} )
 				);
@@ -242,7 +243,7 @@ function EventGroupRules( { eventDateId } ) {
 						path: `/fair-events/v1/event-dates/${ eventDateId }/group-permission-rules`,
 						method: 'POST',
 						data: {
-							group_id: parseInt( selectedGroupId, 10 ),
+							group_id: Number.parseInt( selectedGroupId, 10 ),
 							permission_type: perm,
 						},
 					} )
@@ -296,7 +297,7 @@ function EventGroupRules( { eventDateId } ) {
 
 		try {
 			const hasNewDiscount =
-				editDiscountValue && parseFloat( editDiscountValue ) > 0;
+				editDiscountValue && Number.parseFloat( editDiscountValue ) > 0;
 
 			if ( groupEntry.pricing && hasNewDiscount ) {
 				// Update existing pricing rule
@@ -305,7 +306,7 @@ function EventGroupRules( { eventDateId } ) {
 					method: 'PUT',
 					data: {
 						discount_type: editDiscountType,
-						discount_value: parseFloat( editDiscountValue ),
+						discount_value: Number.parseFloat( editDiscountValue ),
 					},
 				} );
 			} else if ( groupEntry.pricing && ! hasNewDiscount ) {
@@ -322,7 +323,7 @@ function EventGroupRules( { eventDateId } ) {
 					data: {
 						group_id: groupEntry.groupId,
 						discount_type: editDiscountType,
-						discount_value: parseFloat( editDiscountValue ),
+						discount_value: Number.parseFloat( editDiscountValue ),
 					},
 				} );
 			}

@@ -358,11 +358,11 @@ export default function AllParticipants() {
 
 		apiFetch( { path, parse: false } )
 			.then( ( response ) => {
-				const total = parseInt(
+				const total = Number.parseInt(
 					response.headers.get( 'X-WP-Total' ) || '0',
 					10
 				);
-				const pages = parseInt(
+				const pages = Number.parseInt(
 					response.headers.get( 'X-WP-TotalPages' ) || '1',
 					10
 				);

@@ -212,7 +212,9 @@ export default function WeeklyUpdatePanel( { attributes, setAttributes } ) {
 						} ) ),
 					] }
 					onChange={ ( value ) =>
-						setAttributes( { feedId: parseInt( value, 10 ) || 0 } )
+						setAttributes( {
+							feedId: Number.parseInt( value, 10 ) || 0,
+						} )
 					}
 				/>
 			) }

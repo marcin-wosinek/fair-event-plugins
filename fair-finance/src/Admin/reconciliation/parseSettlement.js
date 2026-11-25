@@ -30,7 +30,7 @@ function parseNumber( value ) {
 	if ( cleaned === '' || cleaned === '-' || cleaned === '.' ) {
 		return 0;
 	}
-	const parsed = parseFloat( cleaned );
+	const parsed = Number.parseFloat( cleaned );
 	return Number.isFinite( parsed ) ? parsed : 0;
 }
 

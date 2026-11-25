@@ -57,7 +57,7 @@ export function parseEntryRows( rows ) {
 		const dateStr = date.toISOString().split( 'T' )[ 0 ];
 
 		const description = row[ 2 ] || '';
-		const amount = parseFloat( row[ 3 ] ) || 0;
+		const amount = Number.parseFloat( row[ 3 ] ) || 0;
 		const nroApunte = row[ 5 ] || i; // Use row index as fallback
 
 		// Determine entry type based on amount sign

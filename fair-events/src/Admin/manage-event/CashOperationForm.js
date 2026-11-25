@@ -39,7 +39,7 @@ export function parseAmount( value ) {
 	if ( ! AMOUNT_PATTERN.test( trimmed ) ) {
 		return null;
 	}
-	const amount = parseFloat( trimmed.replace( ',', '.' ) );
+	const amount = Number.parseFloat( trimmed.replace( ',', '.' ) );
 	return Number.isFinite( amount ) ? amount : null;
 }
 

@@ -157,7 +157,7 @@ test.describe( 'EventDatesController — grouped all-events list', () => {
 		);
 		expect( resFiltered.ok() ).toBeTruthy();
 		const bodyFiltered = await resFiltered.json();
-		const totalFiltered = parseInt(
+		const totalFiltered = Number.parseInt(
 			resFiltered.headers()[ 'x-wp-total' ] || '0',
 			10
 		);
@@ -248,8 +248,11 @@ test.describe( 'EventDatesController — all-events list query safety', () => {
 		return {
 			body,
 			ids: body.map( ( item ) => item.id ),
-			total: parseInt( res.headers()[ 'x-wp-total' ], 10 ),
-			totalPages: parseInt( res.headers()[ 'x-wp-totalpages' ], 10 ),
+			total: Number.parseInt( res.headers()[ 'x-wp-total' ], 10 ),
+			totalPages: Number.parseInt(
+				res.headers()[ 'x-wp-totalpages' ],
+				10
+			),
 		};
 	};
 

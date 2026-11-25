@@ -108,7 +108,7 @@ export function parsePOContent(content) {
 			// Handle plural forms: msgstr[0], msgstr[1]
 			const pluralMatch = line.match(/msgstr\[(\d+)\]/);
 			if (pluralMatch) {
-				const index = parseInt(pluralMatch[1], 10);
+				const index = Number.parseInt(pluralMatch[1], 10);
 				if (!currentEntry.msgstr) currentEntry.msgstr = [];
 				currentEntry.msgstr[index] = parseString(line);
 				currentField = `msgstr[${index}]`;
@@ -132,7 +132,7 @@ export function parsePOContent(content) {
 				// Handle plural forms
 				const pluralMatch = currentField.match(/msgstr\[(\d+)\]/);
 				if (pluralMatch) {
-					const index = parseInt(pluralMatch[1], 10);
+					const index = Number.parseInt(pluralMatch[1], 10);
 					currentEntry.msgstr[index] += value;
 				} else {
 					// Append to current field

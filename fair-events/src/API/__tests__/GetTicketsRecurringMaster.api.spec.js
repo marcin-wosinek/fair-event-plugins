@@ -168,7 +168,7 @@ test.describe( 'GetTicketsController — recurring series master pivot', () => {
 		);
 		expect( signup ).toBeTruthy();
 		// Server-resolved amount confirms the price lookup pivoted to the master.
-		expect( parseFloat( signup.amount ) ).toBe( 12.5 );
+		expect( Number.parseFloat( signup.amount ) ).toBe( 12.5 );
 		expect( signup.status ).toBe( 'pending_payment' );
 
 		const masterSignupsRes = await api.get(

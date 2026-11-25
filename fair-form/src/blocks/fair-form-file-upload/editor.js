@@ -75,7 +75,8 @@ registerFormBlockType( 'fair-form-file-upload', {
 							value={ maxFileSize }
 							onChange={ ( value ) =>
 								setAttributes( {
-									maxFileSize: parseInt( value, 10 ) || 5,
+									maxFileSize:
+										Number.parseInt( value, 10 ) || 5,
 								} )
 							}
 							min={ 1 }

@@ -25,8 +25,8 @@ export function measureStatisticsLayout(page) {
 			const style = getComputedStyle(element);
 			return (
 				element.clientWidth -
-				parseFloat(style.paddingLeft) -
-				parseFloat(style.paddingRight)
+				Number.parseFloat(style.paddingLeft) -
+				Number.parseFloat(style.paddingRight)
 			);
 		};
 		const pairs = [

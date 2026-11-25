@@ -95,7 +95,9 @@ function EventDateSelect( { eventDateId, onChange } ) {
 			label={ __( 'Event', 'fair-form' ) }
 			value={ eventDateId ? String( eventDateId ) : '' }
 			options={ options }
-			onChange={ ( value ) => onChange( parseInt( value, 10 ) || 0 ) }
+			onChange={ ( value ) =>
+				onChange( Number.parseInt( value, 10 ) || 0 )
+			}
 			help={ __(
 				'Optional. Link this form to a specific event.',
 				'fair-form'

@@ -117,7 +117,7 @@ export default function SettingsApp() {
 				state,
 				access_token: accessToken,
 				refresh_token: refreshToken,
-				expires_in: parseInt( expiresIn, 10 ) || 0,
+				expires_in: Number.parseInt( expiresIn, 10 ) || 0,
 				organization_id: orgId || '',
 				profile_id: profileId || '',
 				test_mode: testMode === '1',

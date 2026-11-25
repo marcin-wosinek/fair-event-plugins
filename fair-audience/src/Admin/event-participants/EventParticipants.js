@@ -323,7 +323,7 @@ export default function EventParticipants() {
 		if ( ! addGroupFilter ) {
 			return availableParticipants;
 		}
-		const groupId = parseInt( addGroupFilter, 10 );
+		const groupId = Number.parseInt( addGroupFilter, 10 );
 		return availableParticipants.filter(
 			( p ) => p.groups && p.groups.some( ( g ) => g.id === groupId )
 		);

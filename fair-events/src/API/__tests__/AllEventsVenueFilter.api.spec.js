@@ -126,7 +126,10 @@ test.describe( 'EventDatesController — venue_id filter', () => {
 		);
 		expect( res.ok() ).toBeTruthy();
 		const body = await res.json();
-		const total = parseInt( res.headers()[ 'x-wp-total' ] || '0', 10 );
+		const total = Number.parseInt(
+			res.headers()[ 'x-wp-total' ] || '0',
+			10
+		);
 
 		const ids = body.map( ( item ) => item.id );
 		expect( ids.sort() ).toEqual(

@@ -98,7 +98,7 @@ export default function EditComponent( { attributes, setAttributes } ) {
 									MAX_SESSIONS,
 									Math.max(
 										MIN_SESSIONS,
-										parseInt( value, 10 ) ||
+										Number.parseInt( value, 10 ) ||
 											DEFAULT_SESSIONS
 									)
 								),

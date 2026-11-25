@@ -137,7 +137,7 @@ export default function EditComponent( {
 
 	// Handle length change while keeping start time constant
 	const handleLengthChange = ( newLength ) => {
-		timetableRange.setDuration( parseFloat( newLength ) );
+		timetableRange.setDuration( Number.parseFloat( newLength ) );
 		setAttributes( {
 			endTime: timetableRange.getEndTime(),
 		} );
@@ -235,7 +235,9 @@ export default function EditComponent( {
 						value={ hourHeight }
 						options={ hourHeightOptions }
 						onChange={ ( value ) =>
-							setAttributes( { hourHeight: parseInt( value ) } )
+							setAttributes( {
+								hourHeight: Number.parseInt( value ),
+							} )
 						}
 						help={ __(
 							'Visual height multiplier for each hour (2-8)',

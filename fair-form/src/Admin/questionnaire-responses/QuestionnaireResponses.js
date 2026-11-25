@@ -127,7 +127,8 @@ export default function QuestionnaireResponses() {
 	const hasParticipantData = useMemo(
 		() =>
 			responses.some(
-				( response ) => parseInt( response.participant_id, 10 ) > 0
+				( response ) =>
+					Number.parseInt( response.participant_id, 10 ) > 0
 			),
 		[ responses ]
 	);

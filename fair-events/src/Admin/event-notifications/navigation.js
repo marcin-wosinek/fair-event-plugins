@@ -17,7 +17,7 @@ export const FILTERS = [
 ];
 
 function positive( value ) {
-	const number = parseInt( value, 10 );
+	const number = Number.parseInt( value, 10 );
 	return number > 0 ? number : 1;
 }
 
@@ -56,7 +56,7 @@ export function parseLocation( search ) {
 		view,
 		configuration: 'configuration' === view ? configuration : '',
 		tab: 'history' === params.get( 'tab' ) ? 'history' : 'editor',
-		execution: parseInt( params.get( 'execution' ), 10 ) || 0,
+		execution: Number.parseInt( params.get( 'execution' ), 10 ) || 0,
 		search: params.get( 's' ) || '',
 		feed: params.get( 'feed' ) || '',
 		listPage: positive( params.get( 'list_page' ) ),

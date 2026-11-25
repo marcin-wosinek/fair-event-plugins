@@ -197,11 +197,11 @@ export default function FeeDetail() {
 				label: __( 'Amount', 'fair-audience-experimental' ),
 				render: ( { item } ) => (
 					<div style={ { textAlign: 'right' } }>
-						{ parseFloat( item.amount ).toFixed( 2 ) }
+						{ Number.parseFloat( item.amount ).toFixed( 2 ) }
 					</div>
 				),
 				enableSorting: false,
-				getValue: ( { item } ) => parseFloat( item.amount ),
+				getValue: ( { item } ) => Number.parseFloat( item.amount ),
 			},
 			{
 				id: 'status',
@@ -260,7 +260,7 @@ export default function FeeDetail() {
 			path: `/fair-audience/v1/fees/${ feeId }/payments/${ adjustingPayment.id }/amount`,
 			method: 'PUT',
 			data: {
-				amount: parseFloat( newAmount ),
+				amount: Number.parseFloat( newAmount ),
 				comment: adjustReason.trim(),
 			},
 		} )
@@ -451,7 +451,7 @@ export default function FeeDetail() {
 			method: 'POST',
 			data: {
 				participant_id: selectedToAdd,
-				amount: parseFloat( addAmount ),
+				amount: Number.parseFloat( addAmount ),
 			},
 		} )
 			.then( () => {
@@ -484,7 +484,7 @@ export default function FeeDetail() {
 	const openTransferModal = ( payment ) => {
 		setTransferPayment( payment );
 		setTransferData( {
-			amount: parseFloat( payment.amount ).toFixed( 2 ),
+			amount: Number.parseFloat( payment.amount ).toFixed( 2 ),
 			entry_date: new Date().toISOString().split( 'T' )[ 0 ],
 			description: fee
 				? `${ fee.name } — ${ payment.participant_name || '' } ${
@@ -518,10 +518,16 @@ export default function FeeDetail() {
 		setTransferError( null );
 
 		const data = {
-			amount: parseFloat( transferData.amount ),
+			amount: Number.parseFloat( transferData.amount ),
 			entry_date: transferData.entry_date,
-			source_budget_id: parseInt( transferData.source_budget_id, 10 ),
-			target_budget_id: parseInt( transferData.target_budget_id, 10 ),
+			source_budget_id: Number.parseInt(
+				transferData.source_budget_id,
+				10
+			),
+			target_budget_id: Number.parseInt(
+				transferData.target_budget_id,
+				10
+			),
 			participant_id: transferPayment.participant_id,
 		};
 		// The endpoint declares the description as a string: omit it if empty.
@@ -947,7 +953,7 @@ export default function FeeDetail() {
 										'fair-audience-experimental'
 									) }
 								</strong>{ ' ' }
-								{ parseFloat( fee.amount ).toFixed( 2 ) }{ ' ' }
+								{ Number.parseFloat( fee.amount ).toFixed( 2 ) }{ ' ' }
 								{ fee.currency }
 							</div>
 							<div>
@@ -1088,7 +1094,7 @@ export default function FeeDetail() {
 										'fair-audience-experimental'
 									),
 									fee ? fee.name : '—',
-									`${ parseFloat(
+									`${ Number.parseFloat(
 										dialog.confirm.target.amount
 									).toFixed( 2 ) }${
 										fee?.currency
@@ -1244,9 +1250,9 @@ export default function FeeDetail() {
 									'fair-audience-experimental'
 								) }
 							</strong>{ ' ' }
-							{ parseFloat( reminderPayment.amount ).toFixed(
-								2
-							) }
+							{ Number.parseFloat(
+								reminderPayment.amount
+							).toFixed( 2 ) }
 							{ fee?.currency ? ` ${ fee.currency }` : '' }
 						</div>
 					</div>
@@ -1507,9 +1513,9 @@ export default function FeeDetail() {
 							'fair-audience-experimental'
 						) }{ ' ' }
 						<strong>
-							{ parseFloat( adjustingPayment.amount ).toFixed(
-								2
-							) }
+							{ Number.parseFloat(
+								adjustingPayment.amount
+							).toFixed( 2 ) }
 						</strong>
 					</p>
 
@@ -1661,7 +1667,7 @@ export default function FeeDetail() {
 											{ entry.amount && (
 												<>
 													{ ' — ' }
-													{ parseFloat(
+													{ Number.parseFloat(
 														entry.amount
 													).toFixed( 2 ) }{ ' ' }
 													{ entry.currency ||

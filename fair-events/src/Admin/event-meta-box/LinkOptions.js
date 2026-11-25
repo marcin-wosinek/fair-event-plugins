@@ -42,7 +42,7 @@ export default function LinkOptions( {
 				const eventDate = await apiFetch( {
 					path: '/fair-events/v1/event-dates/ensure-for-post',
 					method: 'POST',
-					data: { post_id: parseInt( postId, 10 ) },
+					data: { post_id: Number.parseInt( postId, 10 ) },
 				} );
 				onEventLinked( eventDate.id );
 				return;
@@ -73,7 +73,7 @@ export default function LinkOptions( {
 			await apiFetch( {
 				path: `/fair-events/v1/event-dates/${ newEvent.id }/link-post`,
 				method: 'POST',
-				data: { post_id: parseInt( postId, 10 ) },
+				data: { post_id: Number.parseInt( postId, 10 ) },
 			} );
 
 			onEventLinked( newEvent.id );
@@ -93,10 +93,10 @@ export default function LinkOptions( {
 			await apiFetch( {
 				path: `/fair-events/v1/event-dates/${ selectedEventDateId }/link-post`,
 				method: 'POST',
-				data: { post_id: parseInt( postId, 10 ) },
+				data: { post_id: Number.parseInt( postId, 10 ) },
 			} );
 
-			onEventLinked( parseInt( selectedEventDateId, 10 ) );
+			onEventLinked( Number.parseInt( selectedEventDateId, 10 ) );
 		} catch ( err ) {
 			setError(
 				err.message || __( 'Failed to link event.', 'fair-events' )

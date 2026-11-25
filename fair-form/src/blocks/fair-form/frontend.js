@@ -57,12 +57,13 @@ function submitForm( form ) {
 				form.querySelectorAll(
 					'input[name="fair_form_mailing_categories[]"]:checked'
 				)
-			).map( ( cb ) => parseInt( cb.value, 10 ) )
+			).map( ( cb ) => Number.parseInt( cb.value, 10 ) )
 		: [];
 	const questionnaireAnswers = collectQuestionAnswers( form );
 
-	const eventDateId = parseInt( wrapper?.dataset.eventDateId, 10 ) || 0;
-	const postId = parseInt( wrapper?.dataset.postId, 10 ) || 0;
+	const eventDateId =
+		Number.parseInt( wrapper?.dataset.eventDateId, 10 ) || 0;
+	const postId = Number.parseInt( wrapper?.dataset.postId, 10 ) || 0;
 	const blockFormId = wrapper?.dataset.formId || '';
 	const blockFormTitle = wrapper?.dataset.formTitle || '';
 

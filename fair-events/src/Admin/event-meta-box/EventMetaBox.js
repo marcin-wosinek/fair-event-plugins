@@ -54,7 +54,7 @@ export default function EventMetaBox( {
 		const checkForEventDate = async ( attempt = 1 ) => {
 			try {
 				const response = await apiFetch( {
-					path: `/fair-events/v1/event-dates?event_id=${ parseInt(
+					path: `/fair-events/v1/event-dates?event_id=${ Number.parseInt(
 						postId,
 						10
 					) }`,
@@ -118,7 +118,7 @@ export default function EventMetaBox( {
 			await apiFetch( {
 				path: `/fair-events/v1/event-dates/${ eventDateId }/link-post`,
 				method: 'DELETE',
-				data: { post_id: parseInt( postId, 10 ) },
+				data: { post_id: Number.parseInt( postId, 10 ) },
 			} );
 			setEventDateId( 0 );
 			setManageEventUrl( '' );

@@ -8,7 +8,7 @@ jest.mock( '@wordpress/i18n', () => ( {
 	__: ( text ) => text,
 	sprintf: ( fmt, ...args ) =>
 		fmt.replace( /%(\d+\$)?d/g, ( _, pos ) => {
-			const idx = pos ? parseInt( pos ) - 1 : 0;
+			const idx = pos ? Number.parseInt( pos ) - 1 : 0;
 			return args[ idx ];
 		} ),
 } ) );

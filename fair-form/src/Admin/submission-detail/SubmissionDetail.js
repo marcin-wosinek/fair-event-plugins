@@ -201,7 +201,7 @@ function EventField( { submission, onUpdate } ) {
 			method: 'PUT',
 			data: {
 				event_date_id: selectedEventDateId
-					? parseInt( selectedEventDateId, 10 )
+					? Number.parseInt( selectedEventDateId, 10 )
 					: 0,
 			},
 		} )

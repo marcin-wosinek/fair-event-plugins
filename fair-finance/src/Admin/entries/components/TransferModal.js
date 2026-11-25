@@ -86,10 +86,16 @@ const TransferModal = ( {
 
 		try {
 			const data = {
-				amount: parseFloat( formData.amount ),
+				amount: Number.parseFloat( formData.amount ),
 				entry_date: formData.entry_date,
-				source_budget_id: parseInt( formData.source_budget_id, 10 ),
-				target_budget_id: parseInt( formData.target_budget_id, 10 ),
+				source_budget_id: Number.parseInt(
+					formData.source_budget_id,
+					10
+				),
+				target_budget_id: Number.parseInt(
+					formData.target_budget_id,
+					10
+				),
 				description: formData.description || null,
 				event_url: formData.event_url || null,
 				event_date_id: formData.event_date_id || null,

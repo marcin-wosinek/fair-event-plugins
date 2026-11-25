@@ -423,7 +423,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 				data: {
 					transaction_ids: selectedTransactionIds,
 					budget_id: selectedBudgetId
-						? parseInt( selectedBudgetId, 10 )
+						? Number.parseInt( selectedBudgetId, 10 )
 						: null,
 				},
 			} );
@@ -488,15 +488,15 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 	// Calculate running total of selected transactions.
 	const selectedTotal = unmatchedTransactions
 		.filter( ( t ) => selectedTransactionIds.includes( t.id ) )
-		.reduce( ( sum, t ) => sum + parseFloat( t.amount ), 0 );
+		.reduce( ( sum, t ) => sum + Number.parseFloat( t.amount ), 0 );
 
 	const selectedNetTotal = unmatchedTransactions
 		.filter( ( t ) => selectedTransactionIds.includes( t.id ) )
 		.reduce( ( sum, t ) => {
 			const net =
-				parseFloat( t.amount ) -
-				parseFloat( t.application_fee || 0 ) -
-				parseFloat( t.mollie_fee || 0 );
+				Number.parseFloat( t.amount ) -
+				Number.parseFloat( t.application_fee || 0 ) -
+				Number.parseFloat( t.mollie_fee || 0 );
 			return sum + net;
 		}, 0 );
 
@@ -1069,14 +1069,14 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 												{ unmatchedTransactions.map(
 													( t ) => {
 														const net =
-															parseFloat(
+															Number.parseFloat(
 																t.amount
 															) -
-															parseFloat(
+															Number.parseFloat(
 																t.application_fee ||
 																	0
 															) -
-															parseFloat(
+															Number.parseFloat(
 																t.mollie_fee ||
 																	0
 															);

@@ -170,7 +170,7 @@ export default function Import() {
 				filename: importFilename || 'unknown',
 			};
 			if ( selectedEventId ) {
-				requestData.event_id = parseInt( selectedEventId );
+				requestData.event_id = Number.parseInt( selectedEventId );
 			}
 
 			const response = await apiFetch( {

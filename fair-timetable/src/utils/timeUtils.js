@@ -17,7 +17,7 @@ export function parseTime( timeString ) {
 
 	// Handle single digit hours (except 1 and 2 which could be decimal numbers)
 	if ( /^\d$/.test( timeString ) ) {
-		const digit = parseInt( timeString );
+		const digit = Number.parseInt( timeString );
 		if ( digit === 1 || digit === 2 ) {
 			return 0; // Could be decimal, don't parse
 		}
@@ -28,7 +28,7 @@ export function parseTime( timeString ) {
 
 	// Handle 2-digit hours up to 24
 	if ( /^\d{2}$/.test( timeString ) ) {
-		const hours = parseInt( timeString );
+		const hours = Number.parseInt( timeString );
 		if ( hours >= 0 && hours <= 24 ) {
 			return hours; // Parse as hour with 0 minutes
 		}

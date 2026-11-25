@@ -44,7 +44,7 @@ export function collectParticipants( responses ) {
 	let duplicateCount = 0;
 
 	responses.forEach( ( response ) => {
-		const id = parseInt( response.participant_id, 10 );
+		const id = Number.parseInt( response.participant_id, 10 );
 		if ( ! ( id > 0 ) ) {
 			unlinkedCount++;
 			return;

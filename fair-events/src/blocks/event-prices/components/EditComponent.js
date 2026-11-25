@@ -23,9 +23,9 @@ import ServerSideRender from '@wordpress/server-side-render';
  */
 function pricingEventDateId( eventDate ) {
 	if ( eventDate.occurrence_type === 'generated' && eventDate.master_id ) {
-		return parseInt( eventDate.master_id, 10 );
+		return Number.parseInt( eventDate.master_id, 10 );
 	}
-	return parseInt( eventDate.id, 10 );
+	return Number.parseInt( eventDate.id, 10 );
 }
 
 /**
@@ -83,7 +83,7 @@ export default function EditComponent( {
 		}
 
 		let cancelled = false;
-		const currentPostId = parseInt( postId, 10 );
+		const currentPostId = Number.parseInt( postId, 10 );
 
 		apiFetch( { path: '/fair-events/v1/event-dates?include_linked=true' } )
 			.then( ( eventDates ) => {
@@ -175,7 +175,7 @@ export default function EditComponent( {
 			);
 		}
 		return items.map( ( item ) => {
-			const id = parseInt( item.id, 10 );
+			const id = Number.parseInt( item.id, 10 );
 			return (
 				<CheckboxControl
 					key={ id }

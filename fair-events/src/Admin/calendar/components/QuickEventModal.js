@@ -293,7 +293,9 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 					start_time: timeValue( startTime ),
 					end_time: timeValue( endTime ),
 					all_day: allDay,
-					venue_id: venueId ? parseInt( venueId, 10 ) : undefined,
+					venue_id: venueId
+						? Number.parseInt( venueId, 10 )
+						: undefined,
 					link_type: linkType === 'post' ? 'none' : linkType,
 					external_url:
 						linkType === 'external' ? externalUrl : undefined,
@@ -308,7 +310,7 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 						path: `/fair-events/v1/event-dates/${ eventDate.id }/link-post`,
 						method: 'POST',
 						data: {
-							post_id: parseInt( linkPostId, 10 ),
+							post_id: Number.parseInt( linkPostId, 10 ),
 						},
 					} );
 				} catch ( linkErr ) {

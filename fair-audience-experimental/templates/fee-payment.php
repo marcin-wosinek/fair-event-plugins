@@ -488,7 +488,7 @@ $site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 	(function() {
 		var delays = [3000, 5000, 5000, 10000, 10000, 15000];
 		var params = new URLSearchParams(window.location.search);
-		var attempt = parseInt(params.get('_check') || '0', 10);
+		var attempt = Number.parseInt(params.get('_check') || '0', 10);
 
 		if (attempt >= delays.length) {
 			var el = document.getElementById('fair-audience-processing');

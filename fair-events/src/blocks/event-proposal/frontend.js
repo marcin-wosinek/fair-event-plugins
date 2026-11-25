@@ -136,7 +136,7 @@ import './frontend.css';
 		const cookie = getCookie( cookieName );
 
 		if ( cookie ) {
-			const lastSubmission = parseInt( cookie, 10 );
+			const lastSubmission = Number.parseInt( cookie, 10 );
 			const now = Math.floor( Date.now() / 1000 );
 			const timeElapsed = now - lastSubmission;
 
@@ -175,7 +175,7 @@ import './frontend.css';
 			const value = formData.get( field );
 			if ( value !== null ) {
 				if ( field === 'duration_minutes' ) {
-					data[ field ] = parseInt( value, 10 );
+					data[ field ] = Number.parseInt( value, 10 );
 				} else {
 					data[ field ] = value;
 				}
@@ -185,7 +185,7 @@ import './frontend.css';
 		// Collect category IDs (checkboxes)
 		const categoryIds = [];
 		formData.getAll( 'category_ids[]' ).forEach( function ( id ) {
-			categoryIds.push( parseInt( id, 10 ) );
+			categoryIds.push( Number.parseInt( id, 10 ) );
 		} );
 		if ( categoryIds.length > 0 ) {
 			data.category_ids = categoryIds;

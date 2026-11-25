@@ -127,7 +127,7 @@ export function calculateDaysInclusive( startDate, endDate ) {
  */
 export function calculateEndDate( startDate, days ) {
 	if ( ! startDate || ! days || days === 'other' ) return '';
-	const count = parseInt( days, 10 );
+	const count = Number.parseInt( days, 10 );
 	if ( Number.isNaN( count ) ) return '';
 	return addCalendarDays( startDate, count - 1 );
 }

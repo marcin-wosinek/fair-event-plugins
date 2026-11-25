@@ -37,7 +37,7 @@ export function parseRRule( rrule ) {
 	} );
 
 	const freq = parts.FREQ || 'WEEKLY';
-	const interval = parseInt( parts.INTERVAL || '1', 10 );
+	const interval = Number.parseInt( parts.INTERVAL || '1', 10 );
 
 	let frequency = 'weekly';
 	if ( freq === 'DAILY' ) {
@@ -56,7 +56,7 @@ export function parseRRule( rrule ) {
 
 	if ( parts.COUNT ) {
 		endType = 'count';
-		count = parseInt( parts.COUNT, 10 );
+		count = Number.parseInt( parts.COUNT, 10 );
 	} else if ( parts.UNTIL ) {
 		endType = 'until';
 		const u = parts.UNTIL;
@@ -140,10 +140,10 @@ function parseRawRRule( rrule ) {
 				result.freq = value.toUpperCase();
 				break;
 			case 'INTERVAL':
-				result.interval = parseInt( value, 10 ) || 1;
+				result.interval = Number.parseInt( value, 10 ) || 1;
 				break;
 			case 'COUNT':
-				result.count = parseInt( value, 10 );
+				result.count = Number.parseInt( value, 10 );
 				break;
 			case 'UNTIL': {
 				const y = value.substring( 0, 4 );

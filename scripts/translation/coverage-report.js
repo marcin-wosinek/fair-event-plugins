@@ -153,7 +153,7 @@ async function generateCoverageReport(options) {
 				report.byLocale[locale].summary.untranslatedStrings +=
 					coverage.untranslated;
 
-				totalPercentage += parseFloat(coverage.percentage);
+				totalPercentage += Number.parseFloat(coverage.percentage);
 				localeCount++;
 			}
 		}

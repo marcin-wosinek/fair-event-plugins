@@ -215,13 +215,13 @@ export default function EventTimingFields( {
 		if ( duration === 'other' || durationUnavailable ) return;
 		if ( allDay ) {
 			const end = new Date( `${ startDate }T00:00:00` );
-			end.setDate( end.getDate() + parseInt( duration, 10 ) - 1 );
+			end.setDate( end.getDate() + Number.parseInt( duration, 10 ) - 1 );
 			onChange( { endDate: toDateString( end ) } );
 			return;
 		}
 		const start = new Date( `${ startDate }T${ startTime }` );
 		const end = new Date(
-			start.getTime() + parseInt( duration, 10 ) * 60000
+			start.getTime() + Number.parseInt( duration, 10 ) * 60000
 		);
 		onChange( {
 			endDate: toDateString( end ),

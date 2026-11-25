@@ -93,7 +93,9 @@ export function OptionSourcePanel( {
 					options={ parentOptions }
 					onChange={ ( value ) =>
 						setAttributes( {
-							parentCategoryId: value ? parseInt( value, 10 ) : 0,
+							parentCategoryId: value
+								? Number.parseInt( value, 10 )
+								: 0,
 						} )
 					}
 					help={ __(

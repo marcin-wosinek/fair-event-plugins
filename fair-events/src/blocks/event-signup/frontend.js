@@ -237,7 +237,10 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	 * @param {HTMLElement} block The .fair-events-get-tickets wrapper.
 	 */
 	function hydrateViewerContext( block ) {
-		const eventDateId = parseInt( block.dataset.eventDateId || '0', 10 );
+		const eventDateId = Number.parseInt(
+			block.dataset.eventDateId || '0',
+			10
+		);
 		if ( ! eventDateId ) {
 			return;
 		}
@@ -705,7 +708,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		if ( select ) {
 			Array.from( select.options ).forEach( function ( option ) {
 				if (
-					idSet.has( parseInt( option.value, 10 ) ) &&
+					idSet.has( Number.parseInt( option.value, 10 ) ) &&
 					option.textContent.indexOf( suffix ) === -1
 				) {
 					option.textContent += suffix;
@@ -715,7 +718,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 
 		form.querySelectorAll( 'input[name="event_date_ids[]"]' ).forEach(
 			function ( checkbox ) {
-				if ( ! idSet.has( parseInt( checkbox.value, 10 ) ) ) {
+				if ( ! idSet.has( Number.parseInt( checkbox.value, 10 ) ) ) {
 					return;
 				}
 				const label = checkbox.closest( 'label' );
@@ -1080,7 +1083,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			initiatePayment( {
 				apiPath: '/fair-events/v1/get-tickets/retry-payment',
 				data: {
-					transaction_id: parseInt(
+					transaction_id: Number.parseInt(
 						container.dataset.transactionId,
 						10
 					),
@@ -1140,7 +1143,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 				path: '/fair-events/v1/get-tickets/cancel-payment',
 				method: 'POST',
 				data: {
-					transaction_id: parseInt(
+					transaction_id: Number.parseInt(
 						container.dataset.transactionId,
 						10
 					),
@@ -1194,7 +1197,8 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		// the form stays unavailable until it settles.
 		const block = form.closest( '.fair-events-get-tickets' );
 		state.viewerContextLoading =
-			!! block && parseInt( block.dataset.eventDateId || '0', 10 ) > 0;
+			!! block &&
+			Number.parseInt( block.dataset.eventDateId || '0', 10 ) > 0;
 		// Fixed for the life of this form: leaving the mode replaces it.
 		state.registeringAnother =
 			!! block && getBlockState( block ).registeringAnother;
@@ -1399,13 +1403,13 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		}
 		return {
 			dates: coverage.dates.map( ( date ) => ( {
-				id: parseInt( date.id, 10 ),
+				id: Number.parseInt( date.id, 10 ),
 				label: String( date.label || '' ),
 				full: !! date.full,
 				signedUp: !! date.signed_up,
 			} ) ),
 			wholeSeries: ( coverage.whole_series || [] ).map( ( id ) =>
-				parseInt( id, 10 )
+				Number.parseInt( id, 10 )
 			),
 		};
 	}
@@ -1437,7 +1441,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		const state = getFormState( form );
 		const block = form.closest( '.fair-events-get-tickets' );
 		const eventDateId = block
-			? parseInt( block.dataset.eventDateId || '0', 10 )
+			? Number.parseInt( block.dataset.eventDateId || '0', 10 )
 			: 0;
 		if ( ! state.series || ! eventDateId ) {
 			return;
@@ -1501,7 +1505,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		);
 		if ( select ) {
 			Array.from( select.options ).forEach( function ( option ) {
-				const date = byId.get( parseInt( option.value, 10 ) );
+				const date = byId.get( Number.parseInt( option.value, 10 ) );
 				if ( date ) {
 					option.textContent = seriesDateLabel( date );
 					option.disabled = date.full;
@@ -1520,7 +1524,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 
 		form.querySelectorAll( 'input[name="event_date_ids[]"]' ).forEach(
 			function ( checkbox ) {
-				const date = byId.get( parseInt( checkbox.value, 10 ) );
+				const date = byId.get( Number.parseInt( checkbox.value, 10 ) );
 				if ( ! date ) {
 					return;
 				}
@@ -1599,7 +1603,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		if ( scope === 'multiple_instances' ) {
 			const min = Math.max(
 				1,
-				parseInt( option.dataset.minInstances || '0', 10 )
+				Number.parseInt( option.dataset.minInstances || '0', 10 )
 			);
 			const dates = Array.from(
 				form.querySelectorAll(
@@ -1607,7 +1611,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 				)
 			)
 				.map( ( checkbox ) =>
-					byId.get( parseInt( checkbox.value, 10 ) )
+					byId.get( Number.parseInt( checkbox.value, 10 ) )
 				)
 				.filter( Boolean );
 			const open = series.dates.filter( ( date ) => ! date.full ).length;
@@ -1647,7 +1651,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			'select[name="event_date_id_single"]'
 		);
 		const chosen = select
-			? byId.get( parseInt( select.value, 10 ) )
+			? byId.get( Number.parseInt( select.value, 10 ) )
 			: undefined;
 		const dates = chosen && ! chosen.full ? [ chosen ] : [];
 		const reason = dates.length
@@ -1875,7 +1879,10 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		return quantityField
 			? Math.max(
 					1,
-					Math.min( 10, parseInt( quantityField.value, 10 ) || 1 )
+					Math.min(
+						10,
+						Number.parseInt( quantityField.value, 10 ) || 1
+					)
 				)
 			: 1;
 	}
@@ -2036,7 +2043,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	function computeCheckoutTotal( form ) {
 		const selected = getSelectedTicketTypeOption( form );
 		const unitPrice = selected
-			? parseFloat( selected.dataset.ticketPrice ) || 0
+			? Number.parseFloat( selected.dataset.ticketPrice ) || 0
 			: 0;
 
 		let count;
@@ -2051,7 +2058,10 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			count = quantityField
 				? Math.max(
 						1,
-						Math.min( 10, parseInt( quantityField.value, 10 ) || 1 )
+						Math.min(
+							10,
+							Number.parseInt( quantityField.value, 10 ) || 1
+						)
 					)
 				: 1;
 		}
@@ -2064,7 +2074,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 						)
 					).map(
 						( input ) =>
-							parseFloat( input.dataset.optionPrice ) || 0
+							Number.parseFloat( input.dataset.optionPrice ) || 0
 					)
 				)
 			: [];
@@ -2205,7 +2215,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		}
 
 		const option = getSelectedTicketTypeOption( form );
-		const min = parseInt( option.dataset.minInstances || '0', 10 );
+		const min = Number.parseInt( option.dataset.minInstances || '0', 10 );
 
 		const hint = instancePicker.querySelector(
 			'.fair-events-instance-picker-hint'
@@ -2249,10 +2259,16 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	 * @return {number} The effective minimum (0 when no minimum applies).
 	 */
 	function getEffectiveActivityMinimum( form ) {
-		const globalMin = parseInt( form.dataset.minActivities || '0', 10 );
+		const globalMin = Number.parseInt(
+			form.dataset.minActivities || '0',
+			10
+		);
 		const selectedTicketType = getSelectedTicketTypeOption( form );
 		const typeMin = selectedTicketType
-			? parseInt( selectedTicketType.dataset.minActivities || '0', 10 )
+			? Number.parseInt(
+					selectedTicketType.dataset.minActivities || '0',
+					10
+				)
 			: 0;
 		return selectedTicketType ? typeMin : globalMin;
 	}
@@ -2271,7 +2287,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		if ( ! selected || selected.dataset.maxActivities === '' ) {
 			return null;
 		}
-		return parseInt( selected.dataset.maxActivities, 10 );
+		return Number.parseInt( selected.dataset.maxActivities, 10 );
 	}
 
 	/**
@@ -2310,7 +2326,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		const option = getSelectedTicketTypeOption( form );
 		const min = Math.max(
 			1,
-			parseInt( option.dataset.minInstances || '0', 10 )
+			Number.parseInt( option.dataset.minInstances || '0', 10 )
 		);
 		const checked = form.querySelectorAll(
 			'input[name="event_date_ids[]"]:checked'
@@ -2492,7 +2508,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 				if ( cb.checked ) {
 					anyChecked = true;
 					optionPrices.push(
-						parseFloat( cb.dataset.optionPrice || 0 )
+						Number.parseFloat( cb.dataset.optionPrice || 0 )
 					);
 				}
 			} );
@@ -2529,9 +2545,9 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	 * @param {HTMLElement} button  The add-activities button.
 	 */
 	function submitAddActivities( block, section, button ) {
-		const eventId = parseInt( section.dataset.eventId, 10 );
+		const eventId = Number.parseInt( section.dataset.eventId, 10 );
 		const eventDateId = section.dataset.eventDateId
-			? parseInt( section.dataset.eventDateId, 10 )
+			? Number.parseInt( section.dataset.eventDateId, 10 )
 			: null;
 		const token = section.dataset.participantToken || '';
 		const messageContainer = getMessageContainer( block );
@@ -2546,7 +2562,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		const requestData = {
 			event_id: eventId,
 			ticket_option_ids: Array.from( checked ).map( ( i ) =>
-				parseInt( i.value, 10 )
+				Number.parseInt( i.value, 10 )
 			),
 		};
 		if ( eventDateId ) {
@@ -2556,7 +2572,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			'select[name="add_ticket_id"]'
 		);
 		if ( ticketSelect && ticketSelect.value ) {
-			requestData.ticket_id = parseInt( ticketSelect.value, 10 );
+			requestData.ticket_id = Number.parseInt( ticketSelect.value, 10 );
 		}
 		if ( token ) {
 			requestData.participant_token = token;
@@ -2656,9 +2672,9 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		if ( ! route ) {
 			return;
 		}
-		const eventId = parseInt( card.dataset.eventId, 10 );
+		const eventId = Number.parseInt( card.dataset.eventId, 10 );
 		const eventDateId = card.dataset.eventDateId
-			? parseInt( card.dataset.eventDateId, 10 )
+			? Number.parseInt( card.dataset.eventDateId, 10 )
 			: null;
 		const token = card.dataset.participantToken || '';
 		const messageContainer = getMessageContainer( block );
@@ -2780,7 +2796,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			const option = getSelectedTicketTypeOption( form );
 			const min = Math.max(
 				1,
-				parseInt( option.dataset.minInstances || '0', 10 )
+				Number.parseInt( option.dataset.minInstances || '0', 10 )
 			);
 			const checked = form.querySelectorAll(
 				'input[name="event_date_ids[]"]:checked'
@@ -2808,7 +2824,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 				'input[name="quantity"]'
 			);
 			if ( quantityField ) {
-				const qty = parseInt( quantityField.value, 10 );
+				const qty = Number.parseInt( quantityField.value, 10 );
 				if ( isNaN( qty ) || qty < 1 || qty > 10 ) {
 					showMessage(
 						messageContainer,
@@ -2864,9 +2880,9 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			! isMultipleInstancesSelected( form ) &&
 			! isWholeSeriesSelected( form )
 		) {
-			data.event_date_id = parseInt( occurrenceSelect.value, 10 );
+			data.event_date_id = Number.parseInt( occurrenceSelect.value, 10 );
 		} else {
-			data.event_date_id = parseInt(
+			data.event_date_id = Number.parseInt(
 				form.getAttribute( 'data-event-date-id' ) || '0',
 				10
 			);
@@ -2891,7 +2907,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			'input[name="ticket_type_id"]:checked'
 		);
 		if ( ticketTypeField && ticketTypeField.value ) {
-			data.ticket_type_id = parseInt( ticketTypeField.value, 10 );
+			data.ticket_type_id = Number.parseInt( ticketTypeField.value, 10 );
 		}
 
 		if ( isMultipleInstancesSelected( form ) ) {
@@ -2900,7 +2916,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 				'input[name="event_date_ids[]"]:checked'
 			);
 			data.event_date_ids = Array.from( instanceInputs ).map( ( i ) =>
-				parseInt( i.value, 10 )
+				Number.parseInt( i.value, 10 )
 			);
 		} else {
 			const quantityField = form.querySelector(
@@ -2909,7 +2925,10 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			if ( quantityField ) {
 				data.quantity = Math.max(
 					1,
-					Math.min( 10, parseInt( quantityField.value, 10 ) || 1 )
+					Math.min(
+						10,
+						Number.parseInt( quantityField.value, 10 ) || 1
+					)
 				);
 			}
 		}
@@ -2927,7 +2946,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 						fieldset.querySelectorAll(
 							'input[type="checkbox"]:checked'
 						)
-					).map( ( i ) => parseInt( i.value, 10 ) )
+					).map( ( i ) => Number.parseInt( i.value, 10 ) )
 				);
 			if ( selections.length > 1 ) {
 				data.ticket_activities = selections;

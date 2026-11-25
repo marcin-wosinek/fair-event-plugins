@@ -285,7 +285,10 @@ export default function ExampleApp() {
 	);
 	const failed = 'error' === scenario;
 	// `&per_page=N` pages the rows, to review pagination.
-	const perPage = Math.max( 0, parseInt( readParam( 'per_page' ), 10 ) || 0 );
+	const perPage = Math.max(
+		0,
+		Number.parseInt( readParam( 'per_page' ), 10 ) || 0
+	);
 	const totalPages = perPage ? Math.ceil( shown.length / perPage ) : 1;
 	const currentPage = Math.min( Math.max( 1, listPage ), totalPages || 1 );
 	const pageRows = perPage

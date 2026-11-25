@@ -120,7 +120,7 @@ export default function Groups() {
 
 		apiFetch( { path, parse: false } )
 			.then( ( response ) => {
-				const total = parseInt(
+				const total = Number.parseInt(
 					response.headers.get( 'X-WP-Total' ) || '0',
 					10
 				);

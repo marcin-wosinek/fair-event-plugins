@@ -68,7 +68,9 @@ export default function RecurrenceControl( {
 							) }
 							value={ count }
 							onChange={ ( val ) =>
-								update( { count: parseInt( val, 10 ) || 1 } )
+								update( {
+									count: Number.parseInt( val, 10 ) || 1,
+								} )
 							}
 							min={ 1 }
 							max={ 365 }
