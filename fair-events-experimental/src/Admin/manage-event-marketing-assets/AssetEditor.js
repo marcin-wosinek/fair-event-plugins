@@ -21,7 +21,12 @@ import {
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
-import { imageFromAttachment, memberName, saveBlocker } from './assetsModel.js';
+import {
+	imageFromAttachment,
+	memberName,
+	publicationNeeds,
+	saveBlocker,
+} from './assetsModel.js';
 
 /**
  * Open the Media Library to choose or upload one image.
@@ -75,6 +80,7 @@ const imageProblem = ( image ) => {
 
 export default function AssetEditor( {
 	form,
+	original,
 	isNew,
 	imageRemoved,
 	options,
@@ -89,6 +95,12 @@ export default function AssetEditor( {
 } ) {
 	const mimeTypes = options.supported_mime_types;
 	const set = ( changes ) => onChange( { ...form, ...changes } );
+	const canAddMembers = options.team.available;
+	const needs = publicationNeeds(
+		form,
+		isNew ? null : original,
+		linkedMembers
+	);
 
 	const blocker = saveBlocker(
 		form,
@@ -114,11 +126,16 @@ export default function AssetEditor( {
 				'Shorten the use case or the text to save the asset.',
 				'fair-events-experimental'
 			),
+			publication: __(
+				'Confirm that the names of the team members you added will be public to save the asset, or remove them.',
+				'fair-events-experimental'
+			),
 		},
 		{
 			maxLabel: options.max_label_length,
 			maxText: options.max_text_length,
-		}
+		},
+		needs
 	);
 
 	const chooseImage = () => {
@@ -143,7 +160,12 @@ export default function AssetEditor( {
 			offered.push( member );
 		}
 	} );
-	const canAddMembers = options.team.available;
+	const nameOf = ( id ) => {
+		const member = offered.find( ( other ) => other.id === id );
+		return member ? memberName( member ) : '';
+	};
+	const becomingPublic = [ ...needs.added, ...needs.unpublished ];
+	const offerPublication = canAddMembers && becomingPublic.length > 0;
 
 	const scheduleItems = [ ...options.schedule.items ];
 	if (
@@ -190,6 +212,13 @@ export default function AssetEditor( {
 			</CardHeader>
 			<CardBody>
 				<VStack spacing={ 4 }>
+					<Notice status="info" isDismissible={ false }>
+						{ __(
+							'Everything in this asset — its use case, text and image — is shown on this date’s public marketing assets page as soon as it is saved, even before the event is published. Anyone can open that page without an account.',
+							'fair-events-experimental'
+						) }
+					</Notice>
+
 					<TextControl
 						label={ __( 'Use case', 'fair-events-experimental' ) }
 						value={ form.label }
@@ -307,6 +336,15 @@ export default function AssetEditor( {
 						<legend>
 							{ __( 'Team members', 'fair-events-experimental' ) }
 						</legend>
+						<p
+							className="fair-events-marketing-hint"
+							id="fair-events-marketing-members-disclosure"
+						>
+							{ __(
+								'The name and surname of each linked team member are shown on the public marketing assets page, and visitors can filter the assets by them. You confirm this when you save. Contact details are never shown.',
+								'fair-events-experimental'
+							) }
+						</p>
 						{ ! canAddMembers && (
 							<p className="fair-events-marketing-hint">
 								{ __(
@@ -339,10 +377,26 @@ export default function AssetEditor( {
 								const onTeam = teamMembers.some(
 									( other ) => other.id === member.id
 								);
+								const notPublic = linkedMembers.some(
+									( other ) =>
+										other.id === member.id &&
+										false === other.public
+								);
 								return (
 									<CheckboxControl
 										key={ member.id }
-										label={ memberName( member ) }
+										label={
+											notPublic
+												? sprintf(
+														/* translators: %s: team member name */
+														__(
+															'%s (name not public)',
+															'fair-events-experimental'
+														),
+														memberName( member )
+													)
+												: memberName( member )
+										}
 										checked={ checked }
 										disabled={
 											saving ||
@@ -367,6 +421,51 @@ export default function AssetEditor( {
 									/>
 								);
 							} ) }
+						{ offerPublication && (
+							<CheckboxControl
+								label={ __(
+									'Show these names on the public marketing assets page',
+									'fair-events-experimental'
+								) }
+								help={
+									needs.added.length > 0
+										? sprintf(
+												/* translators: %s: comma-separated team member names */
+												__(
+													'Required to link new team members. Becomes public: %s.',
+													'fair-events-experimental'
+												),
+												becomingPublic
+													.map( nameOf )
+													.join( ', ' )
+											)
+										: sprintf(
+												/* translators: %s: comma-separated team member names */
+												__(
+													'Optional. Becomes public: %s. Leave it unchecked to keep these names private.',
+													'fair-events-experimental'
+												),
+												becomingPublic
+													.map( nameOf )
+													.join( ', ' )
+											)
+								}
+								checked={ form.publishMemberNames }
+								onChange={ ( publishMemberNames ) =>
+									set( { publishMemberNames } )
+								}
+								disabled={ saving }
+								__nextHasNoMarginBottom
+							/>
+						) }
+						{ ! canAddMembers && needs.unpublished.length > 0 && (
+							<p className="fair-events-marketing-hint">
+								{ __(
+									'Names that are not public cannot be published while team management is turned off.',
+									'fair-events-experimental'
+								) }
+							</p>
+						) }
 						{ fieldErrors.member_ids && (
 							<p className="fair-events-marketing-problem">
 								{ fieldErrors.member_ids }

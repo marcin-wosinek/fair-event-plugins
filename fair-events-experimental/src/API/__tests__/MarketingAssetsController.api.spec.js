@@ -13,59 +13,27 @@
  * anonymous direct-image URLs that keep working through detachment,
  * deletion and disabling the bundle.
  *
+ * Linking a member needs `publish_member_names` since #2430; the public
+ * side is covered by PublicMarketingAssetsController.api.spec.js.
+ *
  * The suite removes the events, profiles, attachments and user it creates,
  * and leaves both bundles off (their default).
  */
 
 import { test, expect, request } from '@playwright/test';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import { png } from '../../../../e2e/support/png.js';
+import {
+	BASE_URL,
+	EVENT_DATES_PATH,
+	adminHeaders,
+	assetsPath,
+	basic,
+	evalJson,
+	setBundles,
+	wp,
+} from './helpers/marketing-fixtures.js';
 
-const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
-const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
-const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
-
-const EVENT_DATES_PATH = '/wp-json/fair-events/v1/event-dates';
-const FEATURES_OPTION = 'fair_events_experimental_features';
 const EDITOR_PASSWORD = 'Test-password-2396!';
-
-const basic = ( user, password ) => ( {
-	Authorization:
-		'Basic ' +
-		Buffer.from( `${ user }:${ password }` ).toString( 'base64' ),
-} );
-const adminHeaders = basic( ADMIN_USER, ADMIN_PASSWORD );
-
-const assetsPath = ( id ) => `${ EVENT_DATES_PATH }/${ id }/marketing-assets`;
-
-/** Run WP-CLI on the tests instance without blocking the event loop. */
-async function wp( ...args ) {
-	const { stdout } = await promisify( execFile )(
-		'npx',
-		[ 'wp-env', 'run', 'tests-cli', 'wp', ...args ],
-		{
-			cwd: new URL( '../../../../', import.meta.url ),
-			encoding: 'utf8',
-		}
-	);
-	return stdout;
-}
-
-/** Evaluate PHP and parse the JSON it echoes after `JSON:`. */
-async function evalJson( php ) {
-	const out = await wp( 'eval', php );
-	return JSON.parse( out.slice( out.indexOf( 'JSON:' ) + 5 ).trim() );
-}
-
-const setBundles = ( bundles ) =>
-	wp(
-		'option',
-		'update',
-		FEATURES_OPTION,
-		JSON.stringify( bundles ),
-		'--format=json'
-	);
 
 // Unicode, CRLF and LF line breaks, tabs, leading/trailing and repeated
 // spaces, a combining accent, an emoji ZWJ sequence and markup-like text.
@@ -451,6 +419,7 @@ test.describe( 'MarketingAssetsController', () => {
 			text: 'Week one',
 			member_ids: [ onTeam ],
 			schedule_item_id: workshop,
+			publish_member_names: true,
 		} );
 		expect( asset.member_ids ).toEqual( [ onTeam ] );
 		expect( asset.schedule_item ).toMatchObject( {
@@ -472,6 +441,7 @@ test.describe( 'MarketingAssetsController', () => {
 			label: 'X',
 			text: 'Y',
 			member_ids: [ elsewhere ],
+			publish_member_names: true,
 		} );
 		expect( badMember.status() ).toBe( 400 );
 		expect( ( await badMember.json() ).data.details.member_ids.code ).toBe(
@@ -523,6 +493,7 @@ test.describe( 'MarketingAssetsController', () => {
 		expect( afterTeamRemoval.member_ids ).toEqual( [] );
 		const programmeOnly = await patch( first, asset.id, {
 			member_ids: [ onTeam ],
+			publish_member_names: true,
 		} );
 		expect( programmeOnly.status() ).toBe( 400 );
 
@@ -568,6 +539,7 @@ test.describe( 'MarketingAssetsController', () => {
 			label: 'Post',
 			text: 'Team',
 			member_ids: [ a ],
+			publish_member_names: true,
 		} );
 
 		await setBundles( { 'marketing-assets': true, 'team-members': false } );
@@ -582,7 +554,10 @@ test.describe( 'MarketingAssetsController', () => {
 			).json();
 			expect( options.team.available ).toBe( false );
 
-			const add = await patch( id, asset.id, { member_ids: [ a, b ] } );
+			const add = await patch( id, asset.id, {
+				member_ids: [ a, b ],
+				publish_member_names: true,
+			} );
 			expect( add.status() ).toBe( 409 );
 			expect( ( await add.json() ).code ).toBe(
 				'marketing_asset_team_unavailable'
@@ -614,6 +589,7 @@ test.describe( 'MarketingAssetsController', () => {
 			label: 'WhatsApp status',
 			attachment_id: image.id,
 			member_ids: [ member ],
+			publish_member_names: true,
 		} );
 
 		await wp( 'post', 'delete', String( image.id ), '--force' );

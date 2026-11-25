@@ -77,6 +77,10 @@ module.exports = {
 			process.cwd(),
 			'src/Frontend/weekly-summary.js'
 		),
+		'frontend/marketing-assets': path.resolve(
+			process.cwd(),
+			'src/Frontend/marketing-assets/index.js'
+		),
 	},
 	plugins: [
 		...defaultConfig.plugins,

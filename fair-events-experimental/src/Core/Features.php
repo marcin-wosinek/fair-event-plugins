@@ -103,7 +103,7 @@ class Features {
 			),
 			'marketing-assets' => array(
 				'label'       => 'Marketing assets',
-				'description' => 'Text and PNG/JPEG images for promoting each event date, managed in the Marketing tab of Manage Event and through an authenticated API. Images are ordinary Media Library files: anyone with an image\'s link can open it. Turning this off hides the tab and its API and keeps every asset; it does not remove images or their links.',
+				'description' => 'Text and PNG/JPEG images for promoting each event date, managed in the Marketing tab of Manage Event and through an authenticated API, and shared on a public page for each date that anyone can open without an account. Images are ordinary Media Library files: anyone with an image\'s link can open it. Turning this off hides the tab, the public pages and their APIs and keeps every asset; it does not remove images or their links.',
 				'default'     => false,
 			),
 		);
@@ -178,7 +178,7 @@ class Features {
 			),
 			'marketing-assets' => array(
 				'label'       => __( 'Marketing assets', 'fair-events-experimental' ),
-				'description' => __( 'Text and PNG/JPEG images for promoting each event date, managed in the Marketing tab of Manage Event and through an authenticated API. Images are ordinary Media Library files: anyone with an image\'s link can open it. Turning this off hides the tab and its API and keeps every asset; it does not remove images or their links.', 'fair-events-experimental' ),
+				'description' => __( 'Text and PNG/JPEG images for promoting each event date, managed in the Marketing tab of Manage Event and through an authenticated API, and shared on a public page for each date that anyone can open without an account. Images are ordinary Media Library files: anyone with an image\'s link can open it. Turning this off hides the tab, the public pages and their APIs and keeps every asset; it does not remove images or their links.', 'fair-events-experimental' ),
 			),
 		);
 

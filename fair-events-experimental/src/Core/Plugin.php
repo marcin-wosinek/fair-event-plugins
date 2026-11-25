@@ -590,7 +590,8 @@ class Plugin {
 
 	/**
 	 * Load marketing assets (#2396) while the `marketing-assets` bundle is
-	 * on: the tables, the REST routes and the Manage Event Marketing tab.
+	 * on: the tables, the authenticated and public REST routes, the public
+	 * asset pages (#2430) and the Manage Event Marketing tab.
 	 *
 	 * Cleanup (a deleted occurrence, attachment, team link or schedule
 	 * entry) runs whenever the tables exist, also with the bundle off, so
@@ -601,6 +602,8 @@ class Plugin {
 	 */
 	private function load_marketing_assets() {
 		\FairEventsExperimental\Services\MarketingAssets::register_lifecycle_hooks();
+		// The public pages answer 404 while the bundle is off (#2430).
+		\FairEventsExperimental\Frontend\MarketingAssetsPage::init();
 
 		if ( ! self::marketing_assets_available() ) {
 			return;
@@ -611,6 +614,7 @@ class Plugin {
 			'rest_api_init',
 			static function () {
 				( new \FairEventsExperimental\API\MarketingAssetsController() )->register_routes();
+				( new \FairEventsExperimental\API\PublicMarketingAssetsController() )->register_routes();
 			}
 		);
 

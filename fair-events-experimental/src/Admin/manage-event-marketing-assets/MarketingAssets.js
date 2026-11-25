@@ -22,6 +22,7 @@ import apiFetch from '@wordpress/api-fetch';
 import ConfirmActionModal, {
 	useConfirmAction,
 } from '../components/ConfirmActionModal.js';
+import CopyUrlButton from '../components/CopyUrlButton.js';
 import AssetEditor from './AssetEditor.js';
 import {
 	emptyForm,
@@ -310,6 +311,7 @@ export default function MarketingAssets( {
 		<AssetEditor
 			key={ key }
 			form={ editing.form }
+			original={ editing.original }
 			isNew={ null === editing.assetId }
 			imageRemoved={ editing.imageRemoved }
 			options={ options }
@@ -349,10 +351,51 @@ export default function MarketingAssets( {
 							</h2>
 							<p>
 								{ __(
-									'Text and images for promoting this date. They belong to this date only: other dates of a series have their own. Nothing here is published.',
+									'Text and images for promoting this date. They belong to this date only: other dates of a series have their own.',
 									'fair-events-experimental'
 								) }
 							</p>
+							<p>
+								{ __(
+									'Everything here is public on this date’s marketing assets page as soon as it is saved, even before the event is published. Share the page with the people who help you promote it: they need no account.',
+									'fair-events-experimental'
+								) }
+							</p>
+							{ options.share_url && (
+								<div className="fair-events-marketing-buttons">
+									<Button
+										variant="link"
+										href={ options.share_url }
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										{ __(
+											'Open public page',
+											'fair-events-experimental'
+										) }
+									</Button>
+									<CopyUrlButton
+										url={ options.share_url }
+										label={ __(
+											'Copy public page link',
+											'fair-events-experimental'
+										) }
+									/>
+									{ options.index_url && (
+										<Button
+											variant="link"
+											href={ options.index_url }
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											{ __(
+												'All events’ public pages',
+												'fair-events-experimental'
+											) }
+										</Button>
+									) }
+								</div>
+							) }
 						</div>
 						<Button
 							variant="primary"
@@ -587,7 +630,20 @@ function AssetCard( { asset, actionsDisabled, onEdit, onDelete } ) {
 										'Team: %s',
 										'fair-events-experimental'
 									),
-									asset.members.map( memberName ).join( ', ' )
+									asset.members
+										.map( ( member ) =>
+											false === member.public
+												? sprintf(
+														/* translators: %s: team member name */
+														__(
+															'%s (name not public)',
+															'fair-events-experimental'
+														),
+														memberName( member )
+													)
+												: memberName( member )
+										)
+										.join( ', ' )
 								) }
 							</li>
 						) }

@@ -36,6 +36,12 @@ defined( 'WPINC' ) || die;
  * Images are ordinary WordPress attachments. Unlinking an image or
  * deleting an asset never deletes the attachment, and nothing here changes
  * who can open its file. See docs/marketing-assets.md.
+ *
+ * Asset content is public on the occurrence's asset page (#2430). A linked
+ * member's name is published only once an administrator saves the link
+ * with `publish_member_names`, which records {@see self::DISCLOSURE_VERSION}
+ * on it; links saved without it, including every link from before #2430,
+ * stay private.
  */
 class MarketingAssets {
 
@@ -58,6 +64,13 @@ class MarketingAssets {
 	 * Most team members one asset links to.
 	 */
 	public const MAX_MEMBERS = 50;
+
+	/**
+	 * Version of the public-name disclosure shown before a save that
+	 * publishes members' names. A link records the version accepted for it;
+	 * a link with a lower one publishes nothing.
+	 */
+	public const DISCLOSURE_VERSION = 1;
 
 	/**
 	 * Storage.
@@ -194,7 +207,7 @@ class MarketingAssets {
 	 * @param EventDates $event_date Event date.
 	 * @return array<int, array>
 	 */
-	private static function team( EventDates $event_date ) {
+	public static function team( EventDates $event_date ) {
 		if ( ! TeamMemberRepository::is_installed() ) {
 			return array();
 		}
@@ -249,6 +262,8 @@ class MarketingAssets {
 				'available' => $schedule_available,
 				'items'     => $schedule_available ? array_values( self::schedule( $event_date ) ) : array(),
 			),
+			'share_url'            => \FairEventsExperimental\Frontend\MarketingAssetsPage::url( (int) $event_date->id ),
+			'index_url'            => \FairEventsExperimental\Frontend\MarketingAssetsPage::index_url(),
 			'supported_mime_types' => self::MIME_TYPES,
 			'max_label_length'     => self::MAX_LABEL_LENGTH,
 			'max_text_length'      => self::MAX_TEXT_LENGTH,
@@ -351,9 +366,9 @@ class MarketingAssets {
 	 * Validate and store an asset.
 	 *
 	 * `$params` holds only the submitted fields: `label` (string), `text`
-	 * (string), `attachment_id` (int|null), `member_ids` (int[]|null) and
-	 * `schedule_item_id` (int|null). A null or empty value clears an
-	 * optional field.
+	 * (string), `attachment_id` (int|null), `member_ids` (int[]|null),
+	 * `schedule_item_id` (int|null) and `publish_member_names` (bool). A
+	 * null or empty value clears an optional field.
 	 *
 	 * @param EventDates $event_date Event date.
 	 * @param int|null   $asset_id   Asset to update, null to create.
@@ -440,26 +455,52 @@ class MarketingAssets {
 		// Team members: new links need the team feature and a member on
 		// this date's team; links already stored may only be removed while
 		// it is off. Locked rows keep a concurrent unlink in order.
-		$stored_members = $stored ? $stored['member_ids'] : array();
-		$added          = array_values( array_diff( $final['member_ids'], $stored_members ) );
-		if ( $added && ! self::team_available() ) {
+		$stored_members     = $stored ? $stored['member_ids'] : array();
+		$stored_disclosures = $stored ? $stored['disclosures'] : array();
+		$added              = array_values( array_diff( $final['member_ids'], $stored_members ) );
+		$publish            = ! empty( $params['publish_member_names'] );
+		$unpublished        = array_values(
+			array_filter(
+				$final['member_ids'],
+				static function ( $member_id ) use ( $stored_disclosures ) {
+					return ( $stored_disclosures[ $member_id ] ?? 0 ) < self::DISCLOSURE_VERSION;
+				}
+			)
+		);
+		if ( ( $added || ( $publish && $unpublished ) ) && ! self::team_available() ) {
 			return new WP_Error(
 				'marketing_asset_team_unavailable',
-				__( 'Team members cannot be added while team management is turned off. You can still remove the ones already linked.', 'fair-events-experimental' ),
+				$added
+					? __( 'Team members cannot be added while team management is turned off. You can still remove the ones already linked.', 'fair-events-experimental' )
+					: __( 'Team member names cannot be published while team management is turned off. You can still remove the members already linked.', 'fair-events-experimental' ),
 				array( 'status' => 409 )
 			);
 		}
-		$on_team     = $this->lock_team_members( $event_date, $final['member_ids'] );
-		$not_on_team = array_values( array_diff( $added, $on_team ) );
-		if ( $not_on_team ) {
+		if ( $publish && ! array_key_exists( 'member_ids', $params ) ) {
 			$errors['member_ids'] = array(
-				'code'    => 'marketing_asset_member_not_on_team',
-				'message' => __( 'Only members of this event\'s team can be linked. Reload the page to see the current team.', 'fair-events-experimental' ),
-				'ids'     => $not_on_team,
+				'code'    => 'marketing_asset_publication_needs_members',
+				'message' => __( 'Send the team members whose names you publish.', 'fair-events-experimental' ),
 			);
-		} else {
-			// A member removed from the team meanwhile is dropped, not resurrected.
-			$final['member_ids'] = array_values( array_intersect( $final['member_ids'], $on_team ) );
+		} elseif ( $added && ! $publish ) {
+			$errors['member_ids'] = array(
+				'code'    => 'marketing_asset_publication_unconfirmed',
+				'message' => __( 'Linked team members\' names are shown on the public asset page. Confirm that their names will be public to link them.', 'fair-events-experimental' ),
+				'ids'     => $added,
+			);
+		}
+		if ( ! isset( $errors['member_ids'] ) ) {
+			$on_team     = $this->lock_team_members( $event_date, $final['member_ids'] );
+			$not_on_team = array_values( array_diff( $added, $on_team ) );
+			if ( $not_on_team ) {
+				$errors['member_ids'] = array(
+					'code'    => 'marketing_asset_member_not_on_team',
+					'message' => __( 'Only members of this event\'s team can be linked. Reload the page to see the current team.', 'fair-events-experimental' ),
+					'ids'     => $not_on_team,
+				);
+			} else {
+				// A member removed from the team meanwhile is dropped, not resurrected.
+				$final['member_ids'] = array_values( array_intersect( $final['member_ids'], $on_team ) );
+			}
 		}
 
 		// Schedule item: same rule as members.
@@ -497,7 +538,14 @@ class MarketingAssets {
 			$ok = $id > 0;
 		}
 
-		if ( ! $ok || ! $this->repository->replace_members( $id, $final['member_ids'] ) ) {
+		// Publishing records the accepted disclosure on every submitted
+		// link; otherwise each kept link keeps its own.
+		$links = array();
+		foreach ( $final['member_ids'] as $member_id ) {
+			$links[ $member_id ] = $publish ? self::DISCLOSURE_VERSION : ( $stored_disclosures[ $member_id ] ?? 0 );
+		}
+
+		if ( ! $ok || ! $this->repository->replace_members( $id, $links ) ) {
 			return self::save_failed();
 		}
 
@@ -725,7 +773,10 @@ class MarketingAssets {
 		$members = array();
 		foreach ( $row['member_ids'] as $member_id ) {
 			if ( isset( $team[ $member_id ] ) ) {
-				$members[] = $team[ $member_id ];
+				$members[] = array_merge(
+					$team[ $member_id ],
+					array( 'public' => ( $row['disclosures'][ $member_id ] ?? 0 ) >= self::DISCLOSURE_VERSION )
+				);
 			}
 		}
 
