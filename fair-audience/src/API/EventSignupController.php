@@ -2267,7 +2267,6 @@ class EventSignupController extends WP_REST_Controller {
 		$event_id       = isset( $metadata['post_id'] ) ? (int) $metadata['post_id'] : (int) $old_transaction->post_id;
 		$event_date_id  = isset( $metadata['event_date_id'] ) ? (int) $metadata['event_date_id'] : (int) $old_transaction->event_date_id;
 		$participant_id = isset( $metadata['participant_id'] ) ? (int) $metadata['participant_id'] : (int) $old_transaction->participant_id;
-		$user_id        = isset( $old_transaction->user_id ) ? (int) $old_transaction->user_id : 0;
 
 		if ( ! $event_id || ! $participant_id ) {
 			return new WP_Error(
@@ -2314,24 +2313,11 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		// Build line items from the old transaction so the retry mirrors the
-		// original purchase exactly (same prices the visitor agreed to).
-		$old_line_items = \FairPaymentsConnector\Models\LineItem::get_by_transaction_id( $transaction_id );
-		if ( empty( $old_line_items ) ) {
-			return new WP_Error(
-				'invalid_retry_state',
-				__( 'Original line items could not be loaded.', 'fair-audience' ),
-				array( 'status' => 500 )
-			);
-		}
-
-		$line_items = array();
-		foreach ( $old_line_items as $li ) {
-			$line_items[] = array(
-				'name'     => (string) $li->name,
-				'quantity' => isset( $li->quantity ) ? (int) $li->quantity : 1,
-				'amount'   => (float) $li->unit_amount,
-			);
+		// The retry mirrors the original purchase exactly (same prices the
+		// visitor agreed to).
+		$line_items = $this->original_line_items( $transaction_id );
+		if ( is_wp_error( $line_items ) ) {
+			return $line_items;
 		}
 
 		// Recover the buyer's original selection from transaction metadata so
@@ -2374,67 +2360,19 @@ class EventSignupController extends WP_REST_Controller {
 			$this->save_participant_options( (int) $event_participant->id, $retry_option_items );
 		}
 
-		$new_transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
+		return $this->start_retry_payment(
+			$old_transaction,
 			$line_items,
+			$event_id,
+			$event_date_id,
+			$participant_id,
 			array(
-				'currency'      => $old_transaction->currency,
-				'description'   => $old_transaction->description,
-				'post_id'       => $event_id,
-				'event_date_id' => $event_date_id,
-				'user_id'       => $user_id ? $user_id : null,
-				'metadata'      => array(
-					'source'                  => 'fair-audience-signup',
-					'event_date_id'           => $event_date_id,
-					'event_participant_id'    => (int) $event_participant->id,
-					'participant_id'          => $participant_id,
-					'ticket_type_id'          => $retry_ticket_type_id,
-					'ticket_option_ids'       => $retry_option_ids,
-					'retry_of_transaction_id' => $transaction_id,
-				),
-			)
-		);
-
-		if ( is_wp_error( $new_transaction_id ) ) {
-			return $new_transaction_id;
-		}
-
-		$recorded = EventsLifecycle::record_attempt( (int) $new_transaction_id );
-		if ( is_wp_error( $recorded ) ) {
-			return $recorded;
-		}
-
-		$redirect_url = add_query_arg(
-			array(
-				'fair_payment_callback' => 'true',
-				'fair_signup_tx'        => $new_transaction_id,
-				'fst_sig'               => \FairAudience\Services\TransactionAccessToken::generate(
-					(int) $new_transaction_id,
-					(int) $participant_id
-				),
-			),
-			get_permalink( $event_id )
-		);
-
-		$payment = \FairPaymentsConnector\API\TransactionAPI::initiate_payment(
-			$new_transaction_id,
-			array(
-				'redirect_url' => $redirect_url,
-			)
-		);
-
-		if ( is_wp_error( $payment ) ) {
-			return $payment;
-		}
-
-		return rest_ensure_response(
-			array(
-				'success'        => true,
-				'status'         => 'payment_required',
-				'message'        => __( 'Redirecting to payment…', 'fair-audience' ),
-				'checkout_url'   => $payment['checkout_url'],
-				'transaction_id' => (int) $new_transaction_id,
-				'amount'         => $old_transaction->amount,
-				'currency'       => $old_transaction->currency,
+				'source'               => 'fair-audience-signup',
+				'event_date_id'        => $event_date_id,
+				'event_participant_id' => (int) $event_participant->id,
+				'participant_id'       => $participant_id,
+				'ticket_type_id'       => $retry_ticket_type_id,
+				'ticket_option_ids'    => $retry_option_ids,
 			)
 		);
 	}
@@ -2457,7 +2395,6 @@ class EventSignupController extends WP_REST_Controller {
 		$event_id       = isset( $metadata['post_id'] ) ? (int) $metadata['post_id'] : (int) $old_transaction->post_id;
 		$event_date_id  = isset( $metadata['event_date_id'] ) ? (int) $metadata['event_date_id'] : (int) $old_transaction->event_date_id;
 		$participant_id = isset( $metadata['participant_id'] ) ? (int) $metadata['participant_id'] : (int) $old_transaction->participant_id;
-		$user_id        = isset( $old_transaction->user_id ) ? (int) $old_transaction->user_id : 0;
 
 		$rows = array();
 		foreach ( $event_participant_ids as $event_participant_id ) {
@@ -2493,22 +2430,9 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		$old_line_items = \FairPaymentsConnector\Models\LineItem::get_by_transaction_id( $transaction_id );
-		if ( empty( $old_line_items ) ) {
-			return new WP_Error(
-				'invalid_retry_state',
-				__( 'Original line items could not be loaded.', 'fair-audience' ),
-				array( 'status' => 500 )
-			);
-		}
-
-		$line_items = array();
-		foreach ( $old_line_items as $li ) {
-			$line_items[] = array(
-				'name'     => (string) $li->name,
-				'quantity' => isset( $li->quantity ) ? (int) $li->quantity : 1,
-				'amount'   => (float) $li->unit_amount,
-			);
+		$line_items = $this->original_line_items( $transaction_id );
+		if ( is_wp_error( $line_items ) ) {
+			return $line_items;
 		}
 
 		$expires_at = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
@@ -2518,64 +2442,18 @@ class EventSignupController extends WP_REST_Controller {
 			$row->save();
 		}
 
-		$new_transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
+		return $this->start_retry_payment(
+			$old_transaction,
 			$line_items,
+			$event_id,
+			$event_date_id,
+			$participant_id,
 			array(
-				'currency'      => $old_transaction->currency,
-				'description'   => $old_transaction->description,
-				'post_id'       => $event_id,
-				'event_date_id' => $event_date_id,
-				'user_id'       => $user_id ? $user_id : null,
-				'metadata'      => array(
-					'source'                  => 'fair-audience-signup',
-					'event_date_id'           => $event_date_id,
-					'event_participant_ids'   => $event_participant_ids,
-					'participant_id'          => $participant_id,
-					'ticket_type_id'          => isset( $metadata['ticket_type_id'] ) ? (int) $metadata['ticket_type_id'] : null,
-					'retry_of_transaction_id' => $transaction_id,
-				),
-			)
-		);
-
-		if ( is_wp_error( $new_transaction_id ) ) {
-			return $new_transaction_id;
-		}
-
-		$recorded = EventsLifecycle::record_attempt( (int) $new_transaction_id );
-		if ( is_wp_error( $recorded ) ) {
-			return $recorded;
-		}
-
-		$payment = \FairPaymentsConnector\API\TransactionAPI::initiate_payment(
-			$new_transaction_id,
-			array(
-				'redirect_url' => add_query_arg(
-					array(
-						'fair_payment_callback' => 'true',
-						'fair_signup_tx'        => $new_transaction_id,
-						'fst_sig'               => \FairAudience\Services\TransactionAccessToken::generate(
-							(int) $new_transaction_id,
-							$participant_id
-						),
-					),
-					get_permalink( $event_id )
-				),
-			)
-		);
-
-		if ( is_wp_error( $payment ) ) {
-			return $payment;
-		}
-
-		return rest_ensure_response(
-			array(
-				'success'        => true,
-				'status'         => 'payment_required',
-				'message'        => __( 'Redirecting to payment…', 'fair-audience' ),
-				'checkout_url'   => $payment['checkout_url'],
-				'transaction_id' => (int) $new_transaction_id,
-				'amount'         => $old_transaction->amount,
-				'currency'       => $old_transaction->currency,
+				'source'                => 'fair-audience-signup',
+				'event_date_id'         => $event_date_id,
+				'event_participant_ids' => $event_participant_ids,
+				'participant_id'        => $participant_id,
+				'ticket_type_id'        => isset( $metadata['ticket_type_id'] ) ? (int) $metadata['ticket_type_id'] : null,
 			)
 		);
 	}
@@ -2600,7 +2478,6 @@ class EventSignupController extends WP_REST_Controller {
 		$option_ids           = isset( $metadata['ticket_option_ids'] ) && is_array( $metadata['ticket_option_ids'] )
 			? array_map( 'intval', $metadata['ticket_option_ids'] )
 			: array();
-		$user_id              = isset( $old_transaction->user_id ) ? (int) $old_transaction->user_id : 0;
 
 		if ( ! $event_id || ! $participant_id || ! $event_participant_id || empty( $option_ids ) ) {
 			return new WP_Error(
@@ -2663,24 +2540,10 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		// Rebuild line items from the original transaction so the retry charges
-		// exactly what the buyer agreed to.
-		$old_line_items = \FairPaymentsConnector\Models\LineItem::get_by_transaction_id( $transaction_id );
-		if ( empty( $old_line_items ) ) {
-			return new WP_Error(
-				'invalid_retry_state',
-				__( 'Original line items could not be loaded.', 'fair-audience' ),
-				array( 'status' => 500 )
-			);
-		}
-
-		$line_items = array();
-		foreach ( $old_line_items as $li ) {
-			$line_items[] = array(
-				'name'     => (string) $li->name,
-				'quantity' => isset( $li->quantity ) ? (int) $li->quantity : 1,
-				'amount'   => (float) $li->unit_amount,
-			);
+		// The retry charges exactly what the buyer agreed to.
+		$line_items = $this->original_line_items( $transaction_id );
+		if ( is_wp_error( $line_items ) ) {
+			return $line_items;
 		}
 
 		// Refresh the pending reservation for this retry attempt so the hold
@@ -2702,6 +2565,74 @@ class EventSignupController extends WP_REST_Controller {
 			return $held;
 		}
 
+		return $this->start_retry_payment(
+			$old_transaction,
+			$line_items,
+			$event_id,
+			$event_date_id,
+			$participant_id,
+			array(
+				'source'               => 'fair-audience-activity-addon',
+				'event_date_id'        => $event_date_id,
+				'event_participant_id' => $event_participant_id,
+				'participant_id'       => $participant_id,
+				'ticket_option_ids'    => $option_ids,
+				'ticket_id'            => $ticket_id ? $ticket_id : null,
+			)
+		);
+	}
+
+	/**
+	 * The line items of the attempt being retried, as Connector line-item
+	 * arguments: names, quantities and unit amounts, discounts included, so
+	 * the retry charges what the buyer agreed to rather than current prices.
+	 * Callers run it after their own eligibility checks and before changing
+	 * any hold, so a legacy attempt without lines leaves the holds alone.
+	 *
+	 * @param int $transaction_id Transaction being retried.
+	 * @return array[]|WP_Error Line items, or invalid_retry_state (500) when none are stored.
+	 */
+	private function original_line_items( $transaction_id ) {
+		$old_line_items = \FairPaymentsConnector\Models\LineItem::get_by_transaction_id( (int) $transaction_id );
+		if ( empty( $old_line_items ) ) {
+			return new WP_Error(
+				'invalid_retry_state',
+				__( 'Original line items could not be loaded.', 'fair-audience' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$line_items = array();
+		foreach ( $old_line_items as $li ) {
+			$line_items[] = array(
+				'name'     => (string) $li->name,
+				'quantity' => isset( $li->quantity ) ? (int) $li->quantity : 1,
+				'amount'   => (float) $li->unit_amount,
+			);
+		}
+		return $line_items;
+	}
+
+	/**
+	 * Hand a retry off to payment: create the new attempt with the original
+	 * currency, description and buyer, record it in Fair Events, then send
+	 * the buyer to pay with a signed callback. Each step stops on its error:
+	 * a creation failure records nothing, a recording failure starts no
+	 * payment, and a payment failure leaves the recorded attempt linked for
+	 * recovery.
+	 *
+	 * @param object  $old_transaction The failed/expired transaction.
+	 * @param array[] $line_items      From original_line_items().
+	 * @param int     $event_id        Event post the callback returns to.
+	 * @param int     $event_date_id   Event date of the attempt.
+	 * @param int     $participant_id  Buyer the callback is signed for.
+	 * @param array   $metadata        Purchase-specific attempt metadata; the
+	 *                                 retried transaction is added to it.
+	 * @return WP_REST_Response|WP_Error The payment_required response, or the failed step's error.
+	 */
+	private function start_retry_payment( $old_transaction, array $line_items, $event_id, $event_date_id, $participant_id, array $metadata ) {
+		$user_id = isset( $old_transaction->user_id ) ? (int) $old_transaction->user_id : 0;
+
 		$new_transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
 			$line_items,
 			array(
@@ -2710,14 +2641,8 @@ class EventSignupController extends WP_REST_Controller {
 				'post_id'       => $event_id,
 				'event_date_id' => $event_date_id,
 				'user_id'       => $user_id ? $user_id : null,
-				'metadata'      => array(
-					'source'                  => 'fair-audience-activity-addon',
-					'event_date_id'           => $event_date_id,
-					'event_participant_id'    => $event_participant_id,
-					'participant_id'          => $participant_id,
-					'ticket_option_ids'       => $option_ids,
-					'ticket_id'               => $ticket_id ? $ticket_id : null,
-					'retry_of_transaction_id' => $transaction_id,
+				'metadata'      => $metadata + array(
+					'retry_of_transaction_id' => (int) $old_transaction->id,
 				),
 			)
 		);
@@ -2731,22 +2656,20 @@ class EventSignupController extends WP_REST_Controller {
 			return $recorded;
 		}
 
-		$redirect_url = add_query_arg(
-			array(
-				'fair_payment_callback' => 'true',
-				'fair_signup_tx'        => $new_transaction_id,
-				'fst_sig'               => \FairAudience\Services\TransactionAccessToken::generate(
-					(int) $new_transaction_id,
-					(int) $participant_id
-				),
-			),
-			get_permalink( $event_id )
-		);
-
 		$payment = \FairPaymentsConnector\API\TransactionAPI::initiate_payment(
 			$new_transaction_id,
 			array(
-				'redirect_url' => $redirect_url,
+				'redirect_url' => add_query_arg(
+					array(
+						'fair_payment_callback' => 'true',
+						'fair_signup_tx'        => $new_transaction_id,
+						'fst_sig'               => \FairAudience\Services\TransactionAccessToken::generate(
+							(int) $new_transaction_id,
+							(int) $participant_id
+						),
+					),
+					get_permalink( $event_id )
+				),
 			)
 		);
 
