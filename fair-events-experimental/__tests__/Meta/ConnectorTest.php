@@ -148,6 +148,54 @@ class ConnectorTest extends TestCase {
 		$this->assertSame( 'env', Connector::credential()['source'] );
 	}
 
+	/**
+	 * Overrides apply in order and the saved token returns, unchanged, once
+	 * they are removed.
+	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
+	public function test_overrides_removed_restore_the_saved_token() {
+		self::save( 'legacy-token' );
+		define( Connector::CREDENTIAL_NAME, '   ' );
+		$this->assertSame( 'legacy-token', Connector::token() );
+
+		putenv( Connector::CREDENTIAL_NAME . '= ' . self::OVERRIDE . ' ' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.runtime_configuration_putenv -- test-only environment.
+		$this->assertSame(
+			array(
+				'token'  => self::OVERRIDE,
+				'source' => 'env',
+			),
+			Connector::credential()
+		);
+
+		putenv( Connector::CREDENTIAL_NAME ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.runtime_configuration_putenv -- test-only environment.
+		$this->assertSame( 'database', Connector::credential()['source'] );
+		$this->assertSame( 'legacy-token', $GLOBALS['_fair_test_options'][ Conversions::TOKEN_OPTION ] );
+	}
+
+	/** Status carries only the configured flag and the source. */
+	public function test_status_contains_no_credential() {
+		self::save( self::SAVED );
+		putenv( Connector::CREDENTIAL_NAME . '=' . self::OVERRIDE ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.runtime_configuration_putenv -- test-only environment.
+
+		$encoded = (string) wp_json_encode( Connector::status() );
+		$this->assertStringNotContainsString( self::OVERRIDE, $encoded );
+		$this->assertStringNotContainsString( self::SAVED, $encoded );
+	}
+
+	/** A non-string saved value counts as no credential. */
+	public function test_non_string_saved_value_is_absent() {
+		$GLOBALS['_fair_test_options'][ Conversions::TOKEN_OPTION ] = 12345;
+
+		$this->assertSame(
+			array(
+				'configured' => false,
+				'source'     => 'none',
+			),
+			Connector::status()
+		);
+	}
+
 	/** Validation is local and loose: no prefix, but no whitespace, masks or fragments. */
 	public function test_valid_token() {
 		$this->assertTrue( Connector::valid_token( self::SAVED ) );

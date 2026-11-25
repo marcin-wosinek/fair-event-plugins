@@ -150,6 +150,47 @@ class TelegramConnectorTest extends TestCase {
 		$this->assertStringNotContainsString( 'env-not-a-token', $problem['message'] );
 	}
 
+	/** A malformed but non-empty override still wins over a valid saved token. */
+	public function test_malformed_override_wins_and_reports_invalid() {
+		self::save( self::SAVED );
+		putenv( TelegramConnector::CREDENTIAL_NAME . '=env-not-a-token' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.runtime_configuration_putenv -- test-only environment.
+
+		$status = TelegramConnector::status();
+		$this->assertSame(
+			array(
+				'configured' => true,
+				'valid'      => false,
+				'source'     => 'env',
+			),
+			$status
+		);
+		$this->assertStringNotContainsString( 'env-not-a-token', (string) json_encode( $status ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- test-only.
+		$this->assertStringNotContainsString( self::SAVED, (string) json_encode( $status ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- test-only.
+	}
+
+	/** A whitespace-only override falls back to the saved token, trimmed. */
+	public function test_blank_override_falls_back_to_the_trimmed_saved_token() {
+		self::save( ' ' . self::SAVED . ' ' );
+		putenv( TelegramConnector::CREDENTIAL_NAME . '=   ' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.runtime_configuration_putenv -- test-only environment.
+
+		$this->assertSame(
+			array(
+				'token'  => self::SAVED,
+				'source' => 'database',
+			),
+			TelegramConnector::credential()
+		);
+		$this->assertTrue( TelegramConnector::status()['valid'] );
+	}
+
+	/** A non-string saved value counts as no credential. */
+	public function test_non_string_saved_value_is_absent() {
+		$GLOBALS['_fair_test_options'][ TelegramSettings::TOKEN_OPTION ] = array( self::SAVED );
+
+		$this->assertSame( 'none', TelegramConnector::credential()['source'] );
+		$this->assertFalse( TelegramConnector::status()['configured'] );
+	}
+
 	/** Writes accept a well-formed token or removal, and keep the saved token otherwise. */
 	public function test_sanitize_keeps_the_saved_token_for_a_malformed_replacement() {
 		self::save( self::SAVED );
