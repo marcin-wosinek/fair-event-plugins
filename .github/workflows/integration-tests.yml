@@ -30,6 +30,18 @@ on:
                 type: choice
                 options: [none, transient, persistent]
                 default: none
+            e2e_focus_spec:
+                description: 'Focused E2E run (TESTING.md § Focused repetition runs): one spec path; replaces the four E2E shards. Leave empty for the whole suite'
+                type: string
+                default: ''
+            e2e_focus_grep:
+                description: 'Focused E2E run: --grep pattern for the scenarios to repeat'
+                type: string
+                default: ''
+            e2e_focus_repeat_each:
+                description: 'Focused E2E run: --repeat-each count (retries are always 0)'
+                type: string
+                default: '30'
 
 jobs:
     # Applies the suites' path filters (scripts/integration-suites.mjs) to the
@@ -201,6 +213,9 @@ jobs:
             prepared_attempt: ${{ needs.prepare.outputs.attempt }}
             php_diagnostics: ${{ inputs.php_diagnostics == true }}
             simulate_preparation_failure: ${{ inputs.simulate_preparation_failure || 'none' }}
+            focus_spec: ${{ inputs.e2e_focus_spec || '' }}
+            focus_grep: ${{ inputs.e2e_focus_grep || '' }}
+            focus_repeat_each: ${{ inputs.e2e_focus_repeat_each || '30' }}
 
     # Single status for the API suite, kept here so the check stays named
     # "API Tests": fails unless suite selection, preparation, the inventory

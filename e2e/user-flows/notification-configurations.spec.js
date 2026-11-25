@@ -76,24 +76,34 @@ function moreActions( page, name ) {
 	} );
 }
 
-// Opens a row's menu and focuses an item with the keyboard only.
+// The items of a row's menu, in order.
+const MENU_ITEMS = [ 'History', 'Duplicate', 'Delete' ];
+
+// Opens a row's menu and focuses an item with the keyboard only. The menu
+// moves focus to its first item one task after it opens; a key pressed
+// before then reaches the trigger and is lost, so wait for each move.
 async function focusMenuItem( page, name, item ) {
-	await moreActions( page, name ).focus();
+	const trigger = moreActions( page, name );
+	await trigger.focus();
+	await expect( trigger ).toBeFocused();
 	await page.keyboard.press( 'Enter' );
 	const menu = page.getByRole( 'menu', {
 		name: `More actions for “${ name }”`,
 	} );
 	await expect( menu ).toBeVisible();
-	const target = menu.getByRole( 'menuitem', { name: item, exact: true } );
-	for ( let step = 0; step < 4; step++ ) {
-		if (
-			await target.evaluate( ( el ) => el === document.activeElement )
-		) {
-			return target;
+	const steps = MENU_ITEMS.indexOf( item );
+	expect( steps ).toBeGreaterThanOrEqual( 0 );
+	let target = null;
+	for ( let step = 0; step <= steps; step++ ) {
+		if ( step > 0 ) {
+			await page.keyboard.press( 'ArrowDown' );
 		}
-		await page.keyboard.press( 'ArrowDown' );
+		target = menu.getByRole( 'menuitem', {
+			name: MENU_ITEMS[ step ],
+			exact: true,
+		} );
+		await expect( target ).toBeFocused();
 	}
-	await expect( target ).toBeFocused();
 	return target;
 }
 
@@ -123,11 +133,9 @@ async function open( page, name, link = name ) {
 
 async function addIndividualEmail( page, name ) {
 	await page.goto( SETTINGS_URL );
-	const add = page
-		.locator( '.fair-events-notifications__add' )
-		.filter( {
-			has: page.getByRole( 'heading', { name: 'Add a notification' } ),
-		} );
+	const add = page.locator( '.fair-events-notifications__add' ).filter( {
+		has: page.getByRole( 'heading', { name: 'Add a notification' } ),
+	} );
 	await add.getByLabel( 'Kind' ).selectOption( 'individual_email' );
 	await add.getByLabel( 'Name' ).fill( name );
 	await add.getByRole( 'button', { name: 'Add notification' } ).click();
@@ -466,13 +474,15 @@ test.describe( 'Notification list by event feed', () => {
 } );
 
 test.describe( 'Duplicating a notification', () => {
-	const ids = [];
+	let ids = [];
 
-	test.beforeAll( () => {
+	test.beforeEach( () => {
+		ids = [];
 		resetCapturedMail();
 	} );
 
-	test.afterAll( () => {
+	// After each test, so repeated runs start from a clean list.
+	test.afterEach( () => {
 		if ( ids.length ) {
 			fixture( `remove ${ ids.join( ' ' ) }` );
 		}
@@ -542,15 +552,23 @@ test.describe( 'Duplicating a notification', () => {
 } );
 
 test.describe( 'Deleting a notification', () => {
-	const ids = [];
+	let ids = [];
 
-	test.beforeAll( () => {
+	test.beforeEach( () => {
+		ids = [];
 		resetCapturedMail();
 	} );
 
-	test.afterAll( () => {
+	// After each test, so repeated runs start from a clean list and history.
+	// The deleted notification's history stays by design; clear it here.
+	test.afterEach( () => {
 		if ( ids.length ) {
 			fixture( `remove ${ ids.join( ' ' ) }` );
+			runScript(
+				'notification-history-fixture.php',
+				'E2E_NOTIFICATION_HISTORY',
+				`clear ${ ids.join( ' ' ) }`
+			);
 		}
 		resetCapturedMail();
 	} );
@@ -582,6 +600,7 @@ test.describe( 'Deleting a notification', () => {
 			name: `Delete notification — ${ name }`,
 		} );
 		await expect( dialog ).toBeVisible();
+		await expect( dialog ).toBeFocused();
 		await expect(
 			dialog.getByText(
 				`Delete the notification “${ name }” (Individual email), which sends to: ${ RECIPIENT }?`
@@ -599,14 +618,19 @@ test.describe( 'Deleting a notification', () => {
 		await expect( moreActions( page, name ) ).toBeFocused();
 		await expect( listRow( page, name ) ).toHaveCount( 1 );
 
+		// Confirm with the keyboard: from the dialog, Shift+Tab wraps to its
+		// last button.
 		await focusMenuItem( page, name, 'Delete' );
 		await page.keyboard.press( 'Enter' );
 		dialog = page.getByRole( 'dialog', {
 			name: `Delete notification — ${ name }`,
 		} );
-		await dialog
-			.getByRole( 'button', { name: 'Delete notification' } )
-			.click();
+		await expect( dialog ).toBeFocused();
+		await page.keyboard.press( 'Shift+Tab' );
+		await expect(
+			dialog.getByRole( 'button', { name: 'Delete notification' } )
+		).toBeFocused();
+		await page.keyboard.press( 'Enter' );
 
 		await expect(
 			page
