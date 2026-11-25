@@ -2453,8 +2453,8 @@ class EventDatesController extends WP_REST_Controller {
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
-		$page       = $request->get_param( 'page' );
-		$per_page   = $request->get_param( 'per_page' );
+		$page       = (int) $request->get_param( 'page' );
+		$per_page   = (int) $request->get_param( 'per_page' );
 		$orderby    = $request->get_param( 'orderby' );
 		$order      = strtoupper( $request->get_param( 'order' ) );
 
@@ -2494,44 +2494,40 @@ class EventDatesController extends WP_REST_Controller {
 			}
 		}
 
-		$where_sql = '';
-		if ( ! empty( $where_clauses ) ) {
-			$where_sql = 'WHERE ' . implode( ' AND ', $where_clauses );
-		}
+		// Every clause above is a fixed SQL fragment; request input reaches the
+		// query only through the bound values. The occurrence_type branch always
+		// adds a clause, so the WHERE is never empty and the count and page
+		// queries share it.
+		$where_sql = 'WHERE ' . implode( ' AND ', $where_clauses );
 
-		// Whitelist orderby to prevent SQL injection.
-		$allowed_orderby = array( 'id', 'title', 'start_date', 'link_type', 'occurrence_type' );
-		if ( ! in_array( $orderby, $allowed_orderby, true ) ) {
-			$orderby = 'start_date';
-		}
-		if ( 'ASC' !== $order ) {
-			$order = 'DESC';
-		}
-		// Dates order by their time within a day too.
-		$orderby_sql = 'start_date' === $orderby ? "`start_date` $order, `start_time`" : "`$orderby`";
+		// Map the enum-validated orderby onto fixed column names, bound with
+		// %i. Dates also order by their time within a day; other columns
+		// break ties by id so pages are stable.
+		$sort_columns = array(
+			'id'              => array( 'id', 'id' ),
+			'title'           => array( 'title', 'id' ),
+			'start_date'      => array( 'start_date', 'start_time' ),
+			'link_type'       => array( 'link_type', 'id' ),
+			'occurrence_type' => array( 'occurrence_type', 'id' ),
+		);
+		$sort_by      = $sort_columns[ $orderby ] ?? $sort_columns['start_date'];
+		$order_sql    = 'ASC' === $order
+			? 'ORDER BY %i ASC, %i ASC LIMIT %d OFFSET %d'
+			: 'ORDER BY %i DESC, %i DESC LIMIT %d OFFSET %d';
 
-		// Count total items.
-		if ( ! empty( $where_clauses ) ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i $where_sql", $table_name, ...$where_values ) );
-		} else {
-			$total = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $table_name ) );
-		}
+		$count_args = array_merge( array( $table_name ), $where_values );
+		$total      = (int) $wpdb->get_var(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where_sql joins fixed fragments; values are bound.
+			$wpdb->prepare( "SELECT COUNT(*) FROM %i $where_sql", ...$count_args )
+		);
 
 		$total_pages = (int) ceil( $total / $per_page );
 		$offset      = ( $page - 1 ) * $per_page;
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$order_sql = "ORDER BY $orderby_sql $order LIMIT %d OFFSET %d";
-
-		if ( ! empty( $where_clauses ) ) {
-			$select_args = array_merge( array( $table_name ), $where_values, array( $per_page, $offset ) );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$results = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i $where_sql $order_sql", ...$select_args ) );
-		} else {
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$results = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i $order_sql", $table_name, $per_page, $offset ) );
-		}
+		$select_args = array_merge( $count_args, $sort_by, array( $per_page, $offset ) );
+		$results     = $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where_sql and $order_sql are fixed fragments; identifiers and values are bound.
+			$wpdb->prepare( "SELECT * FROM %i $where_sql $order_sql", ...$select_args )
+		);
 
 		// Batch-fetch generated children for any masters on this page, in one
 		// query, so groups never split across pages and we avoid an N+1 per
@@ -2548,7 +2544,7 @@ class EventDatesController extends WP_REST_Controller {
 			$placeholders  = implode( ', ', array_fill( 0, count( $master_ids ), '%d' ) );
 			$children_args = array_merge( array( $table_name ), $master_ids, array( 'generated' ) );
 			$child_results = $wpdb->get_results(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is a fixed run of %d tokens, not request input.
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $placeholders is a fixed run of %d tokens, not request input; the spread supplies one value per token.
 				$wpdb->prepare( "SELECT * FROM %i WHERE master_id IN ($placeholders) AND occurrence_type = %s ORDER BY start_date ASC, start_time ASC", ...$children_args )
 			);
 
