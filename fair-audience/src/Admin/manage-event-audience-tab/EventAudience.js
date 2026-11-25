@@ -24,6 +24,9 @@ import {
 } from './ticketLabels.js';
 import AssignTicketModal, { personLabel } from './AssignTicketModal.js';
 import RemoveParticipantModal from './RemoveParticipantModal.js';
+import ParticipantSelector, {
+	useParticipantSelection,
+} from '../components/ParticipantSelector.js';
 import InvitationSummary, {
 	invitationBlockReason,
 	useInvitationPreview,
@@ -221,8 +224,8 @@ export default function EventAudience( {
 	const [ allParticipants, setAllParticipants ] = useState( [] );
 	const [ loadingAllParticipants, setLoadingAllParticipants ] =
 		useState( false );
-	const [ addSearch, setAddSearch ] = useState( '' );
-	const [ selectedToAdd, setSelectedToAdd ] = useState( new Set() );
+	const addSelection = useParticipantSelection();
+	const selectedToAdd = addSelection.selectedIds;
 	const [ isAdding, setIsAdding ] = useState( false );
 
 	// Consent modal state: maps participant_id → 'yes' | 'no' | null (null = skip)
@@ -586,8 +589,7 @@ export default function EventAudience( {
 
 	const handleOpenAddModal = () => {
 		setAddModalOpen( true );
-		setSelectedToAdd( new Set() );
-		setAddSearch( '' );
+		addSelection.reset();
 		setAddModalLabel( 'signed_up' );
 		setLoadingAllParticipants( true );
 		apiFetch( { path: '/fair-audience/v1/participants?per_page=0' } )
@@ -602,8 +604,7 @@ export default function EventAudience( {
 
 	const handleCloseAddModal = () => {
 		setAddModalOpen( false );
-		setSelectedToAdd( new Set() );
-		setAddSearch( '' );
+		addSelection.reset();
 	};
 
 	const availableParticipants = useMemo( () => {
@@ -612,27 +613,6 @@ export default function EventAudience( {
 		);
 		return allParticipants.filter( ( p ) => ! existingIds.has( p.id ) );
 	}, [ allParticipants, participants ] );
-
-	const filteredAvailableParticipants = useMemo( () => {
-		if ( ! addSearch ) return availableParticipants;
-		const term = addSearch.toLowerCase();
-		return availableParticipants.filter(
-			( p ) =>
-				( p.name || '' ).toLowerCase().includes( term ) ||
-				( p.surname || '' ).toLowerCase().includes( term ) ||
-				( p.email || '' ).toLowerCase().includes( term )
-		);
-	}, [ availableParticipants, addSearch ] );
-
-	const handleToggleParticipantToAdd = ( participantId ) => {
-		const next = new Set( selectedToAdd );
-		if ( next.has( participantId ) ) {
-			next.delete( participantId );
-		} else {
-			next.add( participantId );
-		}
-		setSelectedToAdd( next );
-	};
 
 	const handleBatchAdd = async () => {
 		if ( selectedToAdd.size === 0 ) return;
@@ -2678,149 +2658,41 @@ export default function EventAudience( {
 						</p>
 					) : (
 						<>
-							<div
-								style={ {
-									display: 'flex',
-									gap: '10px',
-									marginBottom: '10px',
-								} }
-							>
-								<input
-									type="text"
-									placeholder={ __(
-										'Search by name or email…',
-										'fair-audience'
-									) }
-									value={ addSearch }
-									onChange={ ( e ) =>
-										setAddSearch( e.target.value )
-									}
-									style={ {
-										flex: 1,
-										padding: '8px 12px',
-										border: '1px solid #ddd',
-										borderRadius: '4px',
-									} }
-								/>
-								<SelectControl
-									value={ addModalLabel }
-									options={ [
-										{
-											label: __(
-												'Signed up',
-												'fair-audience'
-											),
-											value: 'signed_up',
-										},
-										{
-											label: __(
-												'Collaborator',
-												'fair-audience'
-											),
-											value: 'collaborator',
-										},
-										{
-											label: __(
-												'Interested',
-												'fair-audience'
-											),
-											value: 'interested',
-										},
-									] }
-									onChange={ setAddModalLabel }
-									__nextHasNoMarginBottom
-								/>
-							</div>
-
-							<div
-								style={ {
-									marginBottom: '10px',
-									fontSize: '12px',
-									color: '#666',
-								} }
-							>
-								{ selectedToAdd.size > 0
-									? sprintf(
-											/* translators: 1: selected count, 2: shown count */
-											__(
-												'%1$d selected, %2$d shown',
-												'fair-audience'
-											),
-											selectedToAdd.size,
-											filteredAvailableParticipants.length
-										)
-									: sprintf(
-											/* translators: %d: number of available participants */
-											__(
-												'%d participant(s) available',
-												'fair-audience'
-											),
-											filteredAvailableParticipants.length
-										) }
-							</div>
-
-							<div
-								style={ {
-									maxHeight: '400px',
-									overflowY: 'auto',
-									border: '1px solid #ddd',
-									borderRadius: '4px',
-								} }
-							>
-								{ filteredAvailableParticipants.map( ( p ) => (
-									<div
-										key={ p.id }
-										style={ {
-											padding: '10px 15px',
-											borderBottom: '1px solid #eee',
-											display: 'flex',
-											alignItems: 'center',
-											gap: '10px',
-										} }
-									>
-										<CheckboxControl
-											checked={ selectedToAdd.has(
-												p.id
-											) }
-											onChange={ () =>
-												handleToggleParticipantToAdd(
-													p.id
-												)
-											}
-											__nextHasNoMarginBottom
-										/>
-										<div>
-											<strong>
-												{ p.name } { p.surname }
-											</strong>
-											<br />
-											<span
-												style={ {
-													color: '#666',
-													fontSize: '12px',
-												} }
-											>
-												{ p.email }
-											</span>
-										</div>
-									</div>
-								) ) }
-								{ filteredAvailableParticipants.length ===
-									0 && (
-									<p
-										style={ {
-											padding: '15px',
-											color: '#666',
-										} }
-									>
-										{ __(
-											'No participants match your search.',
-											'fair-audience'
-										) }
-									</p>
-								) }
-							</div>
-
+							<ParticipantSelector
+								participants={ availableParticipants }
+								selection={ addSelection }
+								checkboxHasNoMarginBottom
+								controls={
+									<SelectControl
+										value={ addModalLabel }
+										options={ [
+											{
+												label: __(
+													'Signed up',
+													'fair-audience'
+												),
+												value: 'signed_up',
+											},
+											{
+												label: __(
+													'Collaborator',
+													'fair-audience'
+												),
+												value: 'collaborator',
+											},
+											{
+												label: __(
+													'Interested',
+													'fair-audience'
+												),
+												value: 'interested',
+											},
+										] }
+										onChange={ setAddModalLabel }
+										__nextHasNoMarginBottom
+									/>
+								}
+							/>
 							<div
 								style={ {
 									marginTop: '20px',

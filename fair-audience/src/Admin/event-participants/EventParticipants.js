@@ -22,6 +22,9 @@ import InvitationSummary, {
 	useInvitationPreview,
 } from '../components/InvitationSummary.js';
 import { personFromProfile } from '../components/participantIdentity.js';
+import ParticipantSelector, {
+	useParticipantSelection,
+} from '../components/ParticipantSelector.js';
 import RemoveParticipantModal from '../manage-event-audience-tab/RemoveParticipantModal.js';
 import { ticketShortLabel } from '../manage-event-audience-tab/ticketLabels.js';
 
@@ -180,8 +183,8 @@ export default function EventParticipants() {
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ error, setError ] = useState( null );
 	const [ addModalLabel, setAddModalLabel ] = useState( null );
-	const [ selectedToAdd, setSelectedToAdd ] = useState( new Set() );
-	const [ addSearch, setAddSearch ] = useState( '' );
+	const addSelection = useParticipantSelection();
+	const selectedToAdd = addSelection.selectedIds;
 	const [ addGroupFilter, setAddGroupFilter ] = useState( '' );
 	const [ isAdding, setIsAdding ] = useState( false );
 	const [ addError, setAddError ] = useState( null );
@@ -315,31 +318,16 @@ export default function EventParticipants() {
 		return allParticipants.filter( ( p ) => ! existingIds.has( p.id ) );
 	}, [ allParticipants, participants ] );
 
-	// Filter available participants by search text and group.
-	const filteredAvailableParticipants = useMemo( () => {
-		let filtered = availableParticipants;
-
-		if ( addSearch.trim() ) {
-			const searchLower = addSearch.toLowerCase();
-			filtered = filtered.filter(
-				( p ) =>
-					( p.name &&
-						p.name.toLowerCase().includes( searchLower ) ) ||
-					( p.surname &&
-						p.surname.toLowerCase().includes( searchLower ) ) ||
-					( p.email && p.email.toLowerCase().includes( searchLower ) )
-			);
+	// The search applies on top of the group filter, in the selector.
+	const groupFilteredParticipants = useMemo( () => {
+		if ( ! addGroupFilter ) {
+			return availableParticipants;
 		}
-
-		if ( addGroupFilter ) {
-			const groupId = parseInt( addGroupFilter, 10 );
-			filtered = filtered.filter(
-				( p ) => p.groups && p.groups.some( ( g ) => g.id === groupId )
-			);
-		}
-
-		return filtered;
-	}, [ availableParticipants, addSearch, addGroupFilter ] );
+		const groupId = parseInt( addGroupFilter, 10 );
+		return availableParticipants.filter(
+			( p ) => p.groups && p.groups.some( ( g ) => g.id === groupId )
+		);
+	}, [ availableParticipants, addGroupFilter ] );
 
 	// The selection that can still be added: someone added meanwhile is
 	// no longer offered, and no longer counted or sent.
@@ -353,8 +341,7 @@ export default function EventParticipants() {
 
 	const resetAddModal = ( label ) => {
 		setAddModalLabel( label );
-		setSelectedToAdd( new Set() );
-		setAddSearch( '' );
+		addSelection.reset();
 		setAddGroupFilter( '' );
 		setAddError( null );
 	};
@@ -365,32 +352,6 @@ export default function EventParticipants() {
 	const handleCloseAddModal = () => {
 		if ( ! addInFlight.current ) {
 			resetAddModal( null );
-		}
-	};
-
-	const handleToggleParticipantToAdd = ( participantId ) => {
-		const newSelected = new Set( selectedToAdd );
-		if ( newSelected.has( participantId ) ) {
-			newSelected.delete( participantId );
-		} else {
-			newSelected.add( participantId );
-		}
-		setSelectedToAdd( newSelected );
-	};
-
-	const handleSelectAllToAdd = () => {
-		const filteredIds = filteredAvailableParticipants.map( ( p ) => p.id );
-		const allSelected = filteredIds.every( ( id ) =>
-			selectedToAdd.has( id )
-		);
-		if ( allSelected ) {
-			const newSelected = new Set( selectedToAdd );
-			filteredIds.forEach( ( id ) => newSelected.delete( id ) );
-			setSelectedToAdd( newSelected );
-		} else {
-			const newSelected = new Set( selectedToAdd );
-			filteredIds.forEach( ( id ) => newSelected.add( id ) );
-			setSelectedToAdd( newSelected );
 		}
 	};
 
@@ -950,161 +911,35 @@ export default function EventParticipants() {
 						</p>
 					) : (
 						<>
-							<div
-								style={ {
-									display: 'flex',
-									gap: '10px',
-									marginBottom: '10px',
-								} }
-							>
-								<input
-									type="text"
-									placeholder={ __(
-										'Search by name or email...',
-										'fair-audience'
-									) }
-									value={ addSearch }
-									onChange={ ( e ) =>
-										setAddSearch( e.target.value )
-									}
-									style={ {
-										flex: 1,
-										padding: '8px 12px',
-										border: '1px solid #ddd',
-										borderRadius: '4px',
-									} }
-								/>
-								{ groups.length > 0 && (
-									<SelectControl
-										value={ addGroupFilter }
-										options={ [
-											{
-												label: __(
-													'All groups',
-													'fair-audience'
-												),
-												value: '',
-											},
-											...groups.map( ( g ) => ( {
-												label: g.name,
-												value: String( g.id ),
-											} ) ),
-										] }
-										onChange={ setAddGroupFilter }
-										__nextHasNoMarginBottom
-									/>
-								) }
-							</div>
-
-							<div
-								style={ {
-									marginBottom: '10px',
-									display: 'flex',
-									justifyContent: 'space-between',
-									alignItems: 'center',
-								} }
-							>
-								<span
-									style={ {
-										fontSize: '12px',
-										color: '#666',
-									} }
-								>
-									{ selectedAvailableIds.length > 0
-										? sprintf(
-												/* translators: 1: selected count, 2: shown count */
-												__(
-													'%1$d selected, %2$d shown',
-													'fair-audience'
-												),
-												selectedAvailableIds.length,
-												filteredAvailableParticipants.length
-											)
-										: sprintf(
-												/* translators: %d: number of available participants */
-												__(
-													'%d participant(s) available',
-													'fair-audience'
-												),
-												filteredAvailableParticipants.length
-											) }
-								</span>
-								<Button
-									variant="secondary"
-									isSmall
-									onClick={ handleSelectAllToAdd }
-								>
-									{ filteredAvailableParticipants.length >
-										0 &&
-									filteredAvailableParticipants.every(
-										( p ) => selectedToAdd.has( p.id )
-									)
-										? __( 'Deselect All', 'fair-audience' )
-										: __( 'Select All', 'fair-audience' ) }
-								</Button>
-							</div>
-
-							<div
-								style={ {
-									maxHeight: '400px',
-									overflowY: 'auto',
-									border: '1px solid #ddd',
-									borderRadius: '4px',
-								} }
-							>
-								{ filteredAvailableParticipants.map( ( p ) => (
-									<div
-										key={ p.id }
-										style={ {
-											padding: '10px 15px',
-											borderBottom: '1px solid #eee',
-											display: 'flex',
-											alignItems: 'center',
-											gap: '10px',
-										} }
-									>
-										<CheckboxControl
-											checked={ selectedToAdd.has(
-												p.id
-											) }
-											onChange={ () =>
-												handleToggleParticipantToAdd(
-													p.id
-												)
-											}
+							<ParticipantSelector
+								participants={ groupFilteredParticipants }
+								selection={ addSelection }
+								selectedCount={ selectedAvailableIds.length }
+								ignoreBlankSearch
+								showSelectAll
+								controls={
+									groups.length > 0 && (
+										<SelectControl
+											value={ addGroupFilter }
+											options={ [
+												{
+													label: __(
+														'All groups',
+														'fair-audience'
+													),
+													value: '',
+												},
+												...groups.map( ( g ) => ( {
+													label: g.name,
+													value: String( g.id ),
+												} ) ),
+											] }
+											onChange={ setAddGroupFilter }
+											__nextHasNoMarginBottom
 										/>
-										<div>
-											<strong>
-												{ p.name } { p.surname }
-											</strong>
-											<br />
-											<span
-												style={ {
-													color: '#666',
-													fontSize: '12px',
-												} }
-											>
-												{ p.email }
-											</span>
-										</div>
-									</div>
-								) ) }
-								{ filteredAvailableParticipants.length ===
-									0 && (
-									<p
-										style={ {
-											padding: '15px',
-											color: '#666',
-										} }
-									>
-										{ __(
-											'No participants match your search.',
-											'fair-audience'
-										) }
-									</p>
-								) }
-							</div>
-
+									)
+								}
+							/>
 							{ addError && (
 								<div style={ { marginTop: '16px' } }>
 									<Notice
