@@ -106,11 +106,8 @@ packages; its policy PR lands first, like any other addition.
 
 ## Vulnerability exceptions
 
-The policy carries one exception today: `picomatch` (GHSA-fc5q-39xc-vjpf),
-which has no fixed release and only reaches build, test and release tooling
-(#2401). Add one only
-when no fix is available and the risk is understood. It goes in the base
-branch's policy, so it follows the same two-PR rule:
+Add an exception only when no fix is available and the risk is understood.
+It goes in the base branch's policy, so it follows the same two-PR rule:
 
 ```json
 {
