@@ -25,6 +25,18 @@ on:
                 description: 'Environment preparation check: none, transient or persistent'
                 type: string
                 default: none
+            focus_spec:
+                description: 'Focused run: one spec path, run on a single runner instead of the shards'
+                type: string
+                default: ''
+            focus_grep:
+                description: 'Focused run: --grep pattern'
+                type: string
+                default: ''
+            focus_repeat_each:
+                description: 'Focused run: --repeat-each count'
+                type: string
+                default: '30'
 
 jobs:
     # Lists the suite without WordPress, assigns whole spec files to shards by
@@ -75,14 +87,19 @@ jobs:
     # duration-based assignment as the inventory job and runs its shard's files
     # through --test-list. Inside a shard the suite stays sequential
     # (workers: 1) because specs mutate shared WordPress state.
+    #
+    # A focused run (manual dispatch with focus_spec) uses one runner instead:
+    # it repeats the selected scenarios with retries off against the same
+    # prepared build and isolated test site (TESTING.md § Focused repetition
+    # runs).
     e2e-shard:
-        name: E2E shard ${{ matrix.shard }}/4
+        name: ${{ inputs.focus_spec != '' && 'E2E focused run' || format('E2E shard {0}/4', matrix.shard) }}
         runs-on: ubuntu-latest
 
         strategy:
             fail-fast: false
             matrix:
-                shard: [1, 2, 3, 4]
+                shard: ${{ inputs.focus_spec != '' && fromJSON('[1]') || fromJSON('[1, 2, 3, 4]') }}
 
         steps:
             - uses: actions/checkout@v7
@@ -180,9 +197,38 @@ jobs:
 
             # PHP_DIAGNOSTICS is empty unless a manual dispatch opts in.
             - name: Prepare environment and run E2E tests
+              if: ${{ inputs.focus_spec == '' }}
               env:
                   PHP_DIAGNOSTICS: ${{ inputs.php_diagnostics && '--php-diagnostics' || '' }}
               run: npm run test:e2e:local -- --prepared --shard=${{ matrix.shard }}/4 $PHP_DIAGNOSTICS
+
+            # Inputs arrive through env, never interpolated into the script.
+            # The configuration enables two retries under CI; a focused run
+            # always turns them off so every repetition counts.
+            - name: Prepare environment and run focused E2E repetitions
+              if: ${{ inputs.focus_spec != '' }}
+              env:
+                  FOCUS_SPEC: ${{ inputs.focus_spec }}
+                  FOCUS_GREP: ${{ inputs.focus_grep }}
+                  FOCUS_REPEAT_EACH: ${{ inputs.focus_repeat_each }}
+                  PHP_DIAGNOSTICS: ${{ inputs.php_diagnostics && '--php-diagnostics' || '' }}
+              run: |
+                  case "$FOCUS_SPEC" in
+                      e2e/*.spec.js) ;;
+                      *) echo "::error::focus_spec must be one spec path under e2e/, e.g. e2e/smoke.spec.js"; exit 1 ;;
+                  esac
+                  case "$FOCUS_REPEAT_EACH" in
+                      '' | *[!0-9]* | 0) echo "::error::focus_repeat_each must be a positive whole number"; exit 1 ;;
+                  esac
+                  set -- --prepared $PHP_DIAGNOSTICS "$FOCUS_SPEC" --project=chromium "--repeat-each=$FOCUS_REPEAT_EACH" --retries=0 --workers=1
+                  if [ -n "$FOCUS_GREP" ]; then set -- "$@" --grep "$FOCUS_GREP"; fi
+                  {
+                      echo '### Focused E2E repetitions'
+                      echo "- Commit: \`$GITHUB_SHA\`"
+                      echo "- Node.js: $(node --version), Playwright: $(npx playwright --version)"
+                      printf -- '- Command: `npm run test:e2e:local --'; printf ' %q' "$@"; echo '`'
+                  } >> "$GITHUB_STEP_SUMMARY"
+                  npm run test:e2e:local -- "$@"
 
             # Uploaded on success too, so every shard's timings and flaky
             # retries stay available for comparison.

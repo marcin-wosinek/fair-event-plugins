@@ -802,6 +802,28 @@ file to `SHARED` in `scripts/integration-suites.mjs` and a case to
 [PHP diagnostics sweep](#php-diagnostics-sweep)). `api-tests.yml` and
 `e2e.yml` can no longer be dispatched on their own.
 
+<a id="focused-repetition-runs"></a>**Focused repetition runs.** To show
+that a flaky E2E scenario is fixed, repeat it on CI's environment (Ubuntu,
+Node.js 24, locked dependencies, the prepared build, an isolated tests site
+on PHP 8.5, `CI=1`, locked headless Chromium). The run uses one runner with a
+clean test database that is kept between repetitions, so the spec's cleanup
+is exercised too:
+
+```bash
+gh workflow run integration-tests.yml --ref <branch> -f suites=e2e \
+  -f e2e_focus_spec=e2e/user-flows/notification-configurations.spec.js \
+  -f e2e_focus_grep='confirms, removes only its row and keeps its history' \
+  -f e2e_focus_repeat_each=30
+```
+
+It replaces the four shards with one `E2E focused run` job that runs
+`test:e2e:local --prepared <spec> --project=chromium --repeat-each=<n>
+--retries=0 --workers=1 [--grep <pattern>]`. Retries are always off, because
+the Playwright configuration enables two under `CI`. The job summary records
+the commit, Node.js and Playwright versions, and the exact command. The
+Playwright report is uploaded as for a shard. Pull requests and pushes never
+set these inputs.
+
 **Reruns.** _Re-run failed jobs_ keeps the preparation job's outputs, so the
 rerun shards restore the same build of the same attempt; reports and API
 coverage verification read every attempt's artifacts as before. _Re-run all
