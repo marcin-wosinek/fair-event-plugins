@@ -364,15 +364,5 @@
 			"phpunit/phpunit"
 		]
 	},
-	"exceptions": [
-		{
-			"advisory": "GHSA-fc5q-39xc-vjpf",
-			"package": "picomatch",
-			"dependencySet": "package-lock.json",
-			"rationale": "No fixed release; reaches the lockfile only through build, test and release tooling (@wordpress/scripts, jest, @changesets/cli) that matches globs from our own config, so no shipped bundle includes it.",
-			"owner": "@marcin-wosinek",
-			"issue": "#2401",
-			"expires": "2027-02-28"
-		}
-	]
+	"exceptions": []
 }
