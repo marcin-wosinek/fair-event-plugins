@@ -59,6 +59,40 @@ class TeamMembership {
 		add_filter( 'fair_events_event_copy_extensions', array( $service, 'handle_event_copied' ), 10, 4 );
 		add_filter( 'fair_events_schedule_item_removed', array( $service, 'handle_schedule_item_removed' ), 10, 2 );
 		add_filter( 'fair_events_campaign_contributors', array( $service, 'filter_campaign_contributors' ), 10, 2 );
+		add_filter( 'fair_events_campaign_team_profiles', array( self::class, 'filter_campaign_team_profiles' ), 10, 2 );
+		add_filter( 'fair_events_campaign_snapshot_tables', array( self::class, 'filter_snapshot_tables' ) );
+	}
+
+	/**
+	 * `fair_events_campaign_team_profiles` filter: the promotional profiles
+	 * of the members a complete campaign-facts read references (#2424).
+	 * Fair Events passes null, which stays the answer while this plugin is
+	 * inactive.
+	 *
+	 * @param mixed $profiles   Value so far (null: not supplied).
+	 * @param int[] $member_ids Referenced profile IDs.
+	 * @return array|WP_Error See PromotionalTeamProfiles::read().
+	 */
+	public static function filter_campaign_team_profiles( $profiles, $member_ids ) {
+		if ( null !== $profiles ) {
+			return $profiles;
+		}
+
+		return PromotionalTeamProfiles::read( (array) $member_ids );
+	}
+
+	/**
+	 * `fair_events_campaign_snapshot_tables` filter: the team tables a
+	 * complete campaign-facts read touches.
+	 *
+	 * @param string[] $tables Table names.
+	 * @return string[]
+	 */
+	public static function filter_snapshot_tables( $tables ) {
+		$tables   = (array) $tables;
+		$tables[] = TeamMemberRepository::members_table();
+		$tables[] = TeamMemberRepository::memberships_table();
+		return $tables;
 	}
 
 	/**

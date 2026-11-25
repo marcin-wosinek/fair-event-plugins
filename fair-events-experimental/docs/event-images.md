@@ -179,8 +179,11 @@ explicit `null`) is saved. A circle is only accepted with the image's current
 
 ## Mapping to Event Content Studio campaign facts
 
-For [campaign facts v1](https://github.com/marcin-wosinek/event-content-studio/blob/main/docs/campaign-facts.md)
-(the importer side is tracked in #2424):
+For [campaign facts v1](https://github.com/marcin-wosinek/event-content-studio/blob/main/docs/campaign-facts.md),
+Fair Events' `GET /fair-events/v1/event-dates/{id}/campaign-facts/complete`
+(#2424) reads these lists through `EventImages\CampaignMedia`, which answers
+the `fair_events_campaign_media` filter and adds the images table to the
+snapshot audit. It reads the same rows as the images read, checked:
 
 - `event.mediaIds`: `media:<attachmentId>` for each available image of
   `event.images`, in order. `schedule.items[].mediaIds` likewise from the
@@ -191,11 +194,18 @@ For [campaign facts v1](https://github.com/marcin-wosinek/event-content-studio/b
 - `media[]`: one entry per distinct attachment across all lists, deduplicated
   by `media:<attachmentId>`: `sourceUrl`, `width`, `height`, `altText`
   (`null` when blank) and `credit` (`null` when unknown).
+- Unusable images (`trashed`, `not_image`, `missing_file`) are skipped. A
+  stored link to an attachment that no longer exists is
+  `500 fair_events_event_image_missing`, and a failed query is
+  `500 fair_events_source_unavailable`. Neither becomes an empty list.
 - An empty `images` list is an available, empty list: `mediaIds: []` and
-  `focalRegions: {}`. When the routes are absent (bundle off or plugin
-  inactive, `404 rest_no_route`) the images are unavailable: `mediaIds` and
-  `focalRegions` are `null`. Any other failed read stops the import instead
-  of being read as "no images".
+  `focalRegions: {}`. With the bundle off, the provider answers
+  `409 fair_events_event_images_disabled` (registered whether or not the
+  bundle is on). The complete read then fails with
+  `409 fair_events_campaign_facts_features_unavailable` naming
+  `event-images` as `disabled`, or as `not_provided` while this plugin is
+  inactive. Any other failed read stops the import instead of being read
+  as "no images".
 
 The consumer owns image choice, crop feasibility, target dimensions and
 rendering.

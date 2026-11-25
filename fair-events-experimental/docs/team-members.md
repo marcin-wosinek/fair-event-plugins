@@ -80,7 +80,12 @@ directory is on. Deciding what may be published, and when, belongs to
 
 `Services\PromotionalTeamProfiles::read( $ids )` is the campaign-facts v1
 reader (#2421) for profile IDs the caller has already resolved and
-authorized for an event; the event-scoped REST read is #2424's. It returns
+authorized for an event. The event-scoped REST read is Fair Events'
+`GET /event-dates/{id}/campaign-facts/complete` (#2424), which gets these
+profiles through the `fair_events_campaign_team_profiles` filter
+(`TeamMembership::filter_campaign_team_profiles()`, registered whether or not
+the bundle is on) for the member IDs that `fair_events_campaign_contributors`
+references. It returns
 `members`, one entry per profile sorted by `sourceId`, with exactly these
 keys:
 
@@ -108,8 +113,14 @@ gender and event counts are never selected.
 Every other outcome is a `WP_Error`, never an empty list: `rest_forbidden`
 (401/403, without `edit_posts`; checked first),
 `fair_events_team_directory_disabled` (409, bundle off or never installed;
-campaign facts map it to `team.members: null`),
+the complete campaign-facts read reports it as the `team-members` feature
+being `disabled`, never as `team.members: null`),
 `fair_events_team_member_missing` (500, with `data.member_ids`),
 `fair_events_source_unavailable` (500, failed query) and
 `fair_events_campaign_facts_member_name_missing` (422). An authorized read of
 no IDs returns `members: []`.
+
+The team tables are added to the complete read's snapshot audit with
+`fair_events_campaign_snapshot_tables`. Profile deletion, linking,
+assignment, unassignment and reordering each commit in one transaction, so
+the snapshot never sees half of one of these edits.
