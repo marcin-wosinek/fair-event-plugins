@@ -7,6 +7,11 @@
  * Media Library. Also checks that the Marketing tab is absent while the
  * `marketing-assets` bundle is off.
  *
+ * Public sharing (#2430): links a team member after confirming their name
+ * becomes public, then, as an anonymous visitor, opens the date's page from
+ * the index, filters by member and use case, copies a text exactly and
+ * downloads an image, at desktop, tablet and mobile widths.
+ *
  * Run: `npm run test:e2e:local -- e2e/fair-events-experimental-marketing-assets.spec.js`.
  */
 
@@ -32,19 +37,34 @@ test.describe('Marketing assets', () => {
 	const suffix = `${Date.now()}`;
 	const imageName = `e2e-marketing-${suffix}`;
 	let previous;
+	let previousTeam;
 	let eventDateId;
+	let sharedEventDateId;
+	let memberId;
 
 	test.beforeAll(() => {
 		previous = setExperimentalFeature('marketing-assets', true);
+		previousTeam = setExperimentalFeature('team-members', true);
 	});
 
 	test.afterAll(() => {
 		setExperimentalFeature('marketing-assets', previous);
-		if (eventDateId) {
+		setExperimentalFeature('team-members', previousTeam);
+		for (const id of [eventDateId, sharedEventDateId].filter(Boolean)) {
 			wpCli(
 				`eval 'FairEvents\\Models\\EventDates::delete_by_id( ${Number(
-					eventDateId
+					id
 				)} );'`,
+				{ allowFailure: true }
+			);
+		}
+		if (memberId) {
+			wpCli(
+				`eval 'global $wpdb; $wpdb->delete( $wpdb->prefix . "fair_events_team_memberships", array( "member_id" => ${Number(
+					memberId
+				)} ) ); $wpdb->delete( $wpdb->prefix . "fair_events_team_members", array( "id" => ${Number(
+					memberId
+				)} ) );'`,
 				{ allowFailure: true }
 			);
 		}
@@ -170,6 +190,170 @@ test.describe('Marketing assets', () => {
 			`eval 'echo count( get_posts( array( "post_type" => "attachment", "post_status" => "any", "title" => "${imageName}", "fields" => "ids" ) ) );'`
 		).trim();
 		expect(kept).toBe('1');
+	});
+
+	test('share assets on a public page anyone can use', async ({
+		page,
+		browser,
+	}) => {
+		await loginAsAdmin(page);
+		await page.goto('/wp-admin/admin.php?page=fair-events-manage-event');
+		const title = `Shared marketing ${suffix}`;
+		const created = await apiFetch(page, {
+			path: '/fair-events/v1/event-dates',
+			method: 'POST',
+			data: { title, start_date: '2035-07-08', end_date: '2035-07-08' },
+		});
+		sharedEventDateId = created.id;
+		const member = await apiFetch(page, {
+			path: '/fair-events/v1/team-members',
+			method: 'POST',
+			data: { name: `Ana${suffix}`, surname: 'Ruiz' },
+		});
+		memberId = member.id;
+		await apiFetch(page, {
+			path: `/fair-events/v1/event-dates/${sharedEventDateId}/team-members`,
+			method: 'POST',
+			data: { member_id: memberId },
+		});
+		const memberName = `Ana${suffix} Ruiz`;
+
+		// Linking a member needs consent to publish their name.
+		await page.goto(manageUrl(sharedEventDateId));
+		const shareLink = page.getByRole('link', { name: 'Open public page' });
+		await expect(shareLink).toHaveAttribute(
+			'href',
+			new RegExp(`fair_marketing_assets=${sharedEventDateId}$`)
+		);
+		const shareUrl = await shareLink.getAttribute('href');
+		const text = 'Ven al taller 🎉\n\n\tPlazas: 20  \n<b>not bold</b>';
+		await page.getByRole('button', { name: 'Add asset' }).click();
+		await expect(
+			notice(page, /is shown on this date’s public marketing assets page/)
+		).toBeVisible();
+		await page
+			.getByRole('textbox', { name: 'Use case' })
+			.fill('Instagram post');
+		await page
+			.getByRole('textbox', { name: 'Text', exact: true })
+			.fill(text);
+		await page.getByRole('checkbox', { name: memberName }).check();
+		const create = page.getByRole('button', { name: 'Create asset' });
+		await expect(create).toHaveAttribute('aria-disabled', 'true');
+		await page
+			.getByRole('checkbox', {
+				name: 'Show these names on the public marketing assets page',
+			})
+			.check();
+		await create.click();
+		await expect(notice(page, 'Created Instagram post.')).toBeVisible();
+		await expect(page.getByText(`Team: ${memberName}`)).toBeVisible();
+
+		// An image-only asset, uploaded through the media route.
+		const image = await page.evaluate(
+			async ({ base64, name }) => {
+				const bytes = Uint8Array.from(atob(base64), (c) =>
+					c.charCodeAt(0)
+				);
+				return window.wp.apiFetch({
+					path: '/wp/v2/media',
+					method: 'POST',
+					body: new Blob([bytes], { type: 'image/png' }),
+					headers: {
+						'Content-Type': 'image/png',
+						'Content-Disposition': `attachment; filename="${name}.png"`,
+					},
+				});
+			},
+			{ base64: png(40, 40).toString('base64'), name: imageName }
+		);
+		await apiFetch(page, {
+			path: `/fair-events/v1/event-dates/${sharedEventDateId}/marketing-assets`,
+			method: 'POST',
+			data: { label: 'WhatsApp status', attachment_id: image.id },
+		});
+
+		// An anonymous visitor finds the page in the index.
+		const visitor = await browser.newContext();
+		await visitor.grantPermissions(['clipboard-read', 'clipboard-write']);
+		const pub = await visitor.newPage();
+		try {
+			await pub.goto('/?fair_marketing_assets=all');
+			await pub.getByRole('link', { name: title }).click();
+			await expect(pub).toHaveURL(shareUrl);
+			await expect(pub.getByRole('heading', { level: 1 })).toHaveText(
+				title
+			);
+			await expect(pub.getByText('2 assets')).toBeVisible();
+
+			// Copying keeps the text exactly, markup-like text included.
+			const post = pub.locator('.fair-marketing-assets__card', {
+				has: pub.getByRole('heading', { name: 'Instagram post' }),
+			});
+			await expect(post.getByText(`With ${memberName}`)).toBeVisible();
+			await post.getByRole('button', { name: 'Copy text' }).click();
+			await expect(post.getByText('Text copied.')).toBeVisible();
+			expect(
+				await pub.evaluate(() => navigator.clipboard.readText())
+			).toBe(text);
+
+			// Downloading saves the PNG itself.
+			const status = pub.locator('.fair-marketing-assets__card', {
+				has: pub.getByRole('heading', { name: 'WhatsApp status' }),
+			});
+			const [download] = await Promise.all([
+				pub.waitForEvent('download'),
+				status.getByRole('link', { name: 'Download image' }).click(),
+			]);
+			expect(download.suggestedFilename()).toMatch(/\.png$/);
+			const saved = await download.createReadStream();
+			const chunks = [];
+			for await (const chunk of saved) {
+				chunks.push(chunk);
+			}
+			expect(Buffer.concat(chunks).subarray(0, 8)).toEqual(
+				png(1, 1).subarray(0, 8)
+			);
+
+			// Filters narrow the list and clear again.
+			await pub
+				.getByLabel('Team member')
+				.selectOption({ label: memberName });
+			await expect(
+				pub.getByText('1 asset matches the filters.')
+			).toBeVisible();
+			await expect(
+				pub.getByRole('heading', { name: 'WhatsApp status' })
+			).toHaveCount(0);
+			await pub
+				.getByLabel('Use case')
+				.selectOption({ label: 'WhatsApp status' });
+			await expect(
+				pub.getByText('No assets match these filters.')
+			).toBeVisible();
+			await pub
+				.getByRole('button', { name: 'Clear filters' })
+				.first()
+				.click();
+			await expect(pub.getByText('2 assets')).toBeVisible();
+
+			// The page fits desktop, tablet and mobile widths.
+			for (const width of [1280, 768, 375]) {
+				await pub.setViewportSize({ width, height: 900 });
+				expect(
+					await pub.evaluate(
+						() =>
+							document.documentElement.scrollWidth <=
+							window.innerWidth
+					)
+				).toBe(true);
+				await expect(
+					post.getByRole('button', { name: 'Copy text' })
+				).toBeVisible();
+			}
+		} finally {
+			await visitor.close();
+		}
 	});
 
 	test('the tab is absent while the bundle is off', async ({ page }) => {

@@ -27,9 +27,11 @@ defined( 'WPINC' ) || die;
  *
  * Registered only while the `marketing-assets` bundle is on. Every route
  * requires `manage_options` and, for an event linked to a post, `edit_post`
- * on it. Nothing here is public: anonymous visitors get 401, and member
- * names are never published (#2430). Images are uploaded through the core
- * `POST /wp/v2/media` route and linked by attachment ID. See
+ * on it; anonymous visitors get 401. What is saved here is public on the
+ * occurrence's asset page ({@see PublicMarketingAssetsController}), and a
+ * linked member's name is published only when the save that links it
+ * sends `publish_member_names` (#2430). Images are uploaded through the
+ * core `POST /wp/v2/media` route and linked by attachment ID. See
  * docs/marketing-assets.md.
  */
 class MarketingAssetsController extends WP_REST_Controller {
@@ -170,32 +172,36 @@ class MarketingAssetsController extends WP_REST_Controller {
 	 */
 	private function write_args( $creating ) {
 		return array(
-			'label'            => array(
+			'label'                => array(
 				'description' => __( 'What the asset is for, such as "Instagram post". Required on create; plain text, one line.', 'fair-events-experimental' ),
 				'type'        => 'string',
 				'required'    => $creating,
 			),
-			'text'             => array(
+			'text'                 => array(
 				'description' => __( 'Plain text, stored exactly as sent: Unicode, whitespace and line breaks are kept. Empty or null clears it.', 'fair-events-experimental' ),
 				'type'        => array( 'string', 'null' ),
 			),
-			'attachment_id'    => array(
+			'attachment_id'        => array(
 				'description' => __( 'PNG or JPEG attachment from the Media Library (upload with POST /wp/v2/media). Null or 0 unlinks it; the attachment stays in the Media Library.', 'fair-events-experimental' ),
 				'type'        => array( 'integer', 'null' ),
 				'minimum'     => 0,
 			),
-			'member_ids'       => array(
-				'description' => __( 'Team members of this event to link. Replaces the linked set; [] or null removes every link.', 'fair-events-experimental' ),
+			'member_ids'           => array(
+				'description' => __( 'Team members of this event to link. Replaces the linked set; [] or null removes every link. Linked members\' names and surnames are shown on the public asset page once published with publish_member_names.', 'fair-events-experimental' ),
 				'type'        => array( 'array', 'null' ),
 				'items'       => array(
 					'type'    => 'integer',
 					'minimum' => 1,
 				),
 			),
-			'schedule_item_id' => array(
+			'schedule_item_id'     => array(
 				'description' => __( 'Schedule item of this event to link. Null or 0 removes the link.', 'fair-events-experimental' ),
 				'type'        => array( 'integer', 'null' ),
 				'minimum'     => 0,
+			),
+			'publish_member_names' => array(
+				'description' => __( 'Confirms that the names and surnames of every member in member_ids are published on the public asset page and offered there as filters. Required, together with member_ids, to add a member; send it with the current member_ids to publish members linked without it. Contact details are never published.', 'fair-events-experimental' ),
+				'type'        => 'boolean',
 			),
 		);
 	}
@@ -402,7 +408,7 @@ class MarketingAssetsController extends WP_REST_Controller {
 	 */
 	private function submitted( $request ) {
 		$params = array();
-		foreach ( array( 'label', 'text', 'attachment_id', 'member_ids', 'schedule_item_id' ) as $key ) {
+		foreach ( array( 'label', 'text', 'attachment_id', 'member_ids', 'schedule_item_id', 'publish_member_names' ) as $key ) {
 			if ( $request->has_param( $key ) ) {
 				$params[ $key ] = $request->get_param( $key );
 			}

@@ -3,8 +3,10 @@
  */
 import {
 	emptyForm,
+	formFromAsset,
 	hasMeaningfulText,
 	isFormDirty,
+	publicationNeeds,
 	saveBlocker,
 	toPayload,
 } from '../assetsModel.js';
@@ -99,5 +101,79 @@ describe( 'toPayload', () => {
 		expect(
 			isFormDirty( { ...original, memberIds: [ 3, 2 ] }, original )
 		).toBe( false );
+	} );
+} );
+
+describe( 'member name publication (#2430)', () => {
+	const stored = formFromAsset( {
+		label: 'Post',
+		text: 'Hi',
+		member_ids: [ 2, 3 ],
+		schedule_item_id: null,
+	} );
+	const linked = [
+		{ id: 2, public: true },
+		{ id: 3, public: false },
+	];
+
+	it( 'tells added members from stored members not yet public', () => {
+		const form = { ...stored, memberIds: [ 2, 3, 4 ] };
+		expect( publicationNeeds( form, stored, linked ) ).toEqual( {
+			added: [ 4 ],
+			unpublished: [ 3 ],
+		} );
+		expect(
+			publicationNeeds( { ...emptyForm(), memberIds: [ 5 ] }, null )
+		).toEqual( {
+			added: [ 5 ],
+			unpublished: [],
+		} );
+	} );
+
+	it( 'blocks a save that adds members until names are confirmed', () => {
+		const form = { ...stored, memberIds: [ 2, 4 ] };
+		const needs = publicationNeeds( form, stored, linked );
+		const withMessage = { ...messages, publication: 'publication' };
+		expect( saveBlocker( form, withMessage, {}, needs ) ).toBe(
+			'publication'
+		);
+		expect(
+			saveBlocker(
+				{ ...form, publishMemberNames: true },
+				withMessage,
+				{},
+				needs
+			)
+		).toBe( '' );
+		// Members not yet public don't block other edits.
+		const kept = { ...stored, text: 'Edited' };
+		expect(
+			saveBlocker(
+				kept,
+				withMessage,
+				{},
+				publicationNeeds( kept, stored, linked )
+			)
+		).toBe( '' );
+	} );
+
+	it( 'sends the member list with the confirmation', () => {
+		expect(
+			toPayload( { ...stored, publishMemberNames: true }, stored )
+		).toEqual( { member_ids: [ 2, 3 ], publish_member_names: true } );
+		expect( toPayload( { ...stored, text: 'Edited' }, stored ) ).toEqual( {
+			text: 'Edited',
+		} );
+		expect(
+			isFormDirty( { ...stored, publishMemberNames: true }, stored )
+		).toBe( true );
+		expect(
+			toPayload( {
+				...emptyForm(),
+				label: 'L',
+				memberIds: [ 2 ],
+				publishMemberNames: true,
+			} )
+		).toMatchObject( { member_ids: [ 2 ], publish_member_names: true } );
 	} );
 } );

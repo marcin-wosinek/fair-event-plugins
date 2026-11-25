@@ -6,7 +6,8 @@
  * asset with exact text, the Media Library picker and its visibility
  * notice, a failed save that keeps the edits, partial updates, deletion
  * named by label, team and schedule links while those features are off,
- * and a draft kept across a tab switch.
+ * a draft kept across a tab switch, and (#2430) the public page links, the
+ * public-content notice and the confirmation that publishes team names.
  */
 import '@testing-library/jest-dom';
 import {
@@ -47,6 +48,8 @@ const options = ( overrides = {} ) => ( {
 			},
 		],
 	},
+	share_url: 'https://example.org/?fair_marketing_assets=7',
+	index_url: 'https://example.org/?fair_marketing_assets=all',
 	supported_mime_types: [ 'image/jpeg', 'image/png' ],
 	max_label_length: 191,
 	max_text_length: 10000,
@@ -150,7 +153,9 @@ describe( 'Marketing tab', () => {
 		mockApi( {
 			items: [
 				asset( {
-					members: [ { id: 2, name: 'Ana', surname: 'Ruiz' } ],
+					members: [
+						{ id: 2, name: 'Ana', surname: 'Ruiz', public: true },
+					],
 					member_ids: [ 2 ],
 					schedule_item_id: 31,
 					schedule_item: { id: 31, title: 'Acro workshop' },
@@ -229,6 +234,24 @@ describe( 'Marketing tab', () => {
 		fireEvent.change( screen.getByLabelText( 'Schedule item' ), {
 			target: { value: '31' },
 		} );
+
+		// Linking a member publishes their name: saving needs consent.
+		expect( save ).toHaveAttribute( 'aria-disabled', 'true' );
+		expect(
+			screen.getByText(
+				/names of the team members you added will be public/
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				'Required to link new team members. Becomes public: Marek Nowak.'
+			)
+		).toBeInTheDocument();
+		fireEvent.click(
+			screen.getByLabelText(
+				'Show these names on the public marketing assets page'
+			)
+		);
 		fireEvent.click( save );
 
 		await noticeText( 'Created WhatsApp status.' );
@@ -241,6 +264,7 @@ describe( 'Marketing tab', () => {
 				attachment_id: null,
 				member_ids: [ 3 ],
 				schedule_item_id: 31,
+				publish_member_names: true,
 			},
 		} );
 	} );
@@ -467,6 +491,154 @@ describe( 'Marketing tab', () => {
 				.getAllByRole( 'option' )
 				.map( ( o ) => o.value )
 		).toEqual( [ '', '31' ] );
+	} );
+
+	it( 'links the public page and says the assets are public', async () => {
+		mockApi();
+		renderTab();
+		const open = await screen.findByRole( 'link', {
+			name: 'Open public page',
+		} );
+		expect( open ).toHaveAttribute(
+			'href',
+			'https://example.org/?fair_marketing_assets=7'
+		);
+		expect(
+			screen.getByRole( 'link', { name: 'All events’ public pages' } )
+		).toHaveAttribute(
+			'href',
+			'https://example.org/?fair_marketing_assets=all'
+		);
+		expect(
+			screen.getByRole( 'button', { name: 'Copy public page link' } )
+		).toBeInTheDocument();
+		expect(
+			screen.getByText( /Everything here is public on this date’s/ )
+		).toBeInTheDocument();
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Add asset' } ) );
+		expect(
+			screen.getByText(
+				/is shown on this date’s public marketing assets page as soon as it is saved/
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				/The name and surname of each linked team member are shown/
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'keeps legacy member names private until a save publishes them', async () => {
+		const writes = jest.fn( ( req ) =>
+			Promise.resolve(
+				asset( {
+					text: req.data.text ?? 'Line one\n\n  indented 🎉',
+					member_ids: [ 2 ],
+					members: [
+						{
+							id: 2,
+							name: 'Ana',
+							surname: 'Ruiz',
+							public: !! req.data.publish_member_names,
+						},
+					],
+				} )
+			)
+		);
+		mockApi( {
+			items: [
+				asset( {
+					member_ids: [ 2 ],
+					members: [
+						{ id: 2, name: 'Ana', surname: 'Ruiz', public: false },
+					],
+				} ),
+			],
+			writes,
+		} );
+		renderTab();
+		expect(
+			await screen.findByText( 'Team: Ana Ruiz (name not public)' )
+		).toBeInTheDocument();
+
+		const edit = () =>
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Edit Instagram post' } )
+			);
+
+		// A content edit leaves the name private and the links untouched.
+		edit();
+		expect(
+			screen.getByLabelText( 'Ana Ruiz (name not public)' )
+		).toBeChecked();
+		expect(
+			screen.getByText(
+				'Optional. Becomes public: Ana Ruiz. Leave it unchecked to keep these names private.'
+			)
+		).toBeInTheDocument();
+		fireEvent.change( screen.getByLabelText( 'Text' ), {
+			target: { value: 'Edited' },
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Save asset' } ) );
+		await noticeText( 'Saved Instagram post.' );
+		expect( writes ).toHaveBeenLastCalledWith( {
+			path: `${ BASE }/11`,
+			method: 'PATCH',
+			data: { text: 'Edited' },
+		} );
+		expect(
+			screen.getByText( 'Team: Ana Ruiz (name not public)' )
+		).toBeInTheDocument();
+
+		// Publishing sends the member list it applies to.
+		edit();
+		fireEvent.click(
+			screen.getByLabelText(
+				'Show these names on the public marketing assets page'
+			)
+		);
+		fireEvent.click( screen.getByRole( 'button', { name: 'Save asset' } ) );
+		await waitFor( () =>
+			expect( writes ).toHaveBeenLastCalledWith( {
+				path: `${ BASE }/11`,
+				method: 'PATCH',
+				data: { member_ids: [ 2 ], publish_member_names: true },
+			} )
+		);
+		expect(
+			await screen.findByText( 'Team: Ana Ruiz' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'does not offer to publish names while team management is off', async () => {
+		mockApi( {
+			opts: options( { team: { available: false, members: [] } } ),
+			items: [
+				asset( {
+					member_ids: [ 2 ],
+					members: [
+						{ id: 2, name: 'Ana', surname: 'Ruiz', public: false },
+					],
+				} ),
+			],
+		} );
+		renderTab();
+		fireEvent.click(
+			await screen.findByRole( 'button', {
+				name: 'Edit Instagram post',
+			} )
+		);
+		expect(
+			screen.queryByLabelText(
+				'Show these names on the public marketing assets page'
+			)
+		).toBeNull();
+		expect(
+			screen.getByText(
+				'Names that are not public cannot be published while team management is turned off.'
+			)
+		).toBeInTheDocument();
 	} );
 
 	it( 'parks an unsaved edit and restores it', async () => {

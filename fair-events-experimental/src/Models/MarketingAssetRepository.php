@@ -20,6 +20,11 @@ defined( 'WPINC' ) || die;
  * `(asset_id, member_id)`. An asset carries a required use-case label,
  * plain text, an optional attachment and an optional schedule item.
  *
+ * Each member link records the version of the public-name disclosure an
+ * administrator accepted when saving it (#2430). 0, the default (and the
+ * value of every link saved before #2430), means the member's name is not
+ * published.
+ *
  * Text is stored exactly as received: no trimming, no markup stripping.
  *
  * Nothing here is gated on the `marketing-assets` bundle: turning it off
@@ -42,7 +47,7 @@ class MarketingAssetRepository {
 	/**
 	 * Schema version.
 	 */
-	public const DB_VERSION = '1';
+	public const DB_VERSION = '2';
 
 	/**
 	 * Option holding the installed schema version.
@@ -125,6 +130,7 @@ class MarketingAssetRepository {
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 				asset_id bigint(20) unsigned NOT NULL,
 				member_id bigint(20) unsigned NOT NULL,
+				disclosure_version smallint(5) unsigned NOT NULL DEFAULT 0,
 				PRIMARY KEY  (id),
 				UNIQUE KEY asset_member (asset_id,member_id),
 				KEY member_id (member_id)
@@ -265,25 +271,26 @@ class MarketingAssetRepository {
 	/**
 	 * Replace the member links of an asset.
 	 *
-	 * @param int   $asset_id   Asset ID.
-	 * @param int[] $member_ids Member IDs.
+	 * @param int            $asset_id Asset ID.
+	 * @param array<int,int> $links    Disclosure version accepted for each linked member ID; 0 when not published.
 	 * @return bool
 	 */
-	public function replace_members( $asset_id, array $member_ids ) {
+	public function replace_members( $asset_id, array $links ) {
 		global $wpdb;
 
 		if ( false === $wpdb->delete( self::members_table(), array( 'asset_id' => (int) $asset_id ), array( '%d' ) ) ) {
 			return false;
 		}
 
-		foreach ( array_values( array_unique( array_map( 'intval', $member_ids ) ) ) as $member_id ) {
+		foreach ( $links as $member_id => $version ) {
 			$ok = $wpdb->insert(
 				self::members_table(),
 				array(
-					'asset_id'  => (int) $asset_id,
-					'member_id' => $member_id,
+					'asset_id'           => (int) $asset_id,
+					'member_id'          => (int) $member_id,
+					'disclosure_version' => max( 0, (int) $version ),
 				),
-				array( '%d', '%d' )
+				array( '%d', '%d', '%d' )
 			);
 			if ( ! $ok ) {
 				return false;
@@ -401,6 +408,114 @@ class MarketingAssetRepository {
 	}
 
 	/**
+	 * Number of an event date's assets matching the public filters.
+	 *
+	 * @param int         $event_date_id Event date ID.
+	 * @param string|null $label         Exact label, or null for any.
+	 * @param int|null    $member_id     Member with a published link, or null for any.
+	 * @param int         $min_version   Lowest disclosure version that publishes a name.
+	 * @return int
+	 */
+	public function count_filtered( $event_date_id, $label, $member_id, $min_version ) {
+		global $wpdb;
+
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i AS a WHERE a.event_date_id = %d AND ( %d = 0 OR a.label = %s ) AND ( %d = 0 OR EXISTS ( SELECT 1 FROM %i AS m WHERE m.asset_id = a.id AND m.member_id = %d AND m.disclosure_version >= %d ) )',
+				self::assets_table(),
+				(int) $event_date_id,
+				null === $label ? 0 : 1,
+				(string) $label,
+				null === $member_id ? 0 : 1,
+				self::members_table(),
+				(int) $member_id,
+				(int) $min_version
+			)
+		);
+	}
+
+	/**
+	 * One page of an event date's assets matching the public filters,
+	 * oldest first, with member links.
+	 *
+	 * @param int         $event_date_id Event date ID.
+	 * @param string|null $label         Exact label, or null for any.
+	 * @param int|null    $member_id     Member with a published link, or null for any.
+	 * @param int         $min_version   Lowest disclosure version that publishes a name.
+	 * @param int         $limit         Page size.
+	 * @param int         $offset        Rows to skip.
+	 * @return array[] Hydrated rows.
+	 */
+	public function page_filtered( $event_date_id, $label, $member_id, $min_version, $limit, $offset ) {
+		global $wpdb;
+
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT a.* FROM %i AS a WHERE a.event_date_id = %d AND ( %d = 0 OR a.label = %s ) AND ( %d = 0 OR EXISTS ( SELECT 1 FROM %i AS m WHERE m.asset_id = a.id AND m.member_id = %d AND m.disclosure_version >= %d ) ) ORDER BY a.id ASC LIMIT %d OFFSET %d',
+				self::assets_table(),
+				(int) $event_date_id,
+				null === $label ? 0 : 1,
+				(string) $label,
+				null === $member_id ? 0 : 1,
+				self::members_table(),
+				(int) $member_id,
+				(int) $min_version,
+				(int) $limit,
+				(int) $offset
+			),
+			ARRAY_A
+		);
+
+		return $this->with_members( (array) $rows );
+	}
+
+	/**
+	 * Distinct labels of an event date's assets, in the order first used.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return string[]
+	 */
+	public function labels_for_event_date( $event_date_id ) {
+		global $wpdb;
+
+		return array_map(
+			'strval',
+			(array) $wpdb->get_col(
+				$wpdb->prepare(
+					'SELECT label FROM %i WHERE event_date_id = %d GROUP BY label ORDER BY MIN(id) ASC',
+					self::assets_table(),
+					(int) $event_date_id
+				)
+			)
+		);
+	}
+
+	/**
+	 * Members whose name an event date's assets publish: distinct member
+	 * IDs of links with an accepted disclosure.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @param int $min_version   Lowest disclosure version that publishes a name.
+	 * @return int[]
+	 */
+	public function published_member_ids( $event_date_id, $min_version ) {
+		global $wpdb;
+
+		return array_map(
+			'intval',
+			(array) $wpdb->get_col(
+				$wpdb->prepare(
+					'SELECT DISTINCT m.member_id FROM %i AS m INNER JOIN %i AS a ON a.id = m.asset_id WHERE a.event_date_id = %d AND m.disclosure_version >= %d ORDER BY m.member_id ASC',
+					self::members_table(),
+					self::assets_table(),
+					(int) $event_date_id,
+					(int) $min_version
+				)
+			)
+		);
+	}
+
+	/**
 	 * Attach member IDs to rows and cast their columns.
 	 *
 	 * @param array[] $rows Raw rows.
@@ -418,7 +533,7 @@ class MarketingAssetRepository {
 		$links        = $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Placeholders only.
-				"SELECT asset_id, member_id FROM %i WHERE asset_id IN ( $placeholders ) ORDER BY member_id ASC",
+				"SELECT asset_id, member_id, disclosure_version FROM %i WHERE asset_id IN ( $placeholders ) ORDER BY member_id ASC",
 				array_merge( array( self::members_table() ), $ids )
 			),
 			ARRAY_A
@@ -426,7 +541,7 @@ class MarketingAssetRepository {
 
 		$by_asset = array();
 		foreach ( (array) $links as $link ) {
-			$by_asset[ (int) $link['asset_id'] ][] = (int) $link['member_id'];
+			$by_asset[ (int) $link['asset_id'] ][ (int) $link['member_id'] ] = (int) $link['disclosure_version'];
 		}
 
 		$out = array();
@@ -440,7 +555,8 @@ class MarketingAssetRepository {
 				'attachment_id'    => $row['attachment_id'] ? (int) $row['attachment_id'] : null,
 				'image_removed'    => (bool) (int) $row['image_removed'],
 				'schedule_item_id' => $row['schedule_item_id'] ? (int) $row['schedule_item_id'] : null,
-				'member_ids'       => $by_asset[ $id ] ?? array(),
+				'member_ids'       => array_keys( $by_asset[ $id ] ?? array() ),
+				'disclosures'      => $by_asset[ $id ] ?? array(),
 				'created_at'       => (string) $row['created_at'],
 				'updated_at'       => (string) $row['updated_at'],
 			);

@@ -1,0 +1,210 @@
+/* Public marketing asset pages: a plain working view in the site's theme. */
+
+.fair-marketing-assets {
+	box-sizing: border-box;
+	max-width: 64rem;
+	margin: 0 auto;
+	padding: 1.5rem 1rem 3rem;
+	overflow-wrap: anywhere;
+}
+
+.fair-marketing-assets *,
+.fair-marketing-assets *::before,
+.fair-marketing-assets *::after {
+	box-sizing: inherit;
+}
+
+.fair-marketing-assets h1,
+.fair-marketing-assets h2,
+.fair-marketing-assets p {
+	margin-top: 0;
+}
+
+.fair-marketing-assets__header {
+	margin-bottom: 1.5rem;
+}
+
+.fair-marketing-assets__back {
+	margin-bottom: 1rem;
+	font-size: 0.875rem;
+}
+
+.fair-marketing-assets__eyebrow {
+	margin-bottom: 0.25rem;
+	font-size: 0.875rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	opacity: 0.75;
+}
+
+.fair-marketing-assets__title {
+	margin-bottom: 0.5rem;
+	font-size: clamp(1.75rem, 6vw, 2.5rem);
+	line-height: 1.15;
+}
+
+.fair-marketing-assets__intro {
+	max-width: 44rem;
+}
+
+.fair-marketing-assets__notice {
+	margin-bottom: 1rem;
+	padding: 0.75rem 1rem;
+	border-left: 4px solid currentcolor;
+	background: rgba(127, 127, 127, 0.12);
+}
+
+.fair-marketing-assets__notice p:last-child {
+	margin-bottom: 0.5rem;
+}
+
+.fair-marketing-assets__notice--error {
+	border-left-color: #cc1818;
+	background: rgba(204, 24, 24, 0.08);
+}
+
+.fair-marketing-assets__filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem 1rem;
+	align-items: flex-end;
+	margin-bottom: 1rem;
+	padding: 0.75rem;
+	border: 1px solid rgba(127, 127, 127, 0.35);
+	border-radius: 0.5rem;
+}
+
+.fair-marketing-assets__filter {
+	display: flex;
+	flex: 1 1 14rem;
+	flex-direction: column;
+	gap: 0.25rem;
+	font-weight: 600;
+}
+
+.fair-marketing-assets__filter select {
+	min-height: 2.75rem;
+	padding: 0.5rem;
+	font: inherit;
+	font-weight: 400;
+}
+
+.fair-marketing-assets__summary {
+	margin-bottom: 1rem;
+	font-weight: 600;
+}
+
+.fair-marketing-assets__events,
+.fair-marketing-assets__list {
+	margin: 0 0 1.5rem;
+	padding: 0;
+	list-style: none;
+}
+
+.fair-marketing-assets__events li {
+	padding: 0.75rem 0;
+	border-bottom: 1px solid rgba(127, 127, 127, 0.35);
+}
+
+.fair-marketing-assets__list {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+	gap: 1rem;
+}
+
+.fair-marketing-assets__card {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	height: 100%;
+	padding: 1rem;
+	border: 1px solid rgba(127, 127, 127, 0.35);
+	border-radius: 0.5rem;
+}
+
+.fair-marketing-assets__card > * {
+	margin-bottom: 0;
+}
+
+.fair-marketing-assets__label {
+	font-size: 1.125rem;
+	line-height: 1.3;
+}
+
+.fair-marketing-assets__members {
+	font-size: 0.875rem;
+	opacity: 0.85;
+}
+
+.fair-marketing-assets__figure {
+	margin: 0;
+}
+
+.fair-marketing-assets__figure img {
+	display: block;
+	width: 100%;
+	height: auto;
+	max-height: 24rem;
+	object-fit: contain;
+	background: rgba(127, 127, 127, 0.12);
+}
+
+/* Shown exactly as stored: spaces, tabs and line breaks are kept. */
+.fair-marketing-assets__text {
+	padding: 0.75rem;
+	font-size: 0.9375rem;
+	line-height: 1.5;
+	white-space: pre-wrap;
+	tab-size: 4;
+	border-radius: 0.25rem;
+	background: rgba(127, 127, 127, 0.12);
+}
+
+.fair-marketing-assets__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: auto;
+}
+
+.fair-marketing-assets__button {
+	cursor: pointer;
+	text-decoration: none;
+}
+
+.fair-marketing-assets__button:disabled {
+	cursor: progress;
+	opacity: 0.7;
+}
+
+.fair-marketing-assets__button--secondary {
+	min-height: 2.75rem;
+	padding: 0.5rem 1rem;
+	font: inherit;
+	color: inherit;
+	border: 1px solid currentcolor;
+	border-radius: 0.25rem;
+	background: transparent;
+}
+
+.fair-marketing-assets__status {
+	font-weight: 600;
+}
+
+.fair-marketing-assets__status.is-error {
+	padding: 0.75rem 1rem;
+	border-left: 4px solid #cc1818;
+	background: rgba(204, 24, 24, 0.08);
+}
+
+.fair-marketing-assets__more {
+	text-align: center;
+}
+
+@media (max-width: 599px) {
+	.fair-marketing-assets__actions .fair-marketing-assets__button,
+	.fair-marketing-assets__filters .fair-marketing-assets__button {
+		flex: 1 1 100%;
+		text-align: center;
+	}
+}
