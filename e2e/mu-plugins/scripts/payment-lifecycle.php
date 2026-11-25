@@ -23,12 +23,21 @@
  *                   before its notification arrived).
  *   mollie-status {status?}  The status the Mollie double reports when a
  *                   payment is synced; none restores its default (paid).
+ *   faults      {refuseCreates?, unrecordable?, failMollieCreates?}  Fail
+ *                   the next N checkouts at one step (see
+ *                   fair-e2e-checkout-faults.php and the Mollie double);
+ *                   none disarms them. Returns the Mollie creations so far.
+ *   drop-lines  {transactionId}  Delete a transaction's Connector line
+ *                   items, as for a legacy attempt stored without them.
+ *   retries     {transactionId}  Transactions created as its retry, and the
+ *                   Mollie creations so far.
  *   due         {}  Make the lifecycle's queued work due and run the retry
  *                   cron's processing once, counting announcements.
  *   state       {signupIds, transactionIds}  Purchases, links per
- *                   transaction, lifecycle work rows and findings. Each
- *                   linked purchase is listed with its relationship (Fair
- *                   Audience) and its tickets' activities.
+ *                   transaction (with its amount, currency, retried
+ *                   transaction and line items), lifecycle work rows and
+ *                   findings. Each linked purchase is listed with its
+ *                   relationship (Fair Audience) and its tickets' activities.
  *   parallel    {runs: [{action, data, delayMs?}]}  Run actions in
  *                   concurrent processes; results in order.
  *   cleanup     {signupIds, transactionIds}  Links, work rows and findings.
@@ -166,6 +175,39 @@ switch ( $fixture_action ) {
 		$result = array( 'status' => get_option( 'fair_e2e_mollie_get_status', 'paid' ) );
 		break;
 
+	case 'faults':
+		update_option( 'fair_e2e_refuse_transaction_creates', absint( $data['refuseCreates'] ?? 0 ), false );
+		update_option( 'fair_e2e_unrecordable_attempts', absint( $data['unrecordable'] ?? 0 ), false );
+		update_option( 'fair_e2e_mollie_fail_creates', absint( $data['failMollieCreates'] ?? 0 ), false );
+		$result = array( 'mollie_creates' => (int) get_option( 'fair_e2e_mollie_create_count', 0 ) );
+		break;
+
+	case 'drop-lines':
+		$result = array(
+			'deleted' => (int) $wpdb->delete(
+				\FairPaymentsConnector\Database\Schema::get_line_items_table_name(),
+				array( 'transaction_id' => (int) $data['transactionId'] )
+			),
+		);
+		break;
+
+	case 'retries':
+		$result = array(
+			'transaction_ids' => array_map(
+				'intval',
+				$wpdb->get_col(
+					$wpdb->prepare(
+						'SELECT id FROM %i WHERE JSON_EXTRACT(metadata, %s) = %d ORDER BY id',
+						$transactions_table,
+						'$.retry_of_transaction_id',
+						(int) $data['transactionId']
+					)
+				)
+			),
+			'mollie_creates'  => (int) get_option( 'fair_e2e_mollie_create_count', 0 ),
+		);
+		break;
+
 	case 'due':
 		$count_hooks();
 		$wpdb->query(
@@ -213,7 +255,22 @@ switch ( $fixture_action ) {
 		$result['purchases'] = array();
 		foreach ( array_map( 'intval', (array) ( $data['transactionIds'] ?? array() ) ) as $transaction_id ) {
 			$links                                     = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT signup_id, role, allocated_amount, attribution FROM %i WHERE transaction_id = %d ORDER BY id', $links_table, $transaction_id ), ARRAY_A );
+			$transaction                               = \FairPaymentsConnector\Models\Transaction::get_by_id( $transaction_id );
+			$transaction_metadata                      = $transaction ? json_decode( (string) $transaction->metadata, true ) : array();
 			$result['transactions'][ $transaction_id ] = array(
+				'amount'           => $transaction ? (string) $transaction->amount : null,
+				'currency'         => $transaction ? (string) $transaction->currency : null,
+				'retry_of'         => isset( $transaction_metadata['retry_of_transaction_id'] ) ? (int) $transaction_metadata['retry_of_transaction_id'] : null,
+				'line_items'       => array_map(
+					static function ( $line ) {
+						return array(
+							'name'        => (string) $line->name,
+							'quantity'    => (int) $line->quantity,
+							'unit_amount' => (string) $line->unit_amount,
+						);
+					},
+					\FairPaymentsConnector\Models\LineItem::get_by_transaction_id( $transaction_id )
+				),
 				'links'            => $links,
 				'transaction_work' => PaymentShadowWork::get( PaymentShadowWork::KIND_TRANSACTION, $transaction_id ),
 				'payment_work'     => PaymentShadowWork::get( PaymentShadowWork::KIND_PAYMENT, $transaction_id ),

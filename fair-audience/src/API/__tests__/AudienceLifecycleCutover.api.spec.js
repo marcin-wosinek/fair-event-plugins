@@ -70,7 +70,7 @@ test.describe.serial( 'Fair Audience purchase lifecycle', () => {
 	const transactionIds = [];
 	const signupIds = [];
 
-	async function createEvent( { ticketTypes, activities = [] } ) {
+	async function createEvent( { ticketTypes, activities = [], rrule } ) {
 		const title = `Audience lifecycle ${ Date.now() } ${ Math.random() }`;
 		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
 			headers: authHeaders,
@@ -89,6 +89,7 @@ test.describe.serial( 'Fair Audience purchase lifecycle', () => {
 				start_time: '10:00:00',
 				end_date: '2035-11-01',
 				end_time: '12:00:00',
+				...( rrule ? { rrule } : {} ),
 			},
 		} );
 		const edBody = await edRes.json();
@@ -131,7 +132,7 @@ test.describe.serial( 'Fair Audience purchase lifecycle', () => {
 					options: activities.map( ( activity ) => ( {
 						name: activity.name,
 						price: activity.price,
-						capacity: null,
+						capacity: activity.capacity ?? null,
 					} ) ),
 					settings: {},
 				},
@@ -147,6 +148,10 @@ test.describe.serial( 'Fair Audience purchase lifecycle', () => {
 		return {
 			eventId,
 			eventDateId,
+			occurrenceIds: [
+				eventDateId,
+				...( edBody.generated_occurrences || [] ).map( ( o ) => o.id ),
+			].sort( ( a, b ) => a - b ),
 			typeIds: ticketsBody.ticket_types.map( ( type ) => type.id ),
 			optionIds,
 		};
@@ -188,6 +193,43 @@ test.describe.serial( 'Fair Audience purchase lifecycle', () => {
 		current.transactions[ transactionId ].links;
 	const purchaseOf = ( current, transactionId ) =>
 		current.purchases[ linksOf( current, transactionId )[ 0 ].signup_id ];
+	const retriesOf = async ( transactionId ) =>
+		( await lifecycle( 'retries', { transactionId } ) ).transaction_ids;
+	const signupIdsOf = ( current, transactionId ) =>
+		linksOf( current, transactionId )
+			.map( ( link ) => Number( link.signup_id ) )
+			.sort( ( a, b ) => a - b );
+
+	// Current ticket prices by ticket type ID, as a pricing extension would
+	// set them (fair-e2e-line-item-totals.php); none restores them.
+	async function armPrices( ticketTypes = {} ) {
+		const res = await api.put(
+			'/wp-json/fair-e2e/v1/line-item-totals/fixture',
+			{ headers: authHeaders, data: { ticket_types: ticketTypes } }
+		);
+		expect( res.ok(), await res.text() ).toBeTruthy();
+	}
+
+	// A signup or add-on attempt the provider reported failed, before its
+	// notification arrived.
+	async function failedAttempt( path, data ) {
+		const body = await startPayment( path, data );
+		const transactionId = Number( body.transaction_id );
+		await lifecycle( 'status', { transactionId, status: 'failed' } );
+		return transactionId;
+	}
+
+	// The retry is a new attempt of the same purchase at the original
+	// amount, currency and lines.
+	function expectSameCharge( current, retryId, originalId ) {
+		const retry = current.transactions[ retryId ];
+		const original = current.transactions[ originalId ];
+		expect( retry.retry_of ).toBe( originalId );
+		expect( retry.currency ).toBe( original.currency );
+		expect( cents( retry.amount ) ).toBe( cents( original.amount ) );
+		expect( retry.line_items ).toEqual( original.line_items );
+	}
+
 	const activity = ( purchase, optionId ) =>
 		purchase.activities.find(
 			( row ) => Number( row.ticket_option_id ) === optionId
@@ -221,6 +263,8 @@ test.describe.serial( 'Fair Audience purchase lifecycle', () => {
 	} );
 
 	test.afterAll( async () => {
+		await lifecycle( 'faults' );
+		await armPrices();
 		await lifecycle( 'restore' );
 		await lifecycle( 'cleanup', { signupIds, transactionIds } );
 		if ( participantId ) {
@@ -379,6 +423,10 @@ test.describe.serial( 'Fair Audience purchase lifecycle', () => {
 		expect( linksOf( current, retryId ) ).toEqual( [
 			expect.objectContaining( { role: 'additional_charge' } ),
 		] );
+		expectSameCharge( current, retryId, firstId );
+		expect( signupIdsOf( current, retryId ) ).toEqual(
+			signupIdsOf( current, firstId )
+		);
 
 		await settle( firstId, 'failed' );
 		current = await state();
@@ -506,5 +554,285 @@ test.describe.serial( 'Fair Audience purchase lifecycle', () => {
 		expect( Number( rows[ 0 ].ticket_type_id ) ).toBe(
 			series.typeIds[ 1 ]
 		);
+	} );
+	test( 'a signup retry charges the original lines after a price change, on the same purchase', async () => {
+		const priced = await createEvent( {
+			ticketTypes: [ { name: 'Entry', price: 8 } ],
+			activities: [ { name: 'Workshop', price: 5 } ],
+		} );
+		const signup = {
+			event_id: priced.eventId,
+			event_date_id: priced.eventDateId,
+		};
+		const firstId = await failedAttempt( EVENT_SIGNUP, {
+			...signup,
+			ticket_type_id: priced.typeIds[ 0 ],
+			ticket_option_ids: [ priced.optionIds.Workshop ],
+		} );
+
+		await armPrices( { [ priced.typeIds[ 0 ] ]: 11 } );
+		let retried;
+		try {
+			retried = await startPayment( `${ EVENT_SIGNUP }/retry-payment`, {
+				transaction_id: firstId,
+			} );
+		} finally {
+			await armPrices();
+		}
+		const retryId = Number( retried.transaction_id );
+		expect( cents( retried.amount ) ).toBe( cents( 13 ) );
+
+		let current = await state();
+		expectSameCharge( current, retryId, firstId );
+		expect( linksOf( current, retryId ) ).toEqual( [
+			expect.objectContaining( { role: 'charge' } ),
+		] );
+		expect( signupIdsOf( current, retryId ) ).toEqual(
+			signupIdsOf( current, firstId )
+		);
+		// The original attempt stays in the purchase's history.
+		expect( linksOf( current, firstId ) ).toHaveLength( 1 );
+
+		await settle( retryId, 'paid' );
+		current = await state();
+		expect( purchaseOf( current, retryId ).purchase.status ).toBe(
+			'confirmed'
+		);
+
+		// Retrying the old attempt of a paid purchase starts nothing.
+		const again = await post( `${ EVENT_SIGNUP }/retry-payment`, {
+			transaction_id: firstId,
+		} );
+		expect( again.status, JSON.stringify( again.body ) ).toBe( 200 );
+		expect( again.body.status ).toBe( 'already_signed_up' );
+		expect( await retriesOf( firstId ) ).toEqual( [ retryId ] );
+	} );
+
+	test( 'a retry for several occurrences keeps every line and the whole purchase set', async () => {
+		const series = await createEvent( {
+			rrule: 'FREQ=WEEKLY;COUNT=3',
+			ticketTypes: [
+				{ name: 'Pick dates', price: 8, scope: 'multiple_instances' },
+			],
+		} );
+		const firstId = await failedAttempt( EVENT_SIGNUP, {
+			event_id: series.eventId,
+			event_date_id: series.eventDateId,
+			ticket_type_id: series.typeIds[ 0 ],
+			event_date_ids: series.occurrenceIds.slice( 0, 2 ),
+		} );
+
+		await armPrices( { [ series.typeIds[ 0 ] ]: 11 } );
+		let retried;
+		try {
+			retried = await startPayment( `${ EVENT_SIGNUP }/retry-payment`, {
+				transaction_id: firstId,
+			} );
+		} finally {
+			await armPrices();
+		}
+		const retryId = Number( retried.transaction_id );
+
+		let current = await state();
+		expectSameCharge( current, retryId, firstId );
+		expect( current.transactions[ retryId ].line_items ).toHaveLength( 2 );
+		expect( linksOf( current, retryId ) ).toEqual( [
+			expect.objectContaining( {
+				role: 'charge',
+				allocated_amount: '8.00',
+			} ),
+			expect.objectContaining( {
+				role: 'charge',
+				allocated_amount: '8.00',
+			} ),
+		] );
+		expect( signupIdsOf( current, retryId ) ).toEqual(
+			signupIdsOf( current, firstId )
+		);
+		expect( linksOf( current, firstId ) ).toHaveLength( 2 );
+
+		await settle( retryId, 'paid' );
+		current = await state();
+		for ( const signupId of signupIdsOf( current, retryId ) ) {
+			expect( current.purchases[ signupId ].purchase.status ).toBe(
+				'confirmed'
+			);
+		}
+
+		const again = await post( `${ EVENT_SIGNUP }/retry-payment`, {
+			transaction_id: firstId,
+		} );
+		expect( again.status, JSON.stringify( again.body ) ).toBe( 200 );
+		expect( again.body.status ).toBe( 'already_signed_up' );
+		expect( await retriesOf( firstId ) ).toEqual( [ retryId ] );
+	} );
+
+	test( 'an add-on retry whose lapsed places were taken is refused before payment', async () => {
+		const limited = await createEvent( {
+			ticketTypes: [ { name: 'Free Entry', price: 0 } ],
+			activities: [ { name: 'Seminar', price: 7, capacity: 1 } ],
+		} );
+		const signup = {
+			event_id: limited.eventId,
+			event_date_id: limited.eventDateId,
+		};
+		const free = await post( EVENT_SIGNUP, {
+			...signup,
+			ticket_type_id: limited.typeIds[ 0 ],
+		} );
+		expect( free.body.status ).toBe( 'signed_up' );
+		const firstId = await failedAttempt(
+			`${ EVENT_SIGNUP }/add-activities`,
+			{
+				...signup,
+				ticket_option_ids: [ limited.optionIds.Seminar ],
+			}
+		);
+		const current = await state();
+		const { ticket_id: ticketId } = activity(
+			purchaseOf( current, firstId ),
+			limited.optionIds.Seminar
+		);
+
+		// The hold runs out and another buyer takes the only place.
+		const expired = await api.post(
+			'/wp-json/fair-e2e/v1/ticket-activities/expire-addon',
+			{ headers: authHeaders, data: { ticket_id: Number( ticketId ) } }
+		);
+		expect( expired.ok() ).toBeTruthy();
+		const visitor = await request.newContext( { baseURL: BASE_URL } );
+		const taker = await visitor.post(
+			'/wp-json/fair-events/v1/get-tickets',
+			{
+				data: {
+					event_date_id: limited.eventDateId,
+					ticket_type_id: limited.typeIds[ 0 ],
+					name: 'Place Taker',
+					email: `audience-lifecycle-taker-${ Date.now() }@example.test`,
+					ticket_option_ids: [ limited.optionIds.Seminar ],
+					_honeypot: '',
+				},
+			}
+		);
+		const takerBody = await taker.json();
+		await visitor.dispose();
+		expect( taker.status(), JSON.stringify( takerBody ) ).toBe( 200 );
+		if ( takerBody.transaction_id ) {
+			transactionIds.push( Number( takerBody.transaction_id ) );
+		}
+
+		const { mollie_creates: creates } = await lifecycle( 'faults' );
+		const refused = await post( `${ EVENT_SIGNUP }/retry-payment`, {
+			transaction_id: firstId,
+		} );
+		expect( refused.status, JSON.stringify( refused.body ) ).toBe( 409 );
+		expect( refused.body.code ).toBe( 'ticket_option_full' );
+		const after = await lifecycle( 'retries', { transactionId: firstId } );
+		expect( after.transaction_ids ).toEqual( [] );
+		expect( after.mollie_creates ).toBe( creates );
+	} );
+
+	test( 'a legacy attempt without lines is refused and leaves its hold alone', async () => {
+		const legacy = await createEvent( {
+			ticketTypes: [ { name: 'Entry', price: 8 } ],
+		} );
+		const firstId = await failedAttempt( EVENT_SIGNUP, {
+			event_id: legacy.eventId,
+			event_date_id: legacy.eventDateId,
+			ticket_type_id: legacy.typeIds[ 0 ],
+		} );
+		const before = purchaseOf( await state(), firstId ).relationship;
+		expect(
+			( await lifecycle( 'drop-lines', { transactionId: firstId } ) )
+				.deleted
+		).toBeGreaterThan( 0 );
+
+		const refused = await post( `${ EVENT_SIGNUP }/retry-payment`, {
+			transaction_id: firstId,
+		} );
+		expect( refused.status, JSON.stringify( refused.body ) ).toBe( 500 );
+		expect( refused.body.code ).toBe( 'invalid_retry_state' );
+		expect( purchaseOf( await state(), firstId ).relationship ).toEqual(
+			before
+		);
+		expect( await retriesOf( firstId ) ).toEqual( [] );
+	} );
+
+	test( 'a retry stops at the step that fails, and only the buyer may retry', async () => {
+		const faulty = await createEvent( {
+			ticketTypes: [ { name: 'Entry', price: 8 } ],
+		} );
+		const firstId = await failedAttempt( EVENT_SIGNUP, {
+			event_id: faulty.eventId,
+			event_date_id: faulty.eventDateId,
+			ticket_type_id: faulty.typeIds[ 0 ],
+		} );
+		const retry = () =>
+			post( `${ EVENT_SIGNUP }/retry-payment`, {
+				transaction_id: firstId,
+			} );
+
+		// Someone else's request is refused before anything starts.
+		const stranger = await request.newContext( { baseURL: BASE_URL } );
+		const foreign = await stranger.post(
+			`${ EVENT_SIGNUP }/retry-payment`,
+			{ data: { transaction_id: firstId } }
+		);
+		await stranger.dispose();
+		expect( [ 401, 403 ] ).toContain( foreign.status() );
+		const { mollie_creates: creates } = await lifecycle( 'faults' );
+		expect( await retriesOf( firstId ) ).toEqual( [] );
+
+		// Creation refused: nothing is created or recorded.
+		await lifecycle( 'faults', { refuseCreates: 1 } );
+		const notCreated = await retry();
+		expect( notCreated.status ).toBeGreaterThanOrEqual( 400 );
+		expect( await retriesOf( firstId ) ).toEqual( [] );
+
+		// Recording refused: the attempt exists, but no payment starts.
+		await lifecycle( 'faults', { unrecordable: 1 } );
+		const notRecorded = await retry();
+		expect( notRecorded.status, JSON.stringify( notRecorded.body ) ).toBe(
+			503
+		);
+		expect( notRecorded.body.code ).toBe( 'payment_not_recorded' );
+		const [ unrecordedId ] = await retriesOf( firstId );
+		transactionIds.push( unrecordedId );
+		let current = await state();
+		expect( linksOf( current, unrecordedId ) ).toEqual( [] );
+
+		// The provider refuses: the error is returned and the recorded
+		// attempt stays linked for recovery.
+		await lifecycle( 'faults', { failMollieCreates: 1 } );
+		const notPaid = await retry();
+		expect( notPaid.status ).toBeGreaterThanOrEqual( 400 );
+		expect( notPaid.body.status ).not.toBe( 'payment_required' );
+		const unpaidId = ( await retriesOf( firstId ) ).at( -1 );
+		expect( unpaidId ).not.toBe( unrecordedId );
+		transactionIds.push( unpaidId );
+		current = await state();
+		expectSameCharge( current, unpaidId, firstId );
+		expect( linksOf( current, unpaidId ) ).toEqual( [
+			expect.objectContaining( { role: 'charge' } ),
+		] );
+		expect( signupIdsOf( current, unpaidId ) ).toEqual(
+			signupIdsOf( current, firstId )
+		);
+		expect(
+			( await lifecycle( 'retries', { transactionId: firstId } ) )
+				.mollie_creates
+		).toBe( creates );
+
+		// Once nothing fails, the buyer is sent to pay.
+		await lifecycle( 'faults' );
+		const paid = await startPayment( `${ EVENT_SIGNUP }/retry-payment`, {
+			transaction_id: firstId,
+		} );
+		current = await state();
+		expectSameCharge( current, Number( paid.transaction_id ), firstId );
+		expect(
+			( await lifecycle( 'retries', { transactionId: firstId } ) )
+				.mollie_creates
+		).toBe( creates + 1 );
 	} );
 } );
