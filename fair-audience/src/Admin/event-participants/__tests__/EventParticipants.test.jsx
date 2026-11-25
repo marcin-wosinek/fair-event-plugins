@@ -384,6 +384,115 @@ describe( 'EventParticipants — removal and feedback (#1775)', () => {
 		).toEqual( [ [ 2 ], [ 2 ] ] );
 	} );
 
+	it( 'selects all of a group, and sends again only those not added yet (#2437)', async () => {
+		const CHOIR = { id: 7, name: 'Choir' };
+		const profiles = [
+			...PROFILES,
+			{
+				id: 3,
+				name: 'Ann',
+				surname: 'Poe',
+				email: 'ann@x.test',
+				groups: [ CHOIR ],
+			},
+			{
+				id: 4,
+				name: 'Bob',
+				surname: 'Poe',
+				email: 'bob@x.test',
+				groups: [ CHOIR ],
+			},
+		];
+		const row = ( id ) => ( {
+			...JANE,
+			id: 100 + id,
+			participant_id: id,
+			participant_name: `Person ${ id }`,
+		} );
+		let added = [];
+		mockApi( {
+			rows: () => [ JANE, ...added.map( row ) ],
+			mutate: ( { data } ) => {
+				if ( added.length === 0 ) {
+					added = [ 2, 3 ];
+					return Promise.resolve( {
+						added: 2,
+						skipped: 0,
+						failed: 1,
+					} );
+				}
+				added = [ ...added, ...data.participant_ids ];
+				return Promise.resolve( { added: 1, skipped: 0, failed: 0 } );
+			},
+		} );
+		const base = apiFetch.getMockImplementation();
+		apiFetch.mockImplementation( ( request ) => {
+			if ( request.path === '/fair-audience/v1/groups' ) {
+				return Promise.resolve( [ CHOIR ] );
+			}
+			if (
+				! request.method &&
+				request.path === '/fair-audience/v1/participants'
+			) {
+				return Promise.resolve( profiles );
+			}
+			return base( request );
+		} );
+		render( <EventParticipants /> );
+
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Add Participants' } )
+		);
+		const dialog = await screen.findByRole( 'dialog', {
+			name: 'Add Participants',
+		} );
+		fireEvent.click(
+			within( dialog ).getByRole( 'checkbox', {
+				name: 'John Roe john@x.test',
+			} )
+		);
+		fireEvent.change( await within( dialog ).findByRole( 'combobox' ), {
+			target: { value: '7' },
+		} );
+		expect( within( dialog ).getAllByRole( 'checkbox' ) ).toHaveLength( 2 );
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Select All' } )
+		);
+		expect(
+			within( dialog ).getByText( '3 selected, 2 shown' )
+		).toBeInTheDocument();
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Add 3 Selected' } )
+		);
+
+		expect(
+			await within( dialog ).findByText(
+				'1 participant could not be added. They are still selected: try again.'
+			)
+		).toBeInTheDocument();
+		// Wait for the refreshed audience: Ann drops out of the list.
+		await waitFor( () =>
+			expect( within( dialog ).getAllByRole( 'checkbox' ) ).toHaveLength(
+				1
+			)
+		);
+		expect(
+			within( dialog ).getByRole( 'checkbox', {
+				name: 'Bob Poe bob@x.test',
+			} )
+		).toBeChecked();
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Add 1 Selected' } )
+		);
+
+		await waitFor( () => expect( dialog ).not.toBeInTheDocument() );
+		expect(
+			mutations().map( ( request ) => request.data.participant_ids )
+		).toEqual( [ [ 2, 3, 4 ], [ 4 ] ] );
+	} );
+
 	const isPreview = ( { path } ) => path.endsWith( '/preview' );
 	const isInvitationSend = ( { path, method } ) =>
 		method === 'POST' && path.endsWith( '/event-invitations' );
