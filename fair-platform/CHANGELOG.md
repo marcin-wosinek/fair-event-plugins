@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.1
+
+### Patch Changes
+
+- c27242d: Fix Last Refresh staying empty after a site reconnects to Mollie: when Mollie hands the reconnected site the same refresh token as before, the new connection now takes it over, so its refreshes are recorded. Connection Logs also stop showing "Profile created" on connections where no Mollie profile was created.
+- 9f60248: Record successful Mollie token refreshes in Connection Logs: a site's Last Refresh now updates when its token is refreshed, on the connection that issued the credential only, and follows rotated tokens. Tracking starts with each site's next connection or reconnection; earlier log rows keep an empty Last Refresh. Connection Logs never store or show the token.
+- Updated dependencies [a5e3137]
+- Updated dependencies [2baa2cc]
+    - fair-events-shared@0.9.2
+
 ## 1.6.0
 
 ### Minor Changes

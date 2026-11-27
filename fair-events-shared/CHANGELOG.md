@@ -1,5 +1,12 @@
 # fair-events-shared
 
+## 0.9.2
+
+### Patch Changes
+
+- a5e3137: Close an admin list's "More actions" menu when Escape is pressed right after opening it, before focus has moved into the menu; focus stays on the menu button.
+- 2baa2cc: Resolve the Telegram, Meta Conversions API and WhatsApp credentials through one shared helper. The environment variable → PHP constant → saved setting order, existing saved credentials and the administrator status fields are unchanged.
+
 ## 0.9.1
 
 ### Patch Changes

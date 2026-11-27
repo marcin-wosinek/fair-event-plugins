@@ -3,7 +3,7 @@ Contributors: marcinwosinek
 Tags: events, participants, audience, management
 Requires at least: 7.0
 Tested up to: 7.1
-Stable tag: 2.2.0
+Stable tag: 2.2.1
 Requires PHP: 8.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -48,6 +48,15 @@ Yes, it integrates with the fair_event post type from the Fair Events plugin.
 Every release ships `block-docs/index.json` in the plugin folder. It lists each block the plugin supplies, with its block.json, a usage guide, and serialized examples that match this release. To check which blocks are registered on a particular site, use the authenticated WordPress endpoint `/wp-json/wp/v2/block-types` (it requires the `edit_posts` capability). `block-docs/README.md` explains the difference between shipped, registered, and insertable blocks.
 
 == Changelog ==
+
+## 2.2.1
+
+### Patch Changes
+
+- 07db93d: The "Add participants" dialogs on the Event Participants page and the Manage Event Audience tab now share one participant picker. Screen readers announce its search field and name each checkbox after the person and their email.
+- Updated dependencies [a5e3137]
+- Updated dependencies [2baa2cc]
+    - fair-events-shared@0.9.2
 
 ## 2.2.0
 

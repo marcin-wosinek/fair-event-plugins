@@ -1,5 +1,42 @@
 # fair-events-experimental
 
+## 2.4.0
+
+### Minor Changes
+
+- fe8bc07: Provide contributors, promotional team profiles and ordered event images, with their focal regions, to Fair Events' complete campaign facts read. When the team directory or event images bundle is off, the read reports that feature as turned off instead of returning empty lists.
+- 709f4d6: Add event images: with the new opt-in Event images feature, the Manage Event Images tab links ordered Media Library images to an event and to each of its saved programme items, each with an optional circle marking what must stay visible when the image is cropped. A series keeps its images on the series. An authenticated API returns the images, their oriented sizes and circles for tools such as Event Content Studio (see docs/event-images.md).
+- f032c2d: Share marketing assets publicly: with Marketing assets on, every event date gets a page that collaborators can open without an account, at `/?fair_marketing_assets={id}`, plus a list of every date's page at `/?fair_marketing_assets=all`. The pages work for draft, private and published events. There, collaborators filter by team member or use case, copy texts exactly as written, and download PNG/JPEG images. Unpublished events are named by ID only. Team members' names (name and surname only) appear only after an administrator confirms it when linking them. Links saved before this release stay private until confirmed, and the authenticated API needs `publish_member_names` to add a member. Manage Event → Marketing links to the public page and says that asset content is public.
+- 1809870: Add marketing assets: with the new opt-in Marketing assets feature, a Marketing tab on Manage Event keeps text and PNG/JPEG images for promoting each event date. Each asset has a use case such as "Instagram post", plain text kept exactly as typed, an optional Media Library image, links to members of the event's team and an optional schedule item. Every date, including each date of a series, has its own assets. An authenticated API (`/fair-events/v1/event-dates/{id}/marketing-assets`) lets tools such as Event Content Studio manage them (see docs/marketing-assets.md). Images are ordinary Media Library files: anyone with an image's link can open it, and removing an image, deleting an asset or turning the feature off keeps the file and its link. Nothing is published yet.
+- 1c65fa3: Team members now take roles and an order. In Manage Event → Event Details, organizers add a person with a role such as `teacher` or `organizer`, may give the same person several roles, and reorder the list with Move up and Move down; repeating a person's role is refused. Saved schedule items get their own ordered contributors in the Schedule tab. A series keeps both on the series: its dates show them read-only and link to where they are managed. Existing team members keep their place without a role, and profiles referenced by an event or a programme item cannot be deleted. Copies take the contributors along, removed schedule items lose theirs, and Fair Events now passes companion plugins the copied schedule items and reports removed ones.
+- edd21f3: Add an experimental team member directory (Fair Events → Team members, off by default in Settings → Experimental). Administrators keep sitewide profiles with name, surname, contact details and grammatical gender, and add people to an event's team in Manage Event → Event Details; a series shares one team across all its dates, and event copies start with their source's team. Contact details stay private to administrators. Fair Events gains a `fair_events_event_copy_extensions` filter so companion plugins can copy their own data with an event.
+- 5c00870: Team member profiles (Fair Events → Team members) gain an optional website, a plain-text bio that keeps its line breaks, and a portrait chosen from the Media Library with preview, replace and remove actions. Removing a portrait keeps the image in the Media Library. Instagram handles are now checked when they are added or changed; existing handles stay editable. A new reader returns only the public promotional part of profiles (display name, Instagram handle, website, bio and portrait) for Event Content Studio campaign facts. Contact details and grammatical gender stay private. Existing profiles and event teams are kept when the site upgrades.
+- dc77f5f: Add per-feed WhatsApp sharing reminders. With the WhatsApp feature of Fair Events Experimental on, Event notifications links to WhatsApp sharing reminders, where an administrator designates one collaborator per event feed (a team member or a name and number), confirms their consent, chooses the approved template whose button opens the feed's weekly summary, and sets the weekly day and time. Each scheduled week is sent at most once, even after a timeout or a replay; skipped and failed runs say why, and the history shows WhatsApp's acceptance and delivery updates. A renamed feed or a changed number pauses its reminder until it is confirmed again.
+
+### Patch Changes
+
+- a5e3137: Close an admin list's "More actions" menu when Escape is pressed right after opening it, before focus has moved into the menu; focus stays on the menu button.
+- 2baa2cc: Resolve the Telegram, Meta Conversions API and WhatsApp credentials through one shared helper. The environment variable → PHP constant → saved setting order, existing saved credentials and the administrator status fields are unchanged.
+- e7a3788: Telegram ticket sale alerts are now set up with each organizer: on Fair Events → Organizers when organizer management is on, otherwise under Settings → Organizer for the sitewide organizer. "Send test message", below the chat or channel field, posts a labelled sample to the chat or channel in the field, even before it is saved and while alerts are off, and shows the result next to the field. Settings, schedules and sales are not changed. The sitewide "Send ticket sale alerts to Telegram" switch is removed: each organizer's "Send this organizer's sales" switch now turns both its immediate messages and its digests on or off. Sites upgrading with the sitewide switch off have every organizer switched off, keeping its chat and schedule. Sites with the switch on keep each organizer's switch. Fair Events → Event notifications still lists recent ticket sale alerts and links to where organizers are set up.
+- Updated dependencies [b6a030b]
+- Updated dependencies [d6aad6d]
+- Updated dependencies [fe8bc07]
+- Updated dependencies [bb050bd]
+- Updated dependencies [4d265f7]
+- Updated dependencies [cd1e804]
+- Updated dependencies [a5e3137]
+- Updated dependencies [1809870]
+- Updated dependencies [2baa2cc]
+- Updated dependencies [e512978]
+- Updated dependencies [1c65fa3]
+- Updated dependencies [edd21f3]
+- Updated dependencies [e7a3788]
+- Updated dependencies [0e2be90]
+- Updated dependencies [957972b]
+- Updated dependencies [dc77f5f]
+    - fair-events@2.5.0
+    - fair-events-shared@0.9.2
+
 ## 2.3.0
 
 ### Minor Changes

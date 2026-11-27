@@ -1,5 +1,15 @@
 # fair-payments-connector
 
+## 2.8.3
+
+### Patch Changes
+
+- a5e3137: Close an admin list's "More actions" menu when Escape is pressed right after opening it, before focus has moved into the menu; focus stays on the menu button.
+- b1c5eaf: Payment notifications in Telegram and email now show event titles and other details as readable text: entities such as `&nbsp;`, `&amp;` and typographic quotes no longer appear literally (for example `La&nbsp;Mutable` now reads "La Mutable"). Text from events and participants is still shown as plain text and cannot add formatting or links. Notifications already queued for a digest are sent as they were rendered.
+- Updated dependencies [a5e3137]
+- Updated dependencies [2baa2cc]
+    - fair-events-shared@0.9.2
+
 ## 2.8.2
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.2.1
+
+### Patch Changes
+
+- 07db93d: The "Add participants" dialogs on the Event Participants page and the Manage Event Audience tab now share one participant picker. Screen readers announce its search field and name each checkbox after the person and their email.
+- Updated dependencies [a5e3137]
+- Updated dependencies [2baa2cc]
+    - fair-events-shared@0.9.2
+
 ## 2.2.0
 
 ### Minor Changes
