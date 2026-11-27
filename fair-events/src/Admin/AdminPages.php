@@ -723,7 +723,11 @@ class AdminPages {
 				array(
 					// Event sources are created on a Fair Events Experimental
 					// page; null while it is not there.
-					'sourcesUrl' => menu_page_url( 'fair-events-sources', false ) ? admin_url( 'admin.php?page=fair-events-sources' ) : null,
+					'sourcesUrl'           => menu_page_url( 'fair-events-sources', false ) ? admin_url( 'admin.php?page=fair-events-sources' ) : null,
+					// WhatsApp sharing reminders are managed on a Fair Events
+					// Experimental page, registered only while its WhatsApp
+					// feature is on; null otherwise, which hides the entry.
+					'whatsappRemindersUrl' => menu_page_url( 'fair-events-whatsapp-reminders', false ) ? admin_url( 'admin.php?page=fair-events-whatsapp-reminders' ) : null,
 				)
 			);
 

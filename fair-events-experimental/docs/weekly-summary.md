@@ -26,6 +26,13 @@ Each community is an **event feed** in Fair Events → Event Feeds:
 5. To share the link with the operator, open the feed's view. **WhatsApp
    summary link** shows the link, with a **Copy link** button.
 
+6. To remind the operator on WhatsApp every week, designate them in Fair
+   Events → Event notifications → **WhatsApp sharing reminders** (needs the
+   WhatsApp bundle). The reminder's template button opens this link; see
+   [WHATSAPP.md § Sharing reminders](../WHATSAPP.md#sharing-reminders).
+   Changing the feed's slug changes the link and pauses its reminder until
+   a template with the new link is chosen.
+
 A feed without a page shows a hint instead of the link, in both places. In
 the list, a disabled feed shows a hint to enable it. There is nothing
 else to configure: change the feed's inputs and the summary follows.

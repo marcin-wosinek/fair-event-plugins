@@ -786,6 +786,35 @@ describe( 'EventNotifications', () => {
 		).toHaveAttribute( 'href', '/wp-admin/sources' );
 	} );
 
+	it( 'links to WhatsApp sharing reminders only while that page exists', async () => {
+		mockApi( payload() );
+		const { unmount } = render(
+			<EventNotifications
+				sourcesUrl={ null }
+				whatsappRemindersUrl="/wp-admin/reminders"
+			/>
+		);
+		expect(
+			await screen.findByRole( 'link', {
+				name: 'Manage WhatsApp sharing reminders',
+			} )
+		).toHaveAttribute( 'href', '/wp-admin/reminders' );
+		unmount();
+
+		mockApi( payload() );
+		render( <EventNotifications sourcesUrl={ null } /> );
+		expect(
+			await screen.findByRole( 'textbox', {
+				name: 'Search notifications',
+			} )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'link', {
+				name: 'Manage WhatsApp sharing reminders',
+			} )
+		).not.toBeInTheDocument();
+	} );
+
 	it( 'reports a failed load and loads again on request', async () => {
 		mockApi( payload() );
 		apiFetch.mockRejectedValueOnce( { message: 'Sorry, not allowed.' } );

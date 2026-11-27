@@ -343,14 +343,16 @@ class ClientTest extends TestCase {
 		$this->assertSame(
 			array(
 				array(
-					'name'     => 'hello_world',
-					'language' => 'en_US',
-					'category' => 'UTILITY',
+					'name'        => 'hello_world',
+					'language'    => 'en_US',
+					'category'    => 'UTILITY',
+					'button_urls' => array(),
 				),
 				array(
-					'name'     => 'welcome',
-					'language' => 'es_ES',
-					'category' => 'UTILITY',
+					'name'        => 'welcome',
+					'language'    => 'es_ES',
+					'category'    => 'UTILITY',
+					'button_urls' => array( 'https://example.test/' ),
 				),
 			),
 			$result['templates']

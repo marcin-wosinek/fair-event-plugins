@@ -57,9 +57,9 @@ class Plugin {
 		// manageable in Connectors while delivery is off or unavailable.
 		\FairEventsExperimental\Meta\Connector::init();
 
-		// Manual WhatsApp connection: IDs, validation, one-off test sends and
-		// their delivery updates from Meta's webhook, behind the `whatsapp`
-		// bundle. No provider, schedule or queue is registered; see WHATSAPP.md.
+		// WhatsApp connection: IDs, validation, one-off test sends, per-feed
+		// sharing reminders and their delivery updates from Meta's webhook,
+		// behind the `whatsapp` bundle; see WHATSAPP.md.
 		$this->load_whatsapp();
 
 		// Instagram connection, taken over from Fair Audience; see
@@ -451,10 +451,12 @@ class Plugin {
 	/**
 	 * Load the WhatsApp connection while the `whatsapp` bundle is on: the
 	 * Settings → Connectors credential, the administrator and webhook REST
-	 * routes, and the delivery tables, installed and pruned daily.
+	 * routes, the delivery tables, installed and pruned daily, and the
+	 * per-feed sharing reminders with their weekly runs.
 	 *
-	 * Off, none of it is registered and the cleanup is unscheduled. The saved
-	 * IDs, credentials and delivery history stay where they are, and the
+	 * Off, none of it is registered and the cleanup and reminder runs are
+	 * unscheduled. The saved IDs, credentials, reminders and delivery
+	 * history stay where they are, and the
 	 * credentials are not exposed anywhere, so turning the bundle back on
 	 * resumes without re-entering anything.
 	 *
@@ -468,7 +470,7 @@ class Plugin {
 			add_action(
 				'init',
 				static function () {
-					Cron::unschedule( array( \FairEventsExperimental\WhatsApp\Deliveries::CLEANUP_HOOK ) );
+					Cron::unschedule( array( \FairEventsExperimental\WhatsApp\Deliveries::CLEANUP_HOOK, \FairEventsExperimental\WhatsApp\ReminderSchedule::HOOK ) );
 				},
 				11
 			);
@@ -481,6 +483,7 @@ class Plugin {
 			static function () {
 				( new \FairEventsExperimental\API\WhatsAppController() )->register_routes();
 				( new \FairEventsExperimental\API\WhatsAppWebhookController() )->register_routes();
+				( new \FairEventsExperimental\API\WhatsAppRemindersController() )->register_routes();
 			}
 		);
 
@@ -488,9 +491,32 @@ class Plugin {
 			\FairEventsExperimental\WhatsApp\Deliveries::CLEANUP_HOOK,
 			static function () {
 				( new \FairEventsExperimental\WhatsApp\Deliveries() )->prune();
+				( new \FairEventsExperimental\WhatsApp\ReminderRuns() )->prune();
 			}
 		);
 		add_action( 'init', array( \FairEventsExperimental\WhatsApp\Deliveries::class, 'maybe_install' ), 5 );
+		add_action( 'init', array( \FairEventsExperimental\WhatsApp\ReminderRuns::class, 'maybe_install' ), 5 );
+
+		// Per-feed sharing reminders (#2136): one queued run per enabled
+		// reminder. A run missed while the feature was off is not replayed;
+		// admin and cron requests queue whichever next run is missing.
+		add_action(
+			\FairEventsExperimental\WhatsApp\ReminderSchedule::HOOK,
+			static function ( $send_week = '', $source_id = 0 ) {
+				( new \FairEventsExperimental\WhatsApp\ReminderDispatcher() )->run( $send_week, $source_id );
+			},
+			10,
+			2
+		);
+		add_action(
+			'init',
+			static function () {
+				if ( is_admin() || wp_doing_cron() ) {
+					\FairEventsExperimental\WhatsApp\ReminderSchedule::ensure_all();
+				}
+			},
+			12
+		);
 		add_action(
 			'init',
 			static function () {

@@ -393,8 +393,18 @@ test.describe( 'WhatsAppController', () => {
 		} );
 		expect( res.status() ).toBe( 200 );
 		expect( await res.json() ).toEqual( [
-			{ name: 'event_ready', language: 'es_ES', category: 'UTILITY' },
-			{ name: 'hello_world', language: 'en_US', category: 'UTILITY' },
+			{
+				name: 'event_ready',
+				language: 'es_ES',
+				category: 'UTILITY',
+				button_urls: [],
+			},
+			{
+				name: 'hello_world',
+				language: 'en_US',
+				category: 'UTILITY',
+				button_urls: [],
+			},
 		] );
 	} );
 

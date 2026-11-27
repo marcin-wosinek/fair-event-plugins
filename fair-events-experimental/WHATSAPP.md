@@ -9,9 +9,10 @@ Settings → Connectors, and Fair Events → WhatsApp stores the WhatsApp Busine
 Account ID and Phone Number ID, validates them against Meta and sends one
 approved test template on request (see [Manual connection](#manual-connection)).
 Delivery updates (issue #1924) arrive through a webhook and show what happened
-to each send (see [Delivery updates](#delivery-updates)). Automatic sending is
-still off: there is no notification provider, scheduled send, subscriber
-integration or delivery queue.
+to each send (see [Delivery updates](#delivery-updates)). The only
+automatic sends are the per-feed sharing reminders (issue #2136, see
+[Sharing reminders](#sharing-reminders)); there is no subscriber
+notification provider or delivery queue.
 
 Findings were checked against Meta's official developer documentation on
 **2026-10-20**. Meta changes these requirements often; re-check the linked
@@ -272,8 +273,8 @@ settings reads and saves still never contact Meta.
 
 Each send is a row in `{prefix}fair_events_whatsapp_deliveries`, created
 before the request to Meta; a send that cannot be recorded is not sent. A
-row keeps the origin (`admin_test`; `scheduled` is reserved for scheduled
-sends, which are not built), both IDs, Meta's message ID, the template, the
+row keeps the origin (`admin_test`, or `scheduled` for a sharing
+reminder), both IDs, Meta's message ID, the template, the
 masked recipient, the send result and the delivery evidence. Raw payloads,
 message bodies, full numbers and Meta's error text are never stored.
 
@@ -315,6 +316,56 @@ and **at least once**: Meta resends a callback this site did not acknowledge,
 so consumers must deduplicate by `id`. A consumer that throws makes the
 callback answer 500. This plugin does not store, log or reply to incoming
 messages, and nothing subscribes to the hook yet.
+
+## Sharing reminders
+
+Built in #2136. Fair Events → Event notifications shows a **WhatsApp sharing
+reminders** entry while this plugin is active and the WhatsApp bundle is on;
+it opens the hidden page `admin.php?page=fair-events-whatsapp-reminders`.
+
+- **One reminder per event feed**, keyed by the feed's ID, in its own
+  option (`fair_events_experimental_whatsapp_reminder_{id}`, never
+  autoloaded). It holds whether it is on, the weekday and time (site
+  timezone, computed by Fair Events' `WeekSchedule` like Event
+  notifications), the collaborator, the consent and the template. Several
+  feeds may name the same collaborator.
+- **Collaborator:** a Team members profile, whose number is read from the
+  directory at every use, or a standalone name and number. Saving one
+  requires the administrator to confirm that this person agreed to receive
+  the reminders at this number. Consent is stored as a salted fingerprint
+  of that number: once the number in effect differs (a different profile,
+  an edited profile number, a typed number), the reminder pauses until
+  consent is confirmed again. A deleted profile or a turned-off directory
+  pauses it too. Numbers are returned only to the administrator editor
+  (`manage_options`); the history shows them masked.
+- **Template:** one approved, parameterless template per feed whose static
+  URL button opens the feed's weekly-summary page
+  (`/fair-events-weekly-summary/{slug}/`). It is checked with Meta when it
+  is chosen, and the link it was checked against is kept with it, so a
+  renamed feed or a moved site pauses sending until a template opening the
+  new link is chosen. The page opened from the button always shows the
+  current week. The message is never posted to a group: the collaborator
+  copies the prepared text and shares it.
+- **Runs:** each enabled reminder keeps one WP-Cron event
+  (`fair_events_experimental_whatsapp_reminder`, args `[ISO week, feed ID]`).
+  A run reloads the reminder, queues the next run, then claims the feed and
+  week in `{prefix}fair_events_whatsapp_reminder_runs` (unique per feed and
+  week) before any check or request. A duplicate run, a replay, or a run
+  after the collaborator was replaced finds the claim and does nothing, so
+  an accepted, uncertain or interrupted send is never repeated. A turned-off
+  or removed reminder does nothing. Runs are kept 90 days.
+- **Outcomes:** skipped (feed disabled or deleted, no collaborator,
+  unavailable collaborator, consent to confirm, no template, changed feed
+  link, unavailable summary, no public events that week) and failed
+  (connection not validated, template list unavailable, template no longer
+  offered, send not recorded) runs make no request to send. Sent runs link
+  to their delivery row, so the history shows acceptance, uncertainty and
+  webhook-confirmed delivery or read separately.
+- **REST** (administrators only): `GET /whatsapp/reminders` (feeds,
+  reminders, team members, connection state, history), `PUT` and `DELETE
+  /whatsapp/reminders/{feed ID}`. Turning the bundle off removes the page,
+  the entry and the routes and unschedules the runs; the reminders and
+  their history stay.
 
 ## Sources
 

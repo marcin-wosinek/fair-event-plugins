@@ -1,0 +1,52 @@
+.fair-whatsapp-reminders .fair-admin-table {
+	margin-bottom: 24px;
+}
+
+.fair-whatsapp-reminders__editor,
+.fair-whatsapp-reminders__history {
+	margin-bottom: 24px;
+}
+
+.fair-whatsapp-reminders__editor h2,
+.fair-whatsapp-reminders__history h2 {
+	margin: 0;
+	font-size: 1.2em;
+	overflow-wrap: anywhere;
+}
+
+.fair-whatsapp-reminders__history .components-card__header {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	justify-content: space-between;
+}
+
+.fair-whatsapp-reminders__fields {
+	display: grid;
+	gap: 0 16px;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.fair-whatsapp-reminders__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 16px;
+}
+
+.fair-whatsapp-reminders__unsaved {
+	display: inline-block;
+	margin-left: 8px;
+	font-size: 12px;
+	font-weight: 400;
+	color: #996800;
+}
+
+.fair-whatsapp-reminders__problem {
+	color: #996800;
+}
+
+.fair-whatsapp-reminders .components-external-link,
+.fair-whatsapp-reminders .fair-admin-table__identity-meta {
+	overflow-wrap: anywhere;
+}
