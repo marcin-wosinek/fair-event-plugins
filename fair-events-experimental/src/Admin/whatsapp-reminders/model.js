@@ -17,7 +17,7 @@ export const DAYS = [
 ];
 
 /** Number in international format, as the server accepts it. */
-const NUMBER_PATTERN = /^\s*\+?[\d\s().-]+$/;
+const NUMBER_PATTERN = /^\+?[\d\s().-]+$/;
 
 /**
  * Digits of a number as typed, or '' when it cannot be an international
@@ -27,10 +27,11 @@ const NUMBER_PATTERN = /^\s*\+?[\d\s().-]+$/;
  * @return {string} Digits.
  */
 export function numberDigits( value ) {
-	if ( ! NUMBER_PATTERN.test( value || '' ) ) {
+	const trimmed = String( value || '' ).trimStart();
+	if ( ! NUMBER_PATTERN.test( trimmed ) ) {
 		return '';
 	}
-	const digits = value.replace( /\D/g, '' );
+	const digits = trimmed.replace( /\D/g, '' );
 	return /^[1-9]\d{6,14}$/.test( digits ) ? digits : '';
 }
 
@@ -42,7 +43,13 @@ export function numberDigits( value ) {
  * @return {boolean} Whether they match.
  */
 export function sameUrl( a, b ) {
-	const trim = ( url ) => String( url || '' ).replace( /\/+$/, '' );
+	const trim = ( url ) => {
+		let text = String( url || '' );
+		while ( text.endsWith( '/' ) ) {
+			text = text.slice( 0, -1 );
+		}
+		return text;
+	};
 	return '' !== trim( a ) && trim( a ) === trim( b );
 }
 
