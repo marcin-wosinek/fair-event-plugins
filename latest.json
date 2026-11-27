@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-11-27T07:57:15.441Z",
+  "generatedAt": "2026-11-27T07:58:02.593Z",
   "results": [
     {
       "scenario": "wordpress-only",
       "page": "plain",
       "metrics": {
-        "durationMs": 40.37,
+        "durationMs": 39.44,
         "memoryBytes": 8388608,
         "queryCount": 22,
         "sampleCount": 5
@@ -24,7 +24,7 @@
       "scenario": "wordpress-only",
       "page": "feature",
       "metrics": {
-        "durationMs": 39.94,
+        "durationMs": 38.46,
         "memoryBytes": 8388608,
         "queryCount": 22,
         "sampleCount": 5
@@ -43,7 +43,7 @@
       "scenario": "fair-payments-connector",
       "page": "plain",
       "metrics": {
-        "durationMs": 40.81,
+        "durationMs": 42.12,
         "memoryBytes": 8388608,
         "queryCount": 23,
         "sampleCount": 5
@@ -62,7 +62,7 @@
       "scenario": "fair-payments-connector",
       "page": "feature",
       "metrics": {
-        "durationMs": 41.54,
+        "durationMs": 40.54,
         "memoryBytes": 8388608,
         "queryCount": 26,
         "sampleCount": 5
@@ -74,11 +74,11 @@
           "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
           "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
           "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
-          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
           "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
           "http://localhost:8889/wp-content/plugins/fair-payments-connector/build/blocks/simple-payment/view.js?ver=d11bd6482c0d66c21e14",
-          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
           "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
           "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.5"
         ]
       }
@@ -87,9 +87,9 @@
       "scenario": "fair-events",
       "page": "plain",
       "metrics": {
-        "durationMs": 46.98,
+        "durationMs": 43.97,
         "memoryBytes": 8388608,
-        "queryCount": 37,
+        "queryCount": 35,
         "sampleCount": 5
       },
       "frontend": {
@@ -106,9 +106,9 @@
       "scenario": "fair-events",
       "page": "feature",
       "metrics": {
-        "durationMs": 62.12,
+        "durationMs": 58.01,
         "memoryBytes": 8388608,
-        "queryCount": 38,
+        "queryCount": 36,
         "sampleCount": 5
       },
       "frontend": {
@@ -125,7 +125,7 @@
       "scenario": "fair-platform",
       "page": "plain",
       "metrics": {
-        "durationMs": 40.09,
+        "durationMs": 38.85,
         "memoryBytes": 8388608,
         "queryCount": 23,
         "sampleCount": 5
@@ -144,7 +144,7 @@
       "scenario": "fair-platform",
       "page": "feature",
       "metrics": {
-        "durationMs": 42.29,
+        "durationMs": 38.6,
         "memoryBytes": 8388608,
         "queryCount": 23,
         "sampleCount": 5
@@ -163,7 +163,7 @@
       "scenario": "fair-audience",
       "page": "plain",
       "metrics": {
-        "durationMs": 42.24,
+        "durationMs": 40.44,
         "memoryBytes": 8388608,
         "queryCount": 23,
         "sampleCount": 5
@@ -182,21 +182,21 @@
       "scenario": "fair-audience",
       "page": "feature",
       "metrics": {
-        "durationMs": 44,
+        "durationMs": 41.11,
         "memoryBytes": 8388608,
         "queryCount": 24,
         "sampleCount": 5
       },
       "frontend": {
         "requestCount": 9,
-        "transferBytes": 40498,
+        "transferBytes": 40494,
         "assets": [
           "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
           "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
           "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
           "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
           "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
-          "http://localhost:8889/wp-content/plugins/fair-audience/build/blocks/mailing-signup/frontend.js?ver=c9e4087b4a88295b2211",
+          "http://localhost:8889/wp-content/plugins/fair-audience/build/blocks/mailing-signup/frontend.js?ver=dc82648ccef7a757c61a",
           "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
           "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
           "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.5"
@@ -207,7 +207,7 @@
       "scenario": "fair-timetable",
       "page": "plain",
       "metrics": {
-        "durationMs": 42.64,
+        "durationMs": 40.14,
         "memoryBytes": 8388608,
         "queryCount": 23,
         "sampleCount": 5
@@ -226,7 +226,7 @@
       "scenario": "fair-timetable",
       "page": "feature",
       "metrics": {
-        "durationMs": 42.23,
+        "durationMs": 40.76,
         "memoryBytes": 8388608,
         "queryCount": 23,
         "sampleCount": 5
@@ -238,8 +238,8 @@
           "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
           "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
           "http://localhost:8889/wp-content/plugins/fair-timetable/build/blocks/timetable/view.js?ver=ed57f83f5cb71e7557ce",
-          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
           "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
           "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.5"
         ]
       }
@@ -248,7 +248,7 @@
       "scenario": "fair-finance",
       "page": "plain",
       "metrics": {
-        "durationMs": 41.07,
+        "durationMs": 38.48,
         "memoryBytes": 8388608,
         "queryCount": 23,
         "sampleCount": 5
@@ -267,7 +267,7 @@
       "scenario": "fair-finance",
       "page": "feature",
       "metrics": {
-        "durationMs": 40.9,
+        "durationMs": 38.87,
         "memoryBytes": 8388608,
         "queryCount": 23,
         "sampleCount": 5
@@ -286,7 +286,7 @@
       "scenario": "fair-payments-connector-experimental",
       "page": "plain",
       "metrics": {
-        "durationMs": 41.46,
+        "durationMs": 38.4,
         "memoryBytes": 8388608,
         "queryCount": 22,
         "sampleCount": 5
@@ -305,7 +305,7 @@
       "scenario": "fair-payments-connector-experimental",
       "page": "feature",
       "metrics": {
-        "durationMs": 40.72,
+        "durationMs": 38.66,
         "memoryBytes": 8388608,
         "queryCount": 22,
         "sampleCount": 5
@@ -324,7 +324,7 @@
       "scenario": "fair-form",
       "page": "plain",
       "metrics": {
-        "durationMs": 45.23,
+        "durationMs": 42.77,
         "memoryBytes": 8388608,
         "queryCount": 24,
         "sampleCount": 5
@@ -343,14 +343,14 @@
       "scenario": "fair-form",
       "page": "feature",
       "metrics": {
-        "durationMs": 47.26,
+        "durationMs": 43.6,
         "memoryBytes": 8388608,
         "queryCount": 24,
         "sampleCount": 5
       },
       "frontend": {
         "requestCount": 12,
-        "transferBytes": 86503,
+        "transferBytes": 86500,
         "assets": [
           "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
           "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
@@ -360,7 +360,7 @@
           "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
           "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
           "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
-          "http://localhost:8889/wp-content/plugins/fair-form/build/blocks/fair-form/frontend.js?ver=53e0a7b75ec4204936be",
+          "http://localhost:8889/wp-content/plugins/fair-form/build/blocks/fair-form/frontend.js?ver=3a8299a117d517fe269d",
           "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
           "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
           "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.5"
@@ -371,7 +371,7 @@
       "scenario": "fair-calendar-button",
       "page": "plain",
       "metrics": {
-        "durationMs": 40.73,
+        "durationMs": 39.16,
         "memoryBytes": 8388608,
         "queryCount": 22,
         "sampleCount": 5
@@ -390,7 +390,7 @@
       "scenario": "fair-calendar-button",
       "page": "feature",
       "metrics": {
-        "durationMs": 40.41,
+        "durationMs": 39.2,
         "memoryBytes": 8388608,
         "queryCount": 22,
         "sampleCount": 5
@@ -412,9 +412,9 @@
       "scenario": "fair-events-experimental+deps",
       "page": "plain",
       "metrics": {
-        "durationMs": 45.45,
+        "durationMs": 45.51,
         "memoryBytes": 8388608,
-        "queryCount": 40,
+        "queryCount": 37,
         "sampleCount": 5
       },
       "frontend": {
@@ -431,9 +431,9 @@
       "scenario": "fair-events-experimental+deps",
       "page": "feature",
       "metrics": {
-        "durationMs": 60.55,
+        "durationMs": 64.85,
         "memoryBytes": 8388608,
-        "queryCount": 41,
+        "queryCount": 38,
         "sampleCount": 5
       },
       "frontend": {
@@ -450,7 +450,7 @@
       "scenario": "fair-audience-experimental+deps",
       "page": "plain",
       "metrics": {
-        "durationMs": 41.89,
+        "durationMs": 40.59,
         "memoryBytes": 8388608,
         "queryCount": 24,
         "sampleCount": 5
@@ -469,23 +469,23 @@
       "scenario": "fair-audience-experimental+deps",
       "page": "feature",
       "metrics": {
-        "durationMs": 42.8,
+        "durationMs": 41.42,
         "memoryBytes": 8388608,
         "queryCount": 25,
         "sampleCount": 5
       },
       "frontend": {
         "requestCount": 9,
-        "transferBytes": 40498,
+        "transferBytes": 40494,
         "assets": [
           "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
           "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
           "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
           "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
           "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
-          "http://localhost:8889/wp-content/plugins/fair-audience/build/blocks/mailing-signup/frontend.js?ver=c9e4087b4a88295b2211",
-          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
+          "http://localhost:8889/wp-content/plugins/fair-audience/build/blocks/mailing-signup/frontend.js?ver=dc82648ccef7a757c61a",
           "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
           "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.5"
         ]
       }
@@ -494,9 +494,9 @@
       "scenario": "production-stack",
       "page": "plain",
       "metrics": {
-        "durationMs": 54.41,
+        "durationMs": 53.54,
         "memoryBytes": 10485760,
-        "queryCount": 43,
+        "queryCount": 41,
         "sampleCount": 5
       },
       "frontend": {
@@ -513,27 +513,27 @@
       "scenario": "production-stack",
       "page": "feature",
       "metrics": {
-        "durationMs": 71.52,
+        "durationMs": 71.45,
         "memoryBytes": 10485760,
-        "queryCount": 48,
+        "queryCount": 46,
         "sampleCount": 5
       },
       "frontend": {
         "requestCount": 16,
-        "transferBytes": 120896,
+        "transferBytes": 120889,
         "assets": [
           "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
-          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
           "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
           "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
           "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
-          "http://localhost:8889/wp-content/plugins/fair-audience/build/blocks/mailing-signup/frontend.js?ver=c9e4087b4a88295b2211",
+          "http://localhost:8889/wp-content/plugins/fair-audience/build/blocks/mailing-signup/frontend.js?ver=dc82648ccef7a757c61a",
           "http://localhost:8889/wp-content/plugins/fair-timetable/build/blocks/timetable/view.js?ver=ed57f83f5cb71e7557ce",
-          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
           "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
           "http://localhost:8889/wp-content/plugins/fair-payments-connector/build/blocks/simple-payment/view.js?ver=d11bd6482c0d66c21e14",
+          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
           "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
-          "http://localhost:8889/wp-content/plugins/fair-form/build/blocks/fair-form/frontend.js?ver=53e0a7b75ec4204936be",
+          "http://localhost:8889/wp-content/plugins/fair-form/build/blocks/fair-form/frontend.js?ver=3a8299a117d517fe269d",
           "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
           "http://localhost:8889/wp-content/plugins/fair-calendar-button/build/blocks/calendar-button/frontend.js?ver=c596c6f4ff5d8f163239",
           "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
@@ -545,9 +545,9 @@
       "scenario": "production-stack+experimental",
       "page": "plain",
       "metrics": {
-        "durationMs": 57.39,
+        "durationMs": 54.61,
         "memoryBytes": 10485760,
-        "queryCount": 47,
+        "queryCount": 44,
         "sampleCount": 5
       },
       "frontend": {
@@ -564,27 +564,27 @@
       "scenario": "production-stack+experimental",
       "page": "feature",
       "metrics": {
-        "durationMs": 75.09,
+        "durationMs": 72.67,
         "memoryBytes": 10485760,
-        "queryCount": 52,
+        "queryCount": 49,
         "sampleCount": 5
       },
       "frontend": {
         "requestCount": 16,
-        "transferBytes": 120896,
+        "transferBytes": 120889,
         "assets": [
           "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
           "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
           "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
-          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
           "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
-          "http://localhost:8889/wp-content/plugins/fair-audience/build/blocks/mailing-signup/frontend.js?ver=c9e4087b4a88295b2211",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-content/plugins/fair-audience/build/blocks/mailing-signup/frontend.js?ver=dc82648ccef7a757c61a",
           "http://localhost:8889/wp-content/plugins/fair-timetable/build/blocks/timetable/view.js?ver=ed57f83f5cb71e7557ce",
-          "http://localhost:8889/wp-content/plugins/fair-payments-connector/build/blocks/simple-payment/view.js?ver=d11bd6482c0d66c21e14",
           "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-content/plugins/fair-payments-connector/build/blocks/simple-payment/view.js?ver=d11bd6482c0d66c21e14",
           "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
           "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
-          "http://localhost:8889/wp-content/plugins/fair-form/build/blocks/fair-form/frontend.js?ver=53e0a7b75ec4204936be",
+          "http://localhost:8889/wp-content/plugins/fair-form/build/blocks/fair-form/frontend.js?ver=3a8299a117d517fe269d",
           "http://localhost:8889/wp-content/plugins/fair-calendar-button/build/blocks/calendar-button/frontend.js?ver=c596c6f4ff5d8f163239",
           "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
           "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
@@ -596,26 +596,26 @@
       "scenario": "fair-events",
       "page": "recurring-master",
       "metrics": {
-        "durationMs": 116.65,
+        "durationMs": 112.83,
         "memoryBytes": 8388608,
-        "queryCount": 122,
+        "queryCount": 120,
         "sampleCount": 5
       },
       "frontend": {
         "requestCount": 15,
-        "transferBytes": 127725,
+        "transferBytes": 127712,
         "assets": [
           "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.5",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=e91a0a6a05fdf6abd3d0",
           "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
           "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
-          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
           "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
           "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
           "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
           "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
           "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=d1b7407928aa24f9dbcd",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=ba76973587b63bd2432d",
           "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
           "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=e91a0a6a05fdf6abd3d0",
@@ -627,14 +627,14 @@
       "scenario": "fair-events",
       "page": "recurring-occurrence",
       "metrics": {
-        "durationMs": 112.7,
+        "durationMs": 110.59,
         "memoryBytes": 10485760,
-        "queryCount": 117,
+        "queryCount": 115,
         "sampleCount": 5
       },
       "frontend": {
         "requestCount": 15,
-        "transferBytes": 127725,
+        "transferBytes": 127712,
         "assets": [
           "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.5",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=e91a0a6a05fdf6abd3d0",
@@ -643,10 +643,10 @@
           "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
           "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
           "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
-          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
           "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
           "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=d1b7407928aa24f9dbcd",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=ba76973587b63bd2432d",
           "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
           "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=e91a0a6a05fdf6abd3d0",
@@ -658,26 +658,26 @@
       "scenario": "fair-events",
       "page": "event-options",
       "metrics": {
-        "durationMs": 74.78,
+        "durationMs": 66.56,
         "memoryBytes": 8388608,
-        "queryCount": 97,
+        "queryCount": 95,
         "sampleCount": 5
       },
       "frontend": {
         "requestCount": 15,
-        "transferBytes": 127725,
+        "transferBytes": 127712,
         "assets": [
           "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.5",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=e91a0a6a05fdf6abd3d0",
           "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
           "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
-          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
           "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
           "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
           "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
           "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
           "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=d1b7407928aa24f9dbcd",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=ba76973587b63bd2432d",
           "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
           "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=e91a0a6a05fdf6abd3d0",
@@ -689,7 +689,122 @@
       "scenario": "fair-events",
       "page": "listings",
       "metrics": {
-        "durationMs": 80.39,
+        "durationMs": 71.67,
+        "memoryBytes": 10485760,
+        "queryCount": 51,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 6,
+        "transferBytes": 28669,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.5",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/events-calendar/view.js?ver=c643316e7c80460117a4",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/events-week/view.js?ver=5a7438be235f8c8db7ee",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.5"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-events-experimental+deps",
+      "page": "recurring-master",
+      "metrics": {
+        "durationMs": 115.66,
+        "memoryBytes": 8388608,
+        "queryCount": 122,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 15,
+        "transferBytes": 127712,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.5",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=e91a0a6a05fdf6abd3d0",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=ba76973587b63bd2432d",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=e91a0a6a05fdf6abd3d0",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.5"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-events-experimental+deps",
+      "page": "recurring-occurrence",
+      "metrics": {
+        "durationMs": 111.89,
+        "memoryBytes": 8388608,
+        "queryCount": 117,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 15,
+        "transferBytes": 127712,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.5",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=e91a0a6a05fdf6abd3d0",
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=ba76973587b63bd2432d",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=e91a0a6a05fdf6abd3d0",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.5"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-events-experimental+deps",
+      "page": "event-options",
+      "metrics": {
+        "durationMs": 67.7,
+        "memoryBytes": 8388608,
+        "queryCount": 97,
+        "sampleCount": 5
+      },
+      "frontend": {
+        "requestCount": 15,
+        "transferBytes": 127712,
+        "assets": [
+          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.5",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=e91a0a6a05fdf6abd3d0",
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=ba76973587b63bd2432d",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=e91a0a6a05fdf6abd3d0",
+          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.5"
+        ]
+      }
+    },
+    {
+      "scenario": "fair-events-experimental+deps",
+      "page": "listings",
+      "metrics": {
+        "durationMs": 73.12,
         "memoryBytes": 10485760,
         "queryCount": 53,
         "sampleCount": 5
@@ -708,17 +823,17 @@
       }
     },
     {
-      "scenario": "fair-events-experimental+deps",
+      "scenario": "production-stack",
       "page": "recurring-master",
       "metrics": {
-        "durationMs": 118.66,
+        "durationMs": 124.32,
         "memoryBytes": 10485760,
-        "queryCount": 125,
+        "queryCount": 126,
         "sampleCount": 5
       },
       "frontend": {
         "requestCount": 15,
-        "transferBytes": 127725,
+        "transferBytes": 127712,
         "assets": [
           "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.5",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=e91a0a6a05fdf6abd3d0",
@@ -730,7 +845,7 @@
           "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
           "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
           "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=d1b7407928aa24f9dbcd",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=ba76973587b63bd2432d",
           "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
           "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=e91a0a6a05fdf6abd3d0",
@@ -739,29 +854,29 @@
       }
     },
     {
-      "scenario": "fair-events-experimental+deps",
+      "scenario": "production-stack",
       "page": "recurring-occurrence",
       "metrics": {
-        "durationMs": 118.41,
+        "durationMs": 121.99,
         "memoryBytes": 10485760,
-        "queryCount": 120,
+        "queryCount": 121,
         "sampleCount": 5
       },
       "frontend": {
         "requestCount": 15,
-        "transferBytes": 127725,
+        "transferBytes": 127712,
         "assets": [
           "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.5",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=e91a0a6a05fdf6abd3d0",
           "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
-          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
           "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
+          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
           "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
           "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
           "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
           "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
           "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=d1b7407928aa24f9dbcd",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=ba76973587b63bd2432d",
           "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
           "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=e91a0a6a05fdf6abd3d0",
@@ -770,29 +885,29 @@
       }
     },
     {
-      "scenario": "fair-events-experimental+deps",
+      "scenario": "production-stack",
       "page": "event-options",
       "metrics": {
-        "durationMs": 71.78,
-        "memoryBytes": 8388608,
-        "queryCount": 100,
+        "durationMs": 75.61,
+        "memoryBytes": 10485760,
+        "queryCount": 101,
         "sampleCount": 5
       },
       "frontend": {
         "requestCount": 15,
-        "transferBytes": 127725,
+        "transferBytes": 127712,
         "assets": [
           "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.5",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=e91a0a6a05fdf6abd3d0",
           "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
-          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
           "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
           "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
           "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
           "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
           "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
           "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=d1b7407928aa24f9dbcd",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=ba76973587b63bd2432d",
           "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
           "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=e91a0a6a05fdf6abd3d0",
@@ -801,12 +916,12 @@
       }
     },
     {
-      "scenario": "fair-events-experimental+deps",
+      "scenario": "production-stack",
       "page": "listings",
       "metrics": {
-        "durationMs": 75.81,
+        "durationMs": 80.99,
         "memoryBytes": 10485760,
-        "queryCount": 56,
+        "queryCount": 57,
         "sampleCount": 5
       },
       "frontend": {
@@ -823,144 +938,29 @@
       }
     },
     {
-      "scenario": "production-stack",
-      "page": "recurring-master",
-      "metrics": {
-        "durationMs": 125.41,
-        "memoryBytes": 10485760,
-        "queryCount": 128,
-        "sampleCount": 5
-      },
-      "frontend": {
-        "requestCount": 15,
-        "transferBytes": 127725,
-        "assets": [
-          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.5",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=e91a0a6a05fdf6abd3d0",
-          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
-          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
-          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
-          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
-          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
-          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
-          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
-          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=d1b7407928aa24f9dbcd",
-          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
-          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=e91a0a6a05fdf6abd3d0",
-          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.5"
-        ]
-      }
-    },
-    {
-      "scenario": "production-stack",
-      "page": "recurring-occurrence",
-      "metrics": {
-        "durationMs": 123.03,
-        "memoryBytes": 10485760,
-        "queryCount": 123,
-        "sampleCount": 5
-      },
-      "frontend": {
-        "requestCount": 15,
-        "transferBytes": 127725,
-        "assets": [
-          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.5",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=e91a0a6a05fdf6abd3d0",
-          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
-          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
-          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
-          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
-          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
-          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
-          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
-          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=d1b7407928aa24f9dbcd",
-          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
-          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=e91a0a6a05fdf6abd3d0",
-          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.5"
-        ]
-      }
-    },
-    {
-      "scenario": "production-stack",
-      "page": "event-options",
-      "metrics": {
-        "durationMs": 79.81,
-        "memoryBytes": 10485760,
-        "queryCount": 103,
-        "sampleCount": 5
-      },
-      "frontend": {
-        "requestCount": 15,
-        "transferBytes": 127725,
-        "assets": [
-          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.5",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=e91a0a6a05fdf6abd3d0",
-          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
-          "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
-          "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
-          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
-          "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
-          "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
-          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
-          "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=d1b7407928aa24f9dbcd",
-          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
-          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=e91a0a6a05fdf6abd3d0",
-          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.5"
-        ]
-      }
-    },
-    {
-      "scenario": "production-stack",
-      "page": "listings",
-      "metrics": {
-        "durationMs": 82.48,
-        "memoryBytes": 10485760,
-        "queryCount": 59,
-        "sampleCount": 5
-      },
-      "frontend": {
-        "requestCount": 6,
-        "transferBytes": 28669,
-        "assets": [
-          "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.5",
-          "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
-          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/events-week/view.js?ver=5a7438be235f8c8db7ee",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/events-calendar/view.js?ver=c643316e7c80460117a4",
-          "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.5"
-        ]
-      }
-    },
-    {
       "scenario": "production-stack+experimental",
       "page": "recurring-master",
       "metrics": {
-        "durationMs": 128.08,
+        "durationMs": 124.45,
         "memoryBytes": 10485760,
-        "queryCount": 132,
+        "queryCount": 129,
         "sampleCount": 5
       },
       "frontend": {
         "requestCount": 15,
-        "transferBytes": 127725,
+        "transferBytes": 127712,
         "assets": [
           "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.5",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=e91a0a6a05fdf6abd3d0",
-          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
           "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
+          "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
           "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
-          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
           "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
-          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
           "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
+          "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
           "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=d1b7407928aa24f9dbcd",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=ba76973587b63bd2432d",
           "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
           "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=e91a0a6a05fdf6abd3d0",
@@ -972,26 +972,26 @@
       "scenario": "production-stack+experimental",
       "page": "recurring-occurrence",
       "metrics": {
-        "durationMs": 125.19,
+        "durationMs": 119.68,
         "memoryBytes": 10485760,
-        "queryCount": 127,
+        "queryCount": 124,
         "sampleCount": 5
       },
       "frontend": {
         "requestCount": 15,
-        "transferBytes": 127725,
+        "transferBytes": 127712,
         "assets": [
           "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.5",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=e91a0a6a05fdf6abd3d0",
           "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
           "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
           "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
-          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
           "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
           "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
           "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
           "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=d1b7407928aa24f9dbcd",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=ba76973587b63bd2432d",
           "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
           "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=e91a0a6a05fdf6abd3d0",
@@ -1003,26 +1003,26 @@
       "scenario": "production-stack+experimental",
       "page": "event-options",
       "metrics": {
-        "durationMs": 81.45,
+        "durationMs": 77.37,
         "memoryBytes": 10485760,
-        "queryCount": 107,
+        "queryCount": 104,
         "sampleCount": 5
       },
       "frontend": {
         "requestCount": 15,
-        "transferBytes": 127725,
+        "transferBytes": 127712,
         "assets": [
           "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.5",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.css?ver=e91a0a6a05fdf6abd3d0",
           "http://localhost:8889/wp-includes/js/dist/hooks.min.js?ver=f0f188028580e8dc1255",
           "http://localhost:8889/wp-includes/js/dist/i18n.min.js?ver=1dfe7db3940c23ea9216",
           "http://localhost:8889/wp-includes/js/dist/private-apis.min.js?ver=eb85f28c4c729bb4f002",
-          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
           "http://localhost:8889/wp-includes/js/dist/api-fetch.min.js?ver=6f2a4faeee3c722b1e57",
+          "http://localhost:8889/wp-includes/js/dist/url.min.js?ver=7b0de086d4ae11d55704",
           "http://localhost:8889/wp-includes/js/dist/vendor/moment.min.js?ver=2.30.1",
           "http://localhost:8889/wp-includes/js/dist/deprecated.min.js?ver=fe587bac92b7d0ef760e",
           "http://localhost:8889/wp-includes/js/dist/date.min.js?ver=8173fc0fc12b7bb7eaf0",
-          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=d1b7407928aa24f9dbcd",
+          "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/event-signup/frontend.js?ver=ba76973587b63bd2432d",
           "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
           "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/calendar-button/frontend.js?ver=e91a0a6a05fdf6abd3d0",
@@ -1034,9 +1034,9 @@
       "scenario": "production-stack+experimental",
       "page": "listings",
       "metrics": {
-        "durationMs": 84.45,
+        "durationMs": 81.88,
         "memoryBytes": 10485760,
-        "queryCount": 63,
+        "queryCount": 60,
         "sampleCount": 5
       },
       "frontend": {
@@ -1044,8 +1044,8 @@
         "transferBytes": 28669,
         "assets": [
           "http://localhost:8889/wp-includes/blocks/navigation/style.min.css?ver=7.1.5",
-          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
           "http://localhost:8889/wp-includes/js/dist/script-modules/interactivity/index.min.js?ver=6a43cba92ed701f32cd9",
+          "http://localhost:8889/wp-includes/js/dist/script-modules/block-library/navigation/view.min.js?ver=1bf28ded04f9f188bdcb",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/events-calendar/view.js?ver=c643316e7c80460117a4",
           "http://localhost:8889/wp-content/plugins/fair-events/build/blocks/events-week/view.js?ver=5a7438be235f8c8db7ee",
           "http://localhost:8889/wp-includes/js/wp-emoji-release.min.js?ver=7.1.5"
@@ -1057,7 +1057,7 @@
     {
       "scenario": "fair-payments-connector",
       "page": "plain",
-      "deltaDurationMs": 0.44000000000000483,
+      "deltaDurationMs": 2.6799999999999997,
       "deltaQueryCount": 1,
       "deltaMemoryBytes": 0,
       "deltaRequestCount": 0,
@@ -1066,7 +1066,7 @@
     {
       "scenario": "fair-payments-connector",
       "page": "feature",
-      "deltaDurationMs": 1.6000000000000014,
+      "deltaDurationMs": 2.0799999999999983,
       "deltaQueryCount": 4,
       "deltaMemoryBytes": 0,
       "deltaRequestCount": 6,
@@ -1075,8 +1075,8 @@
     {
       "scenario": "fair-events",
       "page": "plain",
-      "deltaDurationMs": 6.609999999999999,
-      "deltaQueryCount": 15,
+      "deltaDurationMs": 4.530000000000001,
+      "deltaQueryCount": 13,
       "deltaMemoryBytes": 0,
       "deltaRequestCount": 0,
       "deltaTransferBytes": 0
@@ -1084,8 +1084,8 @@
     {
       "scenario": "fair-events",
       "page": "feature",
-      "deltaDurationMs": 22.18,
-      "deltaQueryCount": 16,
+      "deltaDurationMs": 19.549999999999997,
+      "deltaQueryCount": 14,
       "deltaMemoryBytes": 0,
       "deltaRequestCount": 0,
       "deltaTransferBytes": 0
@@ -1093,7 +1093,7 @@
     {
       "scenario": "fair-platform",
       "page": "plain",
-      "deltaDurationMs": -0.27999999999999403,
+      "deltaDurationMs": -0.5899999999999963,
       "deltaQueryCount": 1,
       "deltaMemoryBytes": 0,
       "deltaRequestCount": 0,
@@ -1102,7 +1102,7 @@
     {
       "scenario": "fair-platform",
       "page": "feature",
-      "deltaDurationMs": 2.3500000000000014,
+      "deltaDurationMs": 0.14000000000000057,
       "deltaQueryCount": 1,
       "deltaMemoryBytes": 0,
       "deltaRequestCount": 0,
@@ -1111,7 +1111,7 @@
     {
       "scenario": "fair-audience",
       "page": "plain",
-      "deltaDurationMs": 1.8700000000000045,
+      "deltaDurationMs": 1,
       "deltaQueryCount": 1,
       "deltaMemoryBytes": 0,
       "deltaRequestCount": 0,
@@ -1120,32 +1120,14 @@
     {
       "scenario": "fair-audience",
       "page": "feature",
-      "deltaDurationMs": 4.060000000000002,
+      "deltaDurationMs": 2.6499999999999986,
       "deltaQueryCount": 2,
       "deltaMemoryBytes": 0,
       "deltaRequestCount": 6,
-      "deltaTransferBytes": 17005
+      "deltaTransferBytes": 17001
     },
     {
       "scenario": "fair-timetable",
-      "page": "plain",
-      "deltaDurationMs": 2.270000000000003,
-      "deltaQueryCount": 1,
-      "deltaMemoryBytes": 0,
-      "deltaRequestCount": 0,
-      "deltaTransferBytes": 0
-    },
-    {
-      "scenario": "fair-timetable",
-      "page": "feature",
-      "deltaDurationMs": 2.289999999999999,
-      "deltaQueryCount": 1,
-      "deltaMemoryBytes": 0,
-      "deltaRequestCount": 3,
-      "deltaTransferBytes": 5252
-    },
-    {
-      "scenario": "fair-finance",
       "page": "plain",
       "deltaDurationMs": 0.7000000000000028,
       "deltaQueryCount": 1,
@@ -1154,9 +1136,27 @@
       "deltaTransferBytes": 0
     },
     {
+      "scenario": "fair-timetable",
+      "page": "feature",
+      "deltaDurationMs": 2.299999999999997,
+      "deltaQueryCount": 1,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 3,
+      "deltaTransferBytes": 5252
+    },
+    {
+      "scenario": "fair-finance",
+      "page": "plain",
+      "deltaDurationMs": -0.9600000000000009,
+      "deltaQueryCount": 1,
+      "deltaMemoryBytes": 0,
+      "deltaRequestCount": 0,
+      "deltaTransferBytes": 0
+    },
+    {
       "scenario": "fair-finance",
       "page": "feature",
-      "deltaDurationMs": 0.9600000000000009,
+      "deltaDurationMs": 0.4099999999999966,
       "deltaQueryCount": 1,
       "deltaMemoryBytes": 0,
       "deltaRequestCount": 0,
@@ -1165,7 +1165,7 @@
     {
       "scenario": "fair-payments-connector-experimental",
       "page": "plain",
-      "deltaDurationMs": 1.0900000000000034,
+      "deltaDurationMs": -1.0399999999999991,
       "deltaQueryCount": 0,
       "deltaMemoryBytes": 0,
       "deltaRequestCount": 0,
@@ -1174,7 +1174,7 @@
     {
       "scenario": "fair-payments-connector-experimental",
       "page": "feature",
-      "deltaDurationMs": 0.7800000000000011,
+      "deltaDurationMs": 0.19999999999999574,
       "deltaQueryCount": 0,
       "deltaMemoryBytes": 0,
       "deltaRequestCount": 0,
@@ -1183,7 +1183,7 @@
     {
       "scenario": "fair-form",
       "page": "plain",
-      "deltaDurationMs": 4.859999999999999,
+      "deltaDurationMs": 3.3300000000000054,
       "deltaQueryCount": 2,
       "deltaMemoryBytes": 0,
       "deltaRequestCount": 0,
@@ -1192,16 +1192,16 @@
     {
       "scenario": "fair-form",
       "page": "feature",
-      "deltaDurationMs": 7.32,
+      "deltaDurationMs": 5.140000000000001,
       "deltaQueryCount": 2,
       "deltaMemoryBytes": 0,
       "deltaRequestCount": 9,
-      "deltaTransferBytes": 63010
+      "deltaTransferBytes": 63007
     },
     {
       "scenario": "fair-calendar-button",
       "page": "plain",
-      "deltaDurationMs": 0.35999999999999943,
+      "deltaDurationMs": -0.28000000000000114,
       "deltaQueryCount": 0,
       "deltaMemoryBytes": 0,
       "deltaRequestCount": 0,
@@ -1210,7 +1210,7 @@
     {
       "scenario": "fair-calendar-button",
       "page": "feature",
-      "deltaDurationMs": 0.46999999999999886,
+      "deltaDurationMs": 0.740000000000002,
       "deltaQueryCount": 0,
       "deltaMemoryBytes": 0,
       "deltaRequestCount": 3,
@@ -1219,8 +1219,8 @@
     {
       "scenario": "fair-events-experimental+deps",
       "page": "plain",
-      "deltaDurationMs": 5.080000000000005,
-      "deltaQueryCount": 18,
+      "deltaDurationMs": 6.07,
+      "deltaQueryCount": 15,
       "deltaMemoryBytes": 0,
       "deltaRequestCount": 0,
       "deltaTransferBytes": 0
@@ -1228,8 +1228,8 @@
     {
       "scenario": "fair-events-experimental+deps",
       "page": "feature",
-      "deltaDurationMs": 20.61,
-      "deltaQueryCount": 19,
+      "deltaDurationMs": 26.389999999999993,
+      "deltaQueryCount": 16,
       "deltaMemoryBytes": 0,
       "deltaRequestCount": 0,
       "deltaTransferBytes": 0
@@ -1237,7 +1237,7 @@
     {
       "scenario": "fair-audience-experimental+deps",
       "page": "plain",
-      "deltaDurationMs": 1.5200000000000031,
+      "deltaDurationMs": 1.1500000000000057,
       "deltaQueryCount": 2,
       "deltaMemoryBytes": 0,
       "deltaRequestCount": 0,
@@ -1246,17 +1246,17 @@
     {
       "scenario": "fair-audience-experimental+deps",
       "page": "feature",
-      "deltaDurationMs": 2.8599999999999994,
+      "deltaDurationMs": 2.960000000000001,
       "deltaQueryCount": 3,
       "deltaMemoryBytes": 0,
       "deltaRequestCount": 6,
-      "deltaTransferBytes": 17005
+      "deltaTransferBytes": 17001
     },
     {
       "scenario": "production-stack",
       "page": "plain",
-      "deltaDurationMs": 14.04,
-      "deltaQueryCount": 21,
+      "deltaDurationMs": 14.100000000000001,
+      "deltaQueryCount": 19,
       "deltaMemoryBytes": 2097152,
       "deltaRequestCount": 0,
       "deltaTransferBytes": 0
@@ -1264,17 +1264,17 @@
     {
       "scenario": "production-stack",
       "page": "feature",
-      "deltaDurationMs": 31.58,
-      "deltaQueryCount": 26,
+      "deltaDurationMs": 32.99,
+      "deltaQueryCount": 24,
       "deltaMemoryBytes": 2097152,
       "deltaRequestCount": 13,
-      "deltaTransferBytes": 97403
+      "deltaTransferBytes": 97396
     },
     {
       "scenario": "production-stack+experimental",
       "page": "plain",
-      "deltaDurationMs": 17.020000000000003,
-      "deltaQueryCount": 25,
+      "deltaDurationMs": 15.170000000000002,
+      "deltaQueryCount": 22,
       "deltaMemoryBytes": 2097152,
       "deltaRequestCount": 0,
       "deltaTransferBytes": 0
@@ -1282,11 +1282,11 @@
     {
       "scenario": "production-stack+experimental",
       "page": "feature",
-      "deltaDurationMs": 35.150000000000006,
-      "deltaQueryCount": 30,
+      "deltaDurationMs": 34.21,
+      "deltaQueryCount": 27,
       "deltaMemoryBytes": 2097152,
       "deltaRequestCount": 13,
-      "deltaTransferBytes": 97403
+      "deltaTransferBytes": 97396
     }
   ],
   "skipped": [
