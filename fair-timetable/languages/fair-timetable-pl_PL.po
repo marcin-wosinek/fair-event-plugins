@@ -117,7 +117,7 @@ msgstr "Czas trwania tabeli czasowej w godzinach"
 msgid "Hour Height"
 msgstr "Wysokość godziny"
 
-#: src/blocks/timetable/components/EditComponent.js:240
+#: src/blocks/timetable/components/EditComponent.js:242
 msgid "Visual height multiplier for each hour (2-8)"
 msgstr "Wizualny mnożnik wysokości dla każdej godziny (2-8)"
 

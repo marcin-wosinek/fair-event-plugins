@@ -1532,7 +1532,7 @@ msgid "Destination is required."
 msgstr "La destination est requise."
 
 #: src/API/NotificationsController.php:89
-#: src/Services/TelegramService.php:38
+#: src/Services/TelegramService.php:40
 #: src/Settings/TelegramCredentials.php:169
 msgid "Telegram bot token is not configured."
 msgstr "Le jeton du bot Telegram n'est pas configuré."
@@ -1692,7 +1692,7 @@ msgstr "Site connecté n°%s"
 msgid "Another external update is still running. Wait for it to finish, then try again."
 msgstr "Une autre mise à jour externe est toujours en cours. Attendez qu'elle se termine, puis réessayez."
 
-#: src/Services/TelegramService.php:41
+#: src/Services/TelegramService.php:43
 msgid "Telegram chat ID is empty."
 msgstr "L'ID de chat Telegram est vide."
 

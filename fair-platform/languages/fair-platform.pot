@@ -2,14 +2,14 @@
 # This file is distributed under the Private.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Platform - Mollie OAuth Integration 1.5.2\n"
+"Project-Id-Version: Fair Platform - Mollie OAuth Integration 1.6.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-platform\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-20T06:35:37+00:00\n"
+"POT-Creation-Date: 2026-11-27T07:21:32+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-platform\n"
@@ -311,41 +311,41 @@ msgstr ""
 msgid "Forced by a wp-config constant — change it there."
 msgstr ""
 
-#: src/Core/Plugin.php:1221
+#: src/Core/Plugin.php:1272
 msgid "Instagram connections are not configured on this service yet. Try again later."
 msgstr ""
 
-#: src/Core/Plugin.php:1231
+#: src/Core/Plugin.php:1282
 msgid "This site uses the retired Instagram connection. Update Fair Events Experimental, then connect again from Fair Events → Instagram."
 msgstr ""
 
-#: src/Core/Plugin.php:1232
+#: src/Core/Plugin.php:1283
 msgid "This Instagram connection request is not valid. Start again from Fair Events → Instagram on your site."
 msgstr ""
 
-#: src/Core/Plugin.php:1240
+#: src/Core/Plugin.php:1291
 msgid "The Instagram connection could not be started. Try again."
 msgstr ""
 
-#: src/Core/Plugin.php:1273
+#: src/Core/Plugin.php:1324
 msgid "This Instagram authorization expired or was already used. Start again from Fair Events → Instagram on your site."
 msgstr ""
 
-#: src/Core/Plugin.php:1419
-#: src/Core/Plugin.php:1443
-#: src/Core/Plugin.php:1467
+#: src/Core/Plugin.php:1470
+#: src/Core/Plugin.php:1494
+#: src/Core/Plugin.php:1518
 msgid "Fair Platform:"
 msgstr ""
 
-#: src/Core/Plugin.php:1420
+#: src/Core/Plugin.php:1471
 msgid "Instagram connections are not configured. Add META_APP_ID, META_APP_SECRET and META_INSTAGRAM_CONFIG_ID (the Unified Login configuration ID) to wp-config.php; META_GRAPH_VERSION is optional."
 msgstr ""
 
-#: src/Core/Plugin.php:1444
+#: src/Core/Plugin.php:1495
 msgid "Mollie OAuth credentials not configured. Please add MOLLIE_CLIENT_ID and MOLLIE_CLIENT_SECRET to wp-config.php"
 msgstr ""
 
-#: src/Core/Plugin.php:1468
+#: src/Core/Plugin.php:1519
 msgid "Mollie PHP library not installed. Please run: composer require mollie/mollie-api-php"
 msgstr ""
 

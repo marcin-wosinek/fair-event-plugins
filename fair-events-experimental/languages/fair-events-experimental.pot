@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv3 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Events Experimental 2.2.1\n"
+"Project-Id-Version: Fair Events Experimental 2.3.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-events-experimental\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-20T06:35:42+00:00\n"
+"POT-Creation-Date: 2026-11-27T07:21:34+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events-experimental\n"
@@ -43,60 +43,121 @@ msgstr ""
 msgid "Fair Events Experimental requires the Fair Events plugin to be active."
 msgstr ""
 
-#: src/Admin/AdminPages.php:65
-#: src/Admin/AdminPages.php:66
+#: src/Admin/AdminPages.php:68
+#: src/Admin/AdminPages.php:69
 msgid "Experimental Settings"
 msgstr ""
 
-#: src/Admin/AdminPages.php:77
-#: src/Admin/AdminPages.php:78
+#: src/Admin/AdminPages.php:80
+#: src/Admin/AdminPages.php:81
 #: src/Admin/compare-events/CompareEventsPage.js:485
 msgid "Compare events"
 msgstr ""
 
-#: src/Admin/AdminPages.php:88
-#: src/Admin/AdminPages.php:89
+#: src/Admin/AdminPages.php:91
+#: src/Admin/AdminPages.php:92
 #: src/Admin/sources/SourcesList.js:446
 msgid "Event Feeds"
 msgstr ""
 
-#: src/Admin/AdminPages.php:97
-#: src/Admin/AdminPages.php:98
-#: src/Admin/AdminPages.php:104
+#: src/Admin/AdminPages.php:100
+#: src/Admin/AdminPages.php:101
+#: src/Admin/AdminPages.php:107
 msgid "View Event Feed"
 msgstr ""
 
-#: src/Admin/AdminPages.php:112
-#: src/Admin/AdminPages.php:113
+#: src/Admin/AdminPages.php:115
+#: src/Admin/AdminPages.php:116
 #: src/Admin/meta/MetaPage.js:24
 msgid "Meta"
 msgstr ""
 
-#: src/Admin/AdminPages.php:125
-#: src/Admin/AdminPages.php:126
-#: src/Core/Features.php:148
+#: src/Admin/AdminPages.php:128
+#: src/Admin/AdminPages.php:129
+#: src/Core/Features.php:164
 #: src/Admin/instagram/InstagramPage.js:380
 msgid "Instagram"
 msgstr ""
 
-#: src/Admin/AdminPages.php:139
-#: src/Admin/AdminPages.php:140
-#: src/Core/Features.php:144
-#: src/Admin/organizers/OrganizersPage.js:270
-#: src/Admin/organizers/OrganizersPage.js:372
+#: src/Admin/AdminPages.php:142
+#: src/Admin/AdminPages.php:143
+#: src/Core/Features.php:160
+#: src/Admin/organizers/OrganizersPage.js:242
+#: src/Admin/organizers/OrganizersPage.js:344
 msgid "Organizers"
 msgstr ""
 
-#: src/Admin/AdminPages.php:152
-#: src/Admin/AdminPages.php:153
-#: src/Core/Features.php:152
-#: src/WhatsApp/Connector.php:69
+#: src/Admin/AdminPages.php:155
+#: src/Admin/AdminPages.php:156
+#: src/Core/Features.php:172
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:337
+#: src/Admin/manage-event-team-members/EventTeamMembers.js:199
+#: src/Admin/team-members/TeamMembersPage.js:473
+#: src/Admin/team-members/TeamMembersPage.js:661
+msgid "Team members"
+msgstr ""
+
+#: src/Admin/AdminPages.php:168
+#: src/Admin/AdminPages.php:169
+#: src/Core/Features.php:168
+#: src/WhatsApp/Connector.php:70
 #: src/Admin/sources/SourcesList.js:257
 #: src/Admin/whatsapp/WhatsAppPage.js:25
 msgid "WhatsApp"
 msgstr ""
 
+#: src/Admin/AdminPages.php:179
+#: src/Admin/AdminPages.php:180
+#: src/Admin/AdminPages.php:185
+#: src/Admin/whatsapp-reminders/RemindersPage.js:163
+msgid "WhatsApp sharing reminders"
+msgstr ""
+
+#: src/API/EventImagesController.php:55
+#: src/API/GroupPermissionRulesController.php:63
+#: src/API/GroupPermissionRulesController.php:75
+#: src/API/GroupPermissionRulesController.php:108
+#: src/API/GroupPricingRulesController.php:56
+#: src/API/GroupPricingRulesController.php:68
+#: src/API/GroupPricingRulesController.php:109
+#: src/API/GroupPricingRulesController.php:139
+msgid "Event date ID."
+msgstr ""
+
+#: src/API/EventImagesController.php:62
+msgid "Revision of the list as it was loaded. The save is refused when the list changed since."
+msgstr ""
+
+#: src/API/EventImagesController.php:67
+msgid "Every image of the list, in order. Images left out are unlinked."
+msgstr ""
+
+#: src/API/EventImagesController.php:116
+msgid "Programme item ID."
+msgstr ""
+
+#: src/API/EventImagesController.php:161
+msgid "You must be logged in."
+msgstr ""
+
+#: src/API/EventImagesController.php:252
+#: src/API/EventOrganizerController.php:262
+#: src/API/EventTeamMembersController.php:818
+#: src/API/GroupPermissionRulesController.php:146
+#: src/API/GroupPermissionRulesController.php:183
+#: src/API/GroupPricingRulesController.php:177
+#: src/API/GroupPricingRulesController.php:207
+#: src/API/MarketingAssetsController.php:430
+#: src/Services/TeamMembership.php:265
+msgid "Event date not found."
+msgstr ""
+
+#: src/API/EventImagesController.php:265
+msgid "You do not have permission to manage this event's images."
+msgstr ""
+
 #: src/API/EventOrganizerController.php:86
+#: src/API/EventTeamMembersController.php:97
 msgid "Unique identifier for the event date."
 msgstr ""
 
@@ -114,17 +175,9 @@ msgid "Choose the sitewide organizer or one of the organizers in the list."
 msgstr ""
 
 #: src/API/EventOrganizerController.php:228
-#: src/API/OrganizersController.php:207
+#: src/API/OrganizersController.php:161
 #: src/Admin/manage-event-organizer/EventOrganizer.js:162
 msgid "The organizer could not be saved. Try again."
-msgstr ""
-
-#: src/API/EventOrganizerController.php:262
-#: src/API/GroupPermissionRulesController.php:146
-#: src/API/GroupPermissionRulesController.php:183
-#: src/API/GroupPricingRulesController.php:177
-#: src/API/GroupPricingRulesController.php:207
-msgid "Event date not found."
 msgstr ""
 
 #: src/API/EventOrganizerController.php:275
@@ -303,14 +356,97 @@ msgstr ""
 msgid "Unknown feed input type at index %d."
 msgstr ""
 
-#: src/API/GroupPermissionRulesController.php:63
-#: src/API/GroupPermissionRulesController.php:75
-#: src/API/GroupPermissionRulesController.php:108
-#: src/API/GroupPricingRulesController.php:56
-#: src/API/GroupPricingRulesController.php:68
-#: src/API/GroupPricingRulesController.php:109
-#: src/API/GroupPricingRulesController.php:139
-msgid "Event date ID."
+#: src/API/EventTeamMembersController.php:101
+msgid "Schedule item of the event."
+msgstr ""
+
+#: src/API/EventTeamMembersController.php:105
+msgid "Assignment to remove."
+msgstr ""
+
+#: src/API/EventTeamMembersController.php:110
+msgid "Team member to assign."
+msgstr ""
+
+#: src/API/EventTeamMembersController.php:116
+msgid "Role slug, such as teacher or organizer."
+msgstr ""
+
+#: src/API/EventTeamMembersController.php:124
+msgid "Every assignment of the target, in the new order."
+msgstr ""
+
+#: src/API/EventTeamMembersController.php:150
+msgid "Team member to add to the event."
+msgstr ""
+
+#: src/API/EventTeamMembersController.php:167
+msgid "Team member to remove from the event."
+msgstr ""
+
+#. translators: %d: maximum role length in characters
+#: src/API/EventTeamMembersController.php:303
+#, php-format
+msgid "Enter a role of up to %d lowercase letters, digits, hyphens or underscores, starting with a letter, such as teacher or organizer."
+msgstr ""
+
+#: src/API/EventTeamMembersController.php:318
+msgid "Send every assignment of the list, in the new order."
+msgstr ""
+
+#: src/API/EventTeamMembersController.php:340
+msgid "Each assignment can appear only once in the order."
+msgstr ""
+
+#: src/API/EventTeamMembersController.php:582
+msgid "This date is part of a series. Its team is managed on the series."
+msgstr ""
+
+#: src/API/EventTeamMembersController.php:610
+msgid "This date is part of a series. Its programme contributors are managed in the series’ schedule."
+msgstr ""
+
+#: src/API/EventTeamMembersController.php:629
+msgid "This schedule item is not on the event’s schedule. Reload the page; it may have been removed."
+msgstr ""
+
+#: src/API/EventTeamMembersController.php:653
+msgid "This person already has this role here. Choose another role or person."
+msgstr ""
+
+#: src/API/EventTeamMembersController.php:659
+msgid "This team member no longer exists. Reload the page and choose another one."
+msgstr ""
+
+#. translators: %d: maximum number of assignments
+#: src/API/EventTeamMembersController.php:667
+#, php-format
+msgid "A list can hold up to %d contributors."
+msgstr ""
+
+#: src/API/EventTeamMembersController.php:675
+msgid "The team member could not be added. Try again."
+msgstr ""
+
+#: src/API/EventTeamMembersController.php:695
+msgid "This list changed meanwhile, so the new order was not saved. Reload it and move the person again."
+msgstr ""
+
+#: src/API/EventTeamMembersController.php:702
+#: src/Admin/components/ContributorAssignments.js:316
+msgid "The new order could not be saved. Try again."
+msgstr ""
+
+#: src/API/EventTeamMembersController.php:715
+msgid "The team member could not be removed. Try again."
+msgstr ""
+
+#: src/API/EventTeamMembersController.php:805
+msgid "The contributors could not be loaded. Try again."
+msgstr ""
+
+#: src/API/EventTeamMembersController.php:831
+msgid "You do not have permission to manage this event's team."
 msgstr ""
 
 #: src/API/GroupPermissionRulesController.php:80
@@ -388,6 +524,55 @@ msgstr ""
 msgid "Fair Events Experimental did not take over the Instagram connection on this request. Reload the page and try again."
 msgstr ""
 
+#: src/API/MarketingAssetsController.php:74
+msgid "Event date (occurrence) the assets belong to."
+msgstr ""
+
+#: src/API/MarketingAssetsController.php:119
+msgid "Marketing asset ID."
+msgstr ""
+
+#: src/API/MarketingAssetsController.php:151
+#: src/API/PublicMarketingAssetsController.php:128
+msgid "Page of the list, from 1."
+msgstr ""
+
+#: src/API/MarketingAssetsController.php:157
+msgid "Assets per page."
+msgstr ""
+
+#: src/API/MarketingAssetsController.php:176
+msgid "What the asset is for, such as \"Instagram post\". Required on create; plain text, one line."
+msgstr ""
+
+#: src/API/MarketingAssetsController.php:181
+msgid "Plain text, stored exactly as sent: Unicode, whitespace and line breaks are kept. Empty or null clears it."
+msgstr ""
+
+#: src/API/MarketingAssetsController.php:185
+msgid "PNG or JPEG attachment from the Media Library (upload with POST /wp/v2/media). Null or 0 unlinks it; the attachment stays in the Media Library."
+msgstr ""
+
+#: src/API/MarketingAssetsController.php:190
+msgid "Team members of this event to link. Replaces the linked set; [] or null removes every link. Linked members' names and surnames are shown on the public asset page once published with publish_member_names."
+msgstr ""
+
+#: src/API/MarketingAssetsController.php:198
+msgid "Schedule item of this event to link. Null or 0 removes the link."
+msgstr ""
+
+#: src/API/MarketingAssetsController.php:203
+msgid "Confirms that the names and surnames of every member in member_ids are published on the public asset page and offered there as filters. Required, together with member_ids, to add a member; send it with the current member_ids to publish members linked without it. Contact details are never published."
+msgstr ""
+
+#: src/API/MarketingAssetsController.php:271
+msgid "You must be logged in to manage marketing assets."
+msgstr ""
+
+#: src/API/MarketingAssetsController.php:445
+msgid "You do not have permission to manage this event's marketing assets."
+msgstr ""
+
 #: src/API/MetaConversionsController.php:276
 msgid "The Meta access token is managed in Settings → Connectors. Nothing was saved."
 msgstr ""
@@ -427,56 +612,147 @@ msgstr ""
 msgid "Event not found."
 msgstr ""
 
-#: src/API/OrganizersController.php:90
+#: src/API/OrganizersController.php:92
 msgid "Organizer ID: \"default\" for the sitewide organizer, or a UUID."
 msgstr ""
 
-#: src/API/OrganizersController.php:121
+#: src/API/OrganizersController.php:117
 msgid "You do not have permission to manage organizers."
 msgstr ""
 
-#: src/API/OrganizersController.php:260
+#: src/API/OrganizersController.php:214
 msgid "Enter a name for the organizer."
 msgstr ""
 
 #. translators: %s: comma-separated list of allowed organizer types
-#: src/API/OrganizersController.php:271
+#: src/API/OrganizersController.php:225
 #, php-format
 msgid "Choose an organizer type: %s."
 msgstr ""
 
-#: src/API/OrganizersController.php:279
+#: src/API/OrganizersController.php:233
 msgid "Enter the website as a full URL, e.g. https://example.com."
 msgstr ""
 
 #. translators: %s: the rejected link as entered
-#: src/API/OrganizersController.php:291
+#: src/API/OrganizersController.php:245
 #, php-format
 msgid "\"%s\" is not a valid link. Enter full URLs, e.g. https://example.com/profile."
 msgstr ""
 
-#: src/API/OrganizersController.php:302
+#: src/API/OrganizersController.php:256
 msgid "Enter a valid contact email address, e.g. info@example.com."
 msgstr ""
 
 #. translators: %s: the rejected email address as entered
-#: src/API/OrganizersController.php:314
+#: src/API/OrganizersController.php:268
 #, php-format
 msgid "\"%s\" is not a valid notification email address."
 msgstr ""
 
-#: src/API/OrganizersController.php:325
+#: src/API/OrganizersController.php:279
 msgid "The selected logo is not an image in the Media Library. Choose another image."
 msgstr ""
 
 #. translators: %s: comma-separated list of invalid field names
-#: src/API/OrganizersController.php:333
+#. translators: %s: comma-separated list of field names
+#: src/API/OrganizersController.php:287
+#: src/API/TeamMembersController.php:433
+#: src/Services/MarketingAssets.php:892
 #, php-format
 msgid "Invalid parameter(s): %s"
 msgstr ""
 
-#: src/API/OrganizersController.php:370
+#: src/API/OrganizersController.php:324
 msgid "Organizer not found."
+msgstr ""
+
+#: src/API/PublicMarketingAssetsController.php:92
+msgid "Event date (occurrence) whose assets to list."
+msgstr ""
+
+#: src/API/PublicMarketingAssetsController.php:105
+msgid "Only assets with exactly this use case."
+msgstr ""
+
+#: src/API/PublicMarketingAssetsController.php:109
+msgid "Only assets showing this team member: a key from filters.members."
+msgstr ""
+
+#: src/API/PublicMarketingAssetsController.php:134
+msgid "Entries per page."
+msgstr ""
+
+#: src/API/PublicMarketingAssetsController.php:165
+msgid "This event has no marketing assets page. Check the link, or open the list of all events."
+msgstr ""
+
+#: src/API/TeamMembersController.php:120
+msgid "Unique identifier for the team member."
+msgstr ""
+
+#: src/API/TeamMembersController.php:150
+msgid "You do not have permission to manage team members."
+msgstr ""
+
+#: src/API/TeamMembersController.php:196
+#: src/API/TeamMembersController.php:228
+msgid "The team member could not be saved. Try again."
+msgstr ""
+
+#. translators: %d: number of events the team member is linked to
+#: src/API/TeamMembersController.php:268
+#, php-format
+msgid "This team member is still linked to %d event. Remove them from it first."
+msgid_plural "This team member is still linked to %d events. Remove them from those events first."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/API/TeamMembersController.php:285
+#: src/Admin/team-members/TeamMembersPage.js:396
+msgid "The team member could not be deleted. Try again."
+msgstr ""
+
+#: src/API/TeamMembersController.php:363
+msgid "Enter text."
+msgstr ""
+
+#. translators: %d: maximum number of characters
+#: src/API/TeamMembersController.php:374
+#, php-format
+msgid "Use at most %d characters."
+msgstr ""
+
+#: src/API/TeamMembersController.php:381
+msgid "Enter a name for the team member."
+msgstr ""
+
+#: src/API/TeamMembersController.php:385
+msgid "Enter a valid email address, e.g. ana@example.com, or leave it empty."
+msgstr ""
+
+#: src/API/TeamMembersController.php:389
+msgid "Enter the full address of a Facebook profile, e.g. https://www.facebook.com/name, or leave it empty."
+msgstr ""
+
+#: src/API/TeamMembersController.php:393
+msgid "Enter the full address of a website, e.g. https://example.com, or leave it empty."
+msgstr ""
+
+#: src/API/TeamMembersController.php:398
+msgid "Enter an Instagram handle of up to 30 letters, numbers, periods or underscores, e.g. @ana.dances, or leave it empty."
+msgstr ""
+
+#: src/API/TeamMembersController.php:413
+msgid "Choose an image from the Media Library, or remove the portrait."
+msgstr ""
+
+#: src/API/TeamMembersController.php:424
+msgid "Choose male, female or nonbinary, or leave the grammatical gender unset."
+msgstr ""
+
+#: src/API/TeamMembersController.php:485
+msgid "Team member not found."
 msgstr ""
 
 #: src/API/WhatsAppController.php:211
@@ -631,6 +907,133 @@ msgstr ""
 msgid "Meta rejected the request. Check both IDs and the token's access, then try again."
 msgstr ""
 
+#: src/API/WhatsAppRemindersController.php:128
+#: src/API/WhatsAppRemindersController.php:251
+msgid "Sharing reminders need an up-to-date Fair Events plugin."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:177
+msgid "Confirm that the collaborator agreed to receive WhatsApp reminders at this number. Nothing was saved."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:205
+msgid "The reminder could not be saved. Try again; if it keeps failing, check the site's database."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:227
+msgid "This event feed has no sharing reminder."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:258
+msgid "This event feed no longer exists. Reload the page."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:281
+msgid "The team member directory is turned off. Enter the collaborator's name and number instead."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:289
+msgid "This team member no longer exists. Choose another collaborator."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:296
+msgid "This team member has no phone number in international format, such as +34 600 123 456. Add it in Team members, or enter a name and number instead."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:313
+msgid "Enter the collaborator's name."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:320
+msgid "Enter the collaborator's WhatsApp number in international format, with the country code, such as +34 600 123 456."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:333
+msgid "Choose a team member or enter a name and number."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:357
+msgid "Choose one of the approved templates."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:369
+msgid "Validate the WhatsApp connection in Fair Events → WhatsApp before choosing a template. Nothing was saved."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:377
+msgid "The templates could not be checked with WhatsApp. Try again later. Nothing was saved."
+msgstr ""
+
+#. translators: %s: link to the event feed's weekly summary
+#: src/API/WhatsAppRemindersController.php:393
+#, php-format
+msgid "This template is not an approved template without parameters whose button opens %s. Choose another template, or submit one with that button link. Nothing was saved."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:516
+msgid "Not sent: the event feed is disabled or was deleted."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:518
+msgid "Not sent: no collaborator is designated."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:520
+msgid "Not sent: the collaborator's team member profile, its number or the team member directory is no longer available."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:522
+msgid "Not sent: the collaborator's number changed, so their agreement must be confirmed again."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:524
+msgid "Not sent: no template is chosen."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:526
+msgid "Not sent: the feed's weekly-summary link changed since the template was chosen. Choose a template whose button opens the new link."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:528
+msgid "Not sent: the feed's weekly summary is unavailable. Check that the feed has a published page."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:530
+msgid "Not sent: the feed has no public events this week."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:532
+msgid "Failed: the WhatsApp connection is not set up or not validated."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:534
+msgid "Failed: WhatsApp no longer offers this template as approved, in this language, with a button opening the feed's page."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:536
+msgid "Failed: the send could not be recorded, so nothing was sent."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:539
+msgid "Failed: the templates could not be checked with WhatsApp, so nothing was sent."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:543
+msgid "Sent to WhatsApp."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:545
+msgid "WhatsApp refused the message."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:548
+msgid "WhatsApp did not confirm the send, so it may or may not have gone out. It is not sent again automatically."
+msgstr ""
+
+#: src/API/WhatsAppRemindersController.php:550
+msgid "Started; no outcome was recorded. It is not run again automatically."
+msgstr ""
+
 #: src/API/WhatsAppWebhookController.php:90
 msgid "Webhook verification failed."
 msgstr ""
@@ -655,51 +1058,76 @@ msgstr ""
 msgid "The callback could not be stored. Meta will send it again."
 msgstr ""
 
-#: src/Core/Features.php:128
+#: src/Core/Features.php:144
 #: src/Admin/sources/SourcesList.js:410
 msgid "Event feeds"
 msgstr ""
 
-#: src/Core/Features.php:129
+#: src/Core/Features.php:145
 msgid "Event feeds with iCal/JSON output, external calendar imports, Facebook import, event proposals."
 msgstr ""
 
-#: src/Core/Features.php:132
+#: src/Core/Features.php:148
 msgid "Ticketing extensions"
 msgstr ""
 
-#: src/Core/Features.php:133
+#: src/Core/Features.php:149
 msgid "Group pricing and group permission rules for tickets. Requires Ticketing in the Fair Events features and Fair Audience. Turning this off keeps base ticketing and stored rules."
 msgstr ""
 
-#: src/Core/Features.php:136
+#: src/Core/Features.php:152
 msgid "Mailings"
 msgstr ""
 
-#: src/Core/Features.php:137
+#: src/Core/Features.php:153
 msgid "Scheduled email mailings for event attendees. Requires fair-audience."
 msgstr ""
 
-#: src/Core/Features.php:140
+#: src/Core/Features.php:156
 #: src/Admin/meta/MetaConversions.js:606
 #: src/Admin/settings/MetaMoved.js:17
 msgid "Meta Conversions"
 msgstr ""
 
-#: src/Core/Features.php:141
+#: src/Core/Features.php:157
 msgid "Consent-gated server-side Meta measurement of event-button clicks, checkouts and purchases. Requires explicit credentials; checkout and purchase measurement also requires Fair Payments Connector."
 msgstr ""
 
-#: src/Core/Features.php:145
+#: src/Core/Features.php:161
 msgid "Manage additional organizers, each with its own identity and private notification addresses, next to the sitewide organizer. Turning this off keeps every organizer."
 msgstr ""
 
-#: src/Core/Features.php:149
+#: src/Core/Features.php:165
 msgid "Connect an Instagram professional account in Fair Events → Instagram. Turning this off keeps the stored connection; Fair Audience then manages it again."
 msgstr ""
 
-#: src/Core/Features.php:153
+#: src/Core/Features.php:169
 msgid "Connect a WhatsApp Business account in Fair Events → WhatsApp and send test templates. Turning this off keeps the saved connection, credentials and delivery history."
+msgstr ""
+
+#: src/Core/Features.php:173
+msgid "Keep a sitewide directory of team members in Fair Events → Team members and add them to events. Contact details stay private to administrators. Turning this off keeps every profile and event team."
+msgstr ""
+
+#: src/Core/Features.php:176
+#: src/Admin/manage-event-images/EventImages.js:448
+msgid "Event images"
+msgstr ""
+
+#: src/Core/Features.php:177
+msgid "Ordered images for an event and its programme items, each with an optional circle marking what matters when the image is cropped. Turning this off hides the Images tab and its API and keeps every saved image link."
+msgstr ""
+
+#: src/Core/Features.php:180
+#: src/Frontend/MarketingAssetsPage.php:163
+#: src/Frontend/MarketingAssetsPage.php:168
+#: src/Frontend/MarketingAssetsPage.php:207
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:347
+msgid "Marketing assets"
+msgstr ""
+
+#: src/Core/Features.php:181
+msgid "Text and PNG/JPEG images for promoting each event date, managed in the Marketing tab of Manage Event and through an authenticated API, and shared on a public page for each date that anyone can open without an account. Images are ordinary Media Library files: anyone with an image's link can open it. Turning this off hides the tab, the public pages and their APIs and keeps every asset; it does not remove images or their links."
 msgstr ""
 
 #. translators: 1: paused plugin names, e.g. "Fair Events", 2: names of the plugins whose outdated copy loaded first, e.g. "Fair Timetable".
@@ -726,6 +1154,126 @@ msgid_plural "%1$s include outdated copies of the Fair Event Plugins shared libr
 msgstr[0] ""
 msgstr[1] ""
 
+#: src/EventImages/CampaignMedia.php:78
+msgid "Event images are turned off on this site."
+msgstr ""
+
+#: src/EventImages/CampaignMedia.php:87
+msgid "The images of this event could not be read."
+msgstr ""
+
+#: src/EventImages/CampaignMedia.php:138
+msgid "An image of this event refers to a Media Library item that no longer exists."
+msgstr ""
+
+#: src/EventImages/EventImages.php:215
+msgid "This date is part of a series. Its images are managed on the series."
+msgstr ""
+
+#: src/EventImages/EventImages.php:229
+msgid "This programme item is no longer on the schedule. Reload the page to see the current programme."
+msgstr ""
+
+#. translators: %d: maximum number of images
+#: src/EventImages/EventImages.php:240
+#, php-format
+msgid "A list can hold up to %d images."
+msgstr ""
+
+#: src/EventImages/EventImages.php:290
+#: src/EventImages/EventImages.php:297
+#: src/EventImages/EventImages.php:307
+#: src/EventImages/EventImages.php:406
+msgid "An image in the list could not be read. Reload the page and try again."
+msgstr ""
+
+#: src/EventImages/EventImages.php:301
+msgid "The same image is in this list twice. Remove one of them and save again."
+msgstr ""
+
+#: src/EventImages/EventImages.php:317
+msgid "One of the images is not available in the Media Library. Remove it or choose another image."
+msgstr ""
+
+#: src/EventImages/EventImages.php:318
+#: src/Admin/manage-event-images/EventImages.js:356
+msgid "Only JPEG, PNG, GIF, WebP and AVIF images can be used."
+msgstr ""
+
+#: src/EventImages/EventImages.php:330
+msgid "An image was edited in the Media Library after you marked its focal region. Reload the page and mark it again."
+msgstr ""
+
+#: src/EventImages/EventImages.php:341
+msgid "This image has no known size, so a focal region cannot be saved for it. Remove the focal region or use another image."
+msgstr ""
+
+#: src/EventImages/EventImages.php:342
+msgid "A focal region must be a circle with a positive size that fits entirely inside the image."
+msgstr ""
+
+#: src/EventImages/EventImages.php:388
+msgid "These images were changed elsewhere since you opened them. Reload the page to see the latest version, then make your changes again."
+msgstr ""
+
+#: src/EventImages/EventImages.php:479
+msgid "These images are being saved from another window. Wait a moment and save again."
+msgstr ""
+
+#: src/EventImages/EventImages.php:492
+msgid "The images could not be saved. Nothing was changed — try again."
+msgstr ""
+
+#: src/Frontend/MarketingAssetsPage.php:169
+msgid "Text and images for promoting each event. Open an event to copy its texts and download its images."
+msgstr ""
+
+#: src/Frontend/MarketingAssetsPage.php:172
+msgid "Turn on JavaScript to see the events."
+msgstr ""
+
+#. translators: %d: event date ID
+#: src/Frontend/MarketingAssetsPage.php:190
+#: src/Frontend/marketing-assets/App.js:60
+#, php-format,js-format
+msgid "Event #%d"
+msgstr ""
+
+#. translators: %s: event title, or "Event #12" for an unpublished event
+#: src/Frontend/MarketingAssetsPage.php:199
+#, php-format
+msgid "Marketing assets: %s"
+msgstr ""
+
+#: src/Frontend/MarketingAssetsPage.php:206
+#: src/Frontend/MarketingAssetsPage.php:232
+#: src/Admin/meta/SentRequests.js:795
+msgid "All events"
+msgstr ""
+
+#: src/Frontend/MarketingAssetsPage.php:210
+msgid "Copy a text or download an image, then post it wherever you promote the event."
+msgstr ""
+
+#: src/Frontend/MarketingAssetsPage.php:213
+msgid "Turn on JavaScript to see the marketing assets."
+msgstr ""
+
+#: src/Frontend/MarketingAssetsPage.php:227
+#: src/Frontend/MarketingAssetsPage.php:230
+msgid "Marketing assets not found"
+msgstr ""
+
+#: src/Frontend/MarketingAssetsPage.php:231
+msgid "This event does not exist. Check the link you were given, or open the list of all events."
+msgstr ""
+
+#. translators: 1: page title, 2: site name
+#: src/Frontend/MarketingAssetsPage.php:288
+#, php-format
+msgid "%1$s – %2$s"
+msgstr ""
+
 #. translators: 1: ISO week number, 2: ISO week-numbering year
 #: src/Frontend/WeeklySummaryPage.php:168
 #, php-format
@@ -750,6 +1298,8 @@ msgid "Event feed: %s"
 msgstr ""
 
 #: src/Frontend/WeeklySummaryPage.php:201
+#: src/Admin/whatsapp-reminders/RunHistory.js:122
+#: src/Admin/whatsapp-reminders/RunHistory.js:163
 msgid "Week"
 msgstr ""
 
@@ -779,6 +1329,7 @@ msgstr ""
 #: src/Admin/compare-events/comparison.js:99
 #: src/Admin/meta/MetaCalendarTest.js:87
 #: src/Admin/source-view/calendarLabels.js:20
+#: src/Admin/team-members/TeamMembersPage.js:73
 msgid "(untitled event)"
 msgstr ""
 
@@ -981,40 +1532,154 @@ msgstr ""
 msgid "Instagram did not return a container ID."
 msgstr ""
 
-#: src/Meta/Connector.php:54
+#: src/Meta/Connector.php:55
 msgid "Meta Conversions API"
 msgstr ""
 
-#: src/Meta/Connector.php:69
+#: src/Meta/Connector.php:70
 msgid "Report consented checkouts, purchases and event-page button clicks to Meta. Removing the access token stops conversion delivery until another token is saved."
 msgstr ""
 
 #. translators: %s: environment variable name
-#: src/Meta/Connector.php:73
+#: src/Meta/Connector.php:74
 #, php-format
 msgid "The token in use comes from the %s environment variable, so removing a saved token here does not stop delivery."
 msgstr ""
 
 #. translators: %s: PHP constant name
-#: src/Meta/Connector.php:76
+#: src/Meta/Connector.php:77
 #, php-format
 msgid "The token in use comes from the %s constant, so removing a saved token here does not stop delivery."
 msgstr ""
 
-#: src/Meta/Connector.php:93
+#: src/Meta/Connector.php:94
 msgid "Meta access token"
 msgstr ""
 
-#: src/Meta/Connector.php:94
+#: src/Meta/Connector.php:95
 msgid "Access token for the Meta Conversions API."
 msgstr ""
 
-#: src/Meta/Connector.php:178
+#: src/Meta/Connector.php:179
 msgid "That does not look like a Meta access token. Paste the full token generated in Events Manager, without spaces. The saved token was not changed."
+msgstr ""
+
+#: src/Models/TeamMemberRepository.php:638
+msgid "Team member profiles could not be read."
 msgstr ""
 
 #: src/Services/EventOrganizer.php:201
 msgid "You do not have permission to choose an organizer for this event."
+msgstr ""
+
+#: src/Services/MarketingAssets.php:356
+msgid "The asset could not be deleted. Nothing was changed — try again."
+msgstr ""
+
+#: src/Services/MarketingAssets.php:443
+msgid "You cannot use this image. Choose another one from the Media Library."
+msgstr ""
+
+#: src/Services/MarketingAssets.php:451
+msgid "Add text, an image, or both."
+msgstr ""
+
+#: src/Services/MarketingAssets.php:474
+msgid "Team members cannot be added while team management is turned off. You can still remove the ones already linked."
+msgstr ""
+
+#: src/Services/MarketingAssets.php:475
+msgid "Team member names cannot be published while team management is turned off. You can still remove the members already linked."
+msgstr ""
+
+#: src/Services/MarketingAssets.php:482
+msgid "Send the team members whose names you publish."
+msgstr ""
+
+#: src/Services/MarketingAssets.php:487
+msgid "Linked team members' names are shown on the public asset page. Confirm that their names will be public to link them."
+msgstr ""
+
+#: src/Services/MarketingAssets.php:497
+msgid "Only members of this event's team can be linked. Reload the page to see the current team."
+msgstr ""
+
+#: src/Services/MarketingAssets.php:514
+msgid "A schedule item cannot be linked while this event's schedule is turned off. You can still remove the one already linked."
+msgstr ""
+
+#: src/Services/MarketingAssets.php:521
+msgid "This schedule item is not on this event's schedule. Reload the page to see the current schedule."
+msgstr ""
+
+#: src/Services/MarketingAssets.php:571
+msgid "Enter what the asset is for, such as \"Instagram post\"."
+msgstr ""
+
+#: src/Services/MarketingAssets.php:576
+msgid "The use case must be a single line of plain text."
+msgstr ""
+
+#. translators: %d: maximum number of characters
+#: src/Services/MarketingAssets.php:583
+#, php-format
+msgid "The use case can be up to %d characters long."
+msgstr ""
+
+#: src/Services/MarketingAssets.php:595
+msgid "The text could not be read. Paste it again as plain text."
+msgstr ""
+
+#. translators: %d: maximum number of characters
+#: src/Services/MarketingAssets.php:602
+#, php-format
+msgid "The text can be up to %d characters long."
+msgstr ""
+
+#. translators: %d: maximum number of team members
+#: src/Services/MarketingAssets.php:614
+#, php-format
+msgid "An asset can link up to %d team members."
+msgstr ""
+
+#: src/Services/MarketingAssets.php:872
+msgid "Only PNG and JPEG images can be used."
+msgstr ""
+
+#: src/Services/MarketingAssets.php:877
+msgid "This image is not available in the Media Library. Choose or upload another one."
+msgstr ""
+
+#: src/Services/MarketingAssets.php:911
+msgid "This marketing asset does not exist on this date. Reload the page to see the current list."
+msgstr ""
+
+#: src/Services/MarketingAssets.php:924
+msgid "The asset could not be saved. Nothing was changed — try again."
+msgstr ""
+
+#: src/Services/PromotionalTeamProfiles.php:68
+msgid "You do not have permission to read team member profiles."
+msgstr ""
+
+#: src/Services/PromotionalTeamProfiles.php:76
+msgid "The team member directory is turned off on this site."
+msgstr ""
+
+#: src/Services/PromotionalTeamProfiles.php:115
+msgid "A team member has no name."
+msgstr ""
+
+#: src/Services/PromotionalTeamProfiles.php:268
+msgid "A team member of this event could not be found."
+msgstr ""
+
+#: src/Services/TeamMembership.php:332
+msgid "The contributors of this event could not be read."
+msgstr ""
+
+#: src/Services/TeamMembership.php:345
+msgid "A contributor of this event refers to a team member who no longer exists."
 msgstr ""
 
 #: src/Services/WeeklySummary.php:68
@@ -1034,36 +1699,36 @@ msgstr ""
 msgid "Per-bundle feature toggles for experimental features"
 msgstr ""
 
-#: src/WhatsApp/Connector.php:84
+#: src/WhatsApp/Connector.php:85
 msgid "Send test WhatsApp templates from Fair Events → WhatsApp. Removing the access token stops test sends until another token is saved."
 msgstr ""
 
 #. translators: %s: environment variable name
-#: src/WhatsApp/Connector.php:88
+#: src/WhatsApp/Connector.php:89
 #, php-format
 msgid "The token in use comes from the %s environment variable, so removing a saved token here does not stop test sends."
 msgstr ""
 
 #. translators: %s: PHP constant name
-#: src/WhatsApp/Connector.php:91
+#: src/WhatsApp/Connector.php:92
 #, php-format
 msgid "The token in use comes from the %s constant, so removing a saved token here does not stop test sends."
 msgstr ""
 
-#: src/WhatsApp/Connector.php:108
+#: src/WhatsApp/Connector.php:109
 msgid "WhatsApp access token"
 msgstr ""
 
-#: src/WhatsApp/Connector.php:109
+#: src/WhatsApp/Connector.php:110
 msgid "Access token for the WhatsApp Cloud API."
 msgstr ""
 
-#: src/WhatsApp/Connector.php:191
+#: src/WhatsApp/Connector.php:192
 msgid "That does not look like a WhatsApp access token. Paste the full token generated in Meta Business Settings, without spaces. The saved token was not changed."
 msgstr ""
 
 #: src/Admin/calendar-organizer/CalendarOrganizerField.js:72
-#: src/Admin/organizers/OrganizersPage.js:131
+#: src/Admin/organizers/OrganizersPage.js:130
 msgid "The organizers could not be loaded."
 msgstr ""
 
@@ -1074,10 +1739,16 @@ msgstr ""
 #: src/Admin/calendar-organizer/CalendarOrganizerField.js:101
 #: src/Admin/compare-events/CompareEventsPage.js:154
 #: src/Admin/compare-events/CompareEventsPage.js:558
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:193
 #: src/Admin/manage-event-organizer/EventOrganizer.js:197
+#: src/Admin/manage-event-schedule/ScheduleContributors.js:173
+#: src/Admin/manage-event-team-members/EventTeamMembers.js:220
 #: src/Admin/meta/MetaCalendarTest.js:231
-#: src/Admin/organizers/OrganizersPage.js:257
+#: src/Admin/organizers/OrganizersPage.js:229
 #: src/Admin/sources/SourcesList.js:357
+#: src/Admin/team-members/TeamMembersPage.js:424
+#: src/Admin/whatsapp-reminders/RemindersPage.js:187
+#: src/Frontend/marketing-assets/App.js:193
 msgid "Try again"
 msgstr ""
 
@@ -1120,7 +1791,9 @@ msgid "%1$s: %2$s was cancelled, so it cannot be compared. Choose another event.
 msgstr ""
 
 #. translators: 1: which selection, "Current event" or "Comparison event". 2: error message.
+#. translators: 1: schedule item title, 2: comma-separated contributors with roles
 #: src/Admin/compare-events/CompareEventsPage.js:134
+#: src/Admin/manage-event-team-members/EventTeamMembers.js:103
 #, js-format
 msgid "%1$s: %2$s"
 msgstr ""
@@ -1216,7 +1889,9 @@ msgid "The list of events could not be loaded."
 msgstr ""
 
 #. translators: 1: event name, 2: event start date.
+#. translators: 1: team member name, 2: phone number
 #: src/Admin/compare-events/comparison.js:106
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:326
 #, js-format
 msgid "%1$s — %2$s"
 msgstr ""
@@ -1254,9 +1929,147 @@ msgstr ""
 #: src/Admin/components/ConfirmActionModal.js:24
 #: src/Admin/instagram/AccountChoice.js:219
 #: src/Admin/instagram/InstagramPage.js:767
-#: src/Admin/manage-event-schedule/EventSchedule.js:763
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:551
+#: src/Admin/manage-event-schedule/EventSchedule.js:775
 #: src/Admin/sources/components/SourceForm.js:251
 msgid "Cancel"
+msgstr ""
+
+#: src/Admin/components/ContributorAssignments.js:82
+msgid "(deleted team member)"
+msgstr ""
+
+#. translators: 1: team member name, 2: their role, such as teacher
+#. translators: 1: team member name, 2: their email address
+#. translators: 1: team member name, 2: role, such as teacher
+#. translators: 1: schedule entry name, 2: room or location
+#. translators: 1: template name, 2: template language code
+#: src/Admin/components/ContributorAssignments.js:96
+#: src/Admin/components/ContributorAssignments.js:166
+#: src/Admin/components/ContributorAssignments.js:249
+#: src/Admin/manage-event-schedule/EventSchedule.js:536
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:101
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:117
+#, js-format
+msgid "%1$s (%2$s)"
+msgstr ""
+
+#: src/Admin/components/ContributorAssignments.js:113
+msgid "Choose a person to add."
+msgstr ""
+
+#: src/Admin/components/ContributorAssignments.js:116
+msgid "Enter a role, such as teacher or organizer."
+msgstr ""
+
+#. translators: %d: maximum role length in characters
+#: src/Admin/components/ContributorAssignments.js:124
+#, js-format
+msgid "Use up to %d lowercase letters, digits, hyphens or underscores, starting with a letter, such as teacher."
+msgstr ""
+
+#. translators: 1: team member name, 2: role, such as teacher
+#: src/Admin/components/ContributorAssignments.js:139
+#, js-format
+msgid "%1$s is already %2$s here. Choose another role or person."
+msgstr ""
+
+#. translators: %s: team member name and role
+#: src/Admin/components/ContributorAssignments.js:258
+#, js-format
+msgid "%s was added."
+msgstr ""
+
+#. translators: %s: team member name and role
+#: src/Admin/components/ContributorAssignments.js:263
+#, js-format
+msgid "%s could not be added. Try again."
+msgstr ""
+
+#. translators: %s: team member name, with their role when they have one
+#: src/Admin/components/ContributorAssignments.js:283
+#, js-format
+msgid "%s was removed. Their profile and other assignments stay as they are."
+msgstr ""
+
+#. translators: %s: team member name, with their role when they have one
+#: src/Admin/components/ContributorAssignments.js:291
+#, js-format
+msgid "%s could not be removed. Try again."
+msgstr ""
+
+#. translators: 1: team member name with role, 2: new position number
+#: src/Admin/components/ContributorAssignments.js:312
+#, js-format
+msgid "%1$s is now number %2$d."
+msgstr ""
+
+#: src/Admin/components/ContributorAssignments.js:368
+msgid "No role — not included in campaigns"
+msgstr ""
+
+#. translators: %s: team member name, with their role when they have one
+#. translators: %s: image title
+#: src/Admin/components/ContributorAssignments.js:389
+#: src/Admin/manage-event-images/EventImages.js:715
+#, js-format
+msgid "Move %s up"
+msgstr ""
+
+#: src/Admin/components/ContributorAssignments.js:397
+#: src/Admin/manage-event-images/EventImages.js:722
+msgid "Move up"
+msgstr ""
+
+#. translators: %s: team member name, with their role when they have one
+#. translators: %s: image title
+#: src/Admin/components/ContributorAssignments.js:415
+#: src/Admin/manage-event-images/EventImages.js:732
+#, js-format
+msgid "Move %s down"
+msgstr ""
+
+#: src/Admin/components/ContributorAssignments.js:423
+#: src/Admin/manage-event-images/EventImages.js:739
+msgid "Move down"
+msgstr ""
+
+#. translators: %s: team member name, with their role when they have one
+#. translators: %s: schedule entry name
+#: src/Admin/components/ContributorAssignments.js:442
+#: src/Admin/manage-event-schedule/EventSchedule.js:497
+#, js-format
+msgid "Remove %s"
+msgstr ""
+
+#: src/Admin/components/ContributorAssignments.js:452
+msgid "Removing…"
+msgstr ""
+
+#: src/Admin/components/ContributorAssignments.js:456
+#: src/Admin/manage-event-schedule/EventSchedule.js:504
+#: src/Admin/sources/components/DataSourceItem.js:254
+msgid "Remove"
+msgstr ""
+
+#: src/Admin/components/ContributorAssignments.js:484
+msgid "Type to search the directory."
+msgstr ""
+
+#: src/Admin/components/ContributorAssignments.js:494
+msgid "Role"
+msgstr ""
+
+#: src/Admin/components/ContributorAssignments.js:499
+msgid "Lowercase, such as teacher or organizer."
+msgstr ""
+
+#: src/Admin/components/ContributorAssignments.js:527
+msgid "Adding…"
+msgstr ""
+
+#: src/Admin/components/ContributorAssignments.js:528
+msgid "Add"
 msgstr ""
 
 #: src/Admin/components/CopyUrlButton.js:21
@@ -1283,10 +2096,10 @@ msgid "Sitewide default"
 msgstr ""
 
 #: src/Admin/components/OrganizerSelect.js:32
-#: src/Admin/organizers/OrganizersPage.js:293
-#: src/Admin/organizers/OrganizersPage.js:303
-#: src/Admin/organizers/OrganizersPage.js:426
-#: src/Admin/organizers/OrganizersPage.js:530
+#: src/Admin/organizers/OrganizersPage.js:265
+#: src/Admin/organizers/OrganizersPage.js:275
+#: src/Admin/organizers/OrganizersPage.js:398
+#: src/Admin/organizers/OrganizersPage.js:507
 msgid "(unnamed organizer)"
 msgstr ""
 
@@ -1506,6 +2319,567 @@ msgstr ""
 msgid "Posts already published on Instagram, and the post records on this site, are kept."
 msgstr ""
 
+#: src/Admin/manage-event-images/EventImages.js:75
+msgid "This image is in the Media Library trash. Unlink it or restore it there."
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:81
+msgid "This file is no longer a supported image. Unlink it to save this list."
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:86
+msgid "This image cannot be shown: its file is missing. Unlink it to save this list."
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:167
+msgid "The images could not be loaded. Reload the page to try again."
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:240
+#: src/Admin/manage-event-images/EventImages.js:454
+msgid "(untitled programme item)"
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:241
+msgid "the event"
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:264
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:325
+#: src/Admin/team-members/PortraitField.js:139
+msgid "The Media Library could not be opened. Reload the page and try again."
+msgstr ""
+
+#. translators: %s: event or programme item name
+#: src/Admin/manage-event-images/EventImages.js:274
+#, js-format
+msgid "Add images for %s"
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:277
+#: src/Admin/manage-event-images/EventImages.js:566
+msgid "Add images"
+msgstr ""
+
+#. translators: %d: number of files
+#: src/Admin/manage-event-images/EventImages.js:295
+#, js-format
+msgid "%d file was skipped: only JPEG, PNG, GIF, WebP and AVIF images can be used."
+msgid_plural "%d files were skipped: only JPEG, PNG, GIF, WebP and AVIF images can be used."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of images
+#: src/Admin/manage-event-images/EventImages.js:309
+#, js-format
+msgid "%d image is in this list already."
+msgid_plural "%d images are in this list already."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: maximum number of images
+#: src/Admin/manage-event-images/EventImages.js:323
+#, js-format
+msgid "A list can hold up to %d images; the rest were not added."
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:346
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:305
+msgid "Replace image"
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:347
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:144
+msgid "Use this image"
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:372
+msgid "That image is in this list already."
+msgstr ""
+
+#. translators: %s: programme item name
+#: src/Admin/manage-event-images/EventImages.js:418
+#, js-format
+msgid "Images for %s saved."
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:424
+msgid "Event images saved."
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:432
+msgid "The images could not be saved. Your changes are still here — try again."
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:447
+msgid "Event images (unsaved)"
+msgstr ""
+
+#. translators: %s: programme item name
+#: src/Admin/manage-event-images/EventImages.js:460
+#, js-format
+msgid "%s (unsaved)"
+msgstr ""
+
+#. translators: %s: programme item name
+#: src/Admin/manage-event-images/EventImages.js:473
+#, js-format
+msgid "Save images for %s"
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:476
+msgid "Save event images"
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:480
+msgid "Unlink the images marked unavailable before saving."
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:494
+msgid "This date is part of a series. Its images are managed on the series and shown here as they are."
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:500
+msgid "Edit images on the series"
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:512
+msgid "Images for"
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:521
+msgid "Choose the event or one of its saved programme items. A new programme item appears here once the schedule is saved."
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:570
+#: src/Admin/manage-event-schedule/EventSchedule.js:404
+#: src/Admin/whatsapp/DefaultTestNumber.js:142
+#: src/Admin/whatsapp/WhatsAppConnection.js:416
+msgid "No unsaved changes."
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:592
+msgid "No images for this programme item yet."
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:596
+msgid "No event images yet. Add images from the Media Library or upload new ones; the first one is listed first wherever the images are used."
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:647
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:285
+msgid "(untitled image)"
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:654
+msgid "Save this list to mark a focal region on this image."
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:659
+msgid "The size of this image is unknown, so no focal region can be marked on it."
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:664
+msgid "Focal region set: the circle marks what must stay visible when the image is cropped."
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:669
+msgid "No focal region."
+msgstr ""
+
+#. translators: 1: position in the list, 2: image title
+#: src/Admin/manage-event-images/EventImages.js:686
+#, js-format
+msgid "%1$d. %2$s"
+msgstr ""
+
+#. translators: 1: width in pixels, 2: height in pixels
+#: src/Admin/manage-event-images/EventImages.js:695
+#, js-format
+msgid "%1$d × %2$d px"
+msgstr ""
+
+#. translators: %s: image title
+#: src/Admin/manage-event-images/EventImages.js:750
+#, js-format
+msgid "Replace %s"
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:757
+msgid "Replace"
+msgstr ""
+
+#. translators: %s: image title
+#: src/Admin/manage-event-images/EventImages.js:766
+#, js-format
+msgid "Unlink %s (it stays in the Media Library)"
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:773
+msgid "Unlink"
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:781
+msgid "This image was edited in the Media Library after its focal region was marked, so the old circle is no longer used. Mark it again if needed."
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:812
+msgid "Remove focal region"
+msgstr ""
+
+#: src/Admin/manage-event-images/EventImages.js:823
+msgid "Mark focal region"
+msgstr ""
+
+#: src/Admin/manage-event-images/FocalRegionEditor.js:156
+msgid "Circle centre, from the left (%)"
+msgstr ""
+
+#: src/Admin/manage-event-images/FocalRegionEditor.js:172
+msgid "Circle centre, from the top (%)"
+msgstr ""
+
+#: src/Admin/manage-event-images/FocalRegionEditor.js:188
+msgid "Circle radius, % of the shorter side"
+msgstr ""
+
+#: src/Admin/manage-event-images/index.js:22
+msgid "Images"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:64
+msgid "Only PNG and JPEG images can be used. Choose another image."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:70
+msgid "This image is in the Media Library trash. Restore it there or choose another image."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:75
+msgid "This image is no longer available in the Media Library. Choose another image or remove it."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:108
+msgid "Enter what the asset is for to save it."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:113
+msgid "The image of this asset was deleted from the Media Library. Add text or choose another image to save it."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:117
+msgid "Add text, an image, or both to save the asset."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:121
+msgid "Replace or remove the image that cannot be used to save the asset."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:125
+msgid "Shorten the use case or the text to save the asset."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:129
+msgid "Confirm that the names of the team members you added will be public to save the asset, or remove them."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:143
+msgid "Choose an image"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:180
+msgid "No schedule item"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:186
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:659
+msgid "(untitled schedule item)"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:198
+msgid "New marketing asset"
+msgstr ""
+
+#. translators: %s: asset use case
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:204
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:546
+#, js-format
+msgid "Edit %s"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:206
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:44
+msgid "(no use case)"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:216
+msgid "Everything in this asset — its use case, text and image — is shown on this date’s public marketing assets page as soon as it is saved, even before the event is published. Anyone can open that page without an account."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:223
+#: src/Frontend/marketing-assets/App.js:323
+msgid "Use case"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:228
+msgid "What the asset is for, such as \"Instagram post\", \"WhatsApp status\" or \"WhatsApp group message\"."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:240
+#: src/Frontend/marketing-assets/App.js:458
+msgid "Text"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:245
+msgid "Plain text, saved exactly as typed: emoji, spacing and line breaks are kept."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:258
+msgid "Image"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:261
+msgid "Images are ordinary Media Library files. Anyone with an image’s link can open it as soon as it is uploaded, even before the event is published. Removing the image, deleting this asset or turning off marketing assets keeps the file and its link working; delete it in the Media Library to remove it."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:268
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:583
+msgid "Image removed: the image was deleted from the Media Library."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:309
+msgid "Choose or upload image"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:321
+msgid "Remove image"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:343
+msgid "The name and surname of each linked team member are shown on the public marketing assets page, and visitors can filter the assets by them. You confirm this when you save. Contact details are never shown."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:350
+msgid "Team management is turned off, so no team members can be added. Members already linked can be removed."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:358
+msgid "This event has no team yet. Add team members in Event Details to link them here."
+msgstr ""
+
+#. translators: %s: team member name
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:392
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:638
+#, js-format
+msgid "%s (name not public)"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:426
+msgid "Show these names on the public marketing assets page"
+msgstr ""
+
+#. translators: %s: comma-separated team member names
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:434
+#, js-format
+msgid "Required to link new team members. Becomes public: %s."
+msgstr ""
+
+#. translators: %s: comma-separated team member names
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:444
+#, js-format
+msgid "Optional. Becomes public: %s. Leave it unchecked to keep these names private."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:463
+msgid "Names that are not public cannot be published while team management is turned off."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:477
+#: src/Admin/manage-event-schedule/EventSchedule.js:459
+msgid "Schedule item"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:503
+msgid "Optional: the workshop or programme item this asset promotes."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:507
+msgid "This event’s schedule is turned off, so no schedule item can be linked. A linked item can be removed."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:537
+msgid "Create asset"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/AssetEditor.js:541
+msgid "Save asset"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/index.js:22
+msgid "Marketing"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:118
+msgid "The marketing assets could not be loaded."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:164
+msgid "More assets could not be loaded. Try again."
+msgstr ""
+
+#. translators: %s: asset use case
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:245
+#, js-format
+msgid "Created %s."
+msgstr ""
+
+#. translators: %s: asset use case
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:250
+#, js-format
+msgid "Saved %s."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:259
+msgid "The asset could not be saved. Your changes are still here — try again."
+msgstr ""
+
+#. translators: %s: asset use case
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:289
+#, js-format
+msgid "Deleted %s. Its image stays in the Media Library."
+msgstr ""
+
+#. translators: %s: asset use case
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:297
+#, js-format
+msgid "Deleted %s."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:302
+msgid "The asset could not be deleted. Try again."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:353
+msgid "Text and images for promoting this date. They belong to this date only: other dates of a series have their own."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:359
+msgid "Everything here is public on this date’s marketing assets page as soon as it is saved, even before the event is published. Share the page with the people who help you promote it: they need no account."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:372
+#: src/Admin/source-view/FeedHeader.js:109
+msgid "Open public page"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:379
+msgid "Copy public page link"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:391
+msgid "All events’ public pages"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:406
+msgid "Add asset"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:411
+msgid "Save or cancel the open asset to add or edit another one."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:436
+msgid "No marketing assets for this date yet. Add one for each place you promote it, such as an Instagram post or a WhatsApp status."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:467
+msgid "Show more assets"
+msgstr ""
+
+#. translators: %s: asset use case
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:476
+#, js-format
+msgid "Delete marketing asset — %s"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:482
+msgid "Delete asset"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:486
+#: src/Admin/sources/SourcesList.js:480
+#: src/Admin/team-members/TeamMembersPage.js:598
+msgid "Deleting…"
+msgstr ""
+
+#. translators: %s: asset use case
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:496
+#, js-format
+msgid "Delete “%s” from this date? Its text and its links to team members and the schedule are deleted. This cannot be undone."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:505
+msgid "The image stays in the Media Library, and anyone with its link can still open it."
+msgstr ""
+
+#. translators: %s: asset use case
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:538
+#, js-format
+msgid "Repair %s"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:555
+msgid "Repair"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:556
+#: src/Admin/organizers/OrganizersPage.js:314
+#: src/Admin/sources/SourcesList.js:307
+#: src/Admin/team-members/TeamMembersPage.js:544
+#: src/Admin/whatsapp-reminders/RemindersPage.js:375
+msgid "Edit"
+msgstr ""
+
+#. translators: %s: asset use case
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:567
+#, js-format
+msgid "Delete %s"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:571
+#: src/Admin/sources/SourcesList.js:331
+#: src/Admin/team-members/TeamMembersPage.js:560
+msgid "Delete"
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:579
+msgid "Image removed: the image was deleted from the Media Library, and this asset has no text. Repair it with text or another image, or delete it."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:593
+msgid "The image is in the Media Library trash. Restore it there or choose another one."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:597
+msgid "The image can no longer be used. Choose another one."
+msgstr ""
+
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:618
+msgid "No text."
+msgstr ""
+
+#. translators: %s: comma-separated team member names
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:629
+#, js-format
+msgid "Team: %s"
+msgstr ""
+
+#. translators: %s: schedule item title
+#: src/Admin/manage-event-marketing-assets/MarketingAssets.js:654
+#, js-format
+msgid "Schedule item: %s"
+msgstr ""
+
 #: src/Admin/manage-event-organizer/EventOrganizer.js:101
 msgid "The organizer could not be loaded."
 msgstr ""
@@ -1515,7 +2889,7 @@ msgid "Organizer saved. This event uses the sitewide organizer."
 msgstr ""
 
 #: src/Admin/manage-event-organizer/EventOrganizer.js:157
-#: src/Admin/organizers/OrganizersPage.js:230
+#: src/Admin/organizers/OrganizersPage.js:202
 msgid "Organizer saved."
 msgstr ""
 
@@ -1542,6 +2916,7 @@ msgid "The organizer named for this event in search results and other public eve
 msgstr ""
 
 #: src/Admin/manage-event-organizer/EventOrganizer.js:291
+#: src/Admin/team-members/TeamMemberForm.js:281
 msgid "Saving…"
 msgstr ""
 
@@ -1549,168 +2924,165 @@ msgstr ""
 msgid "Save organizer"
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:124
+#: src/Admin/manage-event-schedule/EventSchedule.js:128
 msgid "Failed to load the schedule."
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:221
+#: src/Admin/manage-event-schedule/EventSchedule.js:225
 msgid "The schedule was not saved. Check the marked fields and save again."
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:240
+#: src/Admin/manage-event-schedule/EventSchedule.js:245
 msgid "Schedule saved."
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:246
+#: src/Admin/manage-event-schedule/EventSchedule.js:251
 msgid "Failed to save the schedule. Your changes are still here — try again."
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:276
+#: src/Admin/manage-event-schedule/EventSchedule.js:281
 msgid "Workshops come from the add-ons in Prices. Add one there first."
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:281
+#: src/Admin/manage-event-schedule/EventSchedule.js:286
 msgid "Every add-on from Prices is on the schedule already."
 msgstr ""
 
 #. translators: %s: workshop name
-#: src/Admin/manage-event-schedule/EventSchedule.js:295
+#: src/Admin/manage-event-schedule/EventSchedule.js:300
 #, js-format
 msgid "Remove %s from the schedule? Once you save, it can be booked again: only its schedule entry keeps it Not bookable."
 msgstr ""
 
 #. translators: %s: workshop name
-#: src/Admin/manage-event-schedule/EventSchedule.js:305
+#: src/Admin/manage-event-schedule/EventSchedule.js:310
 #, js-format
 msgid "Remove %s from the schedule? Its add-on in Prices and its bookings stay as they are."
 msgstr ""
 
 #. translators: %s: schedule item title
-#: src/Admin/manage-event-schedule/EventSchedule.js:314
+#: src/Admin/manage-event-schedule/EventSchedule.js:319
 #, js-format
 msgid "Remove %s from the schedule?"
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:327
+#: src/Admin/manage-event-schedule/EventSchedule.js:332
 msgid "The schedule is managed on the series. Its dates are shown shifted to this date."
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:362
+#: src/Admin/manage-event-schedule/EventSchedule.js:367
 msgid "Save schedule"
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:367
-#: src/Admin/manage-event-schedule/EventSchedule.js:388
+#: src/Admin/manage-event-schedule/EventSchedule.js:372
+#: src/Admin/manage-event-schedule/EventSchedule.js:393
 msgid "Add workshop"
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:371
+#: src/Admin/manage-event-schedule/EventSchedule.js:376
 msgid "Add a workshop from Prices"
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:392
+#: src/Admin/manage-event-schedule/EventSchedule.js:397
 msgid "Add schedule item"
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:399
-#: src/Admin/whatsapp/DefaultTestNumber.js:142
-#: src/Admin/whatsapp/WhatsAppConnection.js:416
-msgid "No unsaved changes."
-msgstr ""
-
-#: src/Admin/manage-event-schedule/EventSchedule.js:421
+#: src/Admin/manage-event-schedule/EventSchedule.js:426
 msgid "Nothing is scheduled yet. Add a workshop to set its time and room, or a schedule item for a break or anything else that is not booked."
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:450
+#: src/Admin/manage-event-schedule/EventSchedule.js:455
 msgid "Workshop from Prices"
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:454
-msgid "Schedule item"
-msgstr ""
-
-#: src/Admin/manage-event-schedule/EventSchedule.js:467
-#: src/Admin/manage-event-schedule/EventSchedule.js:587
+#: src/Admin/manage-event-schedule/EventSchedule.js:472
+#: src/Admin/manage-event-schedule/EventSchedule.js:592
 msgid "Bookable"
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:471
-#: src/Admin/manage-event-schedule/EventSchedule.js:595
+#: src/Admin/manage-event-schedule/EventSchedule.js:476
+#: src/Admin/manage-event-schedule/EventSchedule.js:600
 msgid "Not bookable"
 msgstr ""
 
-#. translators: %s: schedule entry name
-#: src/Admin/manage-event-schedule/EventSchedule.js:492
-#, js-format
-msgid "Remove %s"
-msgstr ""
-
-#: src/Admin/manage-event-schedule/EventSchedule.js:499
-#: src/Admin/sources/components/DataSourceItem.js:254
-msgid "Remove"
-msgstr ""
-
 #. translators: %s: comma-separated names of other schedule entries
-#: src/Admin/manage-event-schedule/EventSchedule.js:520
+#: src/Admin/manage-event-schedule/EventSchedule.js:525
 #, js-format
 msgid "Runs at the same time as %s."
 msgid_plural "Runs at the same time as: %s."
 msgstr[0] ""
 msgstr[1] ""
 
-#. translators: 1: schedule entry name, 2: room or location
-#: src/Admin/manage-event-schedule/EventSchedule.js:531
-#, js-format
-msgid "%1$s (%2$s)"
-msgstr ""
-
-#: src/Admin/manage-event-schedule/EventSchedule.js:553
+#: src/Admin/manage-event-schedule/EventSchedule.js:558
 msgid "Title"
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:576
+#: src/Admin/manage-event-schedule/EventSchedule.js:581
 msgid "Booking"
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:610
+#: src/Admin/manage-event-schedule/EventSchedule.js:615
 msgid "Not bookable keeps the workshop on the schedule and stops new bookings. Price and capacity stay in Prices."
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:614
+#: src/Admin/manage-event-schedule/EventSchedule.js:619
 msgid "A schedule item is never a ticket choice. To take bookings, add it as an add-on in Prices and use Add workshop."
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:630
+#: src/Admin/manage-event-schedule/EventSchedule.js:635
 msgid "Start date"
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:652
+#: src/Admin/manage-event-schedule/EventSchedule.js:657
 msgid "Start time"
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:673
+#: src/Admin/manage-event-schedule/EventSchedule.js:678
 msgid "End date"
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:695
+#: src/Admin/manage-event-schedule/EventSchedule.js:700
 msgid "End time"
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:717
+#: src/Admin/manage-event-schedule/EventSchedule.js:722
 msgid "Room or location"
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:735
+#: src/Admin/manage-event-schedule/EventSchedule.js:740
 msgid "Description"
 msgstr ""
 
-#: src/Admin/manage-event-schedule/EventSchedule.js:759
+#: src/Admin/manage-event-schedule/EventSchedule.js:771
 msgid "Remove from schedule"
 msgstr ""
 
 #: src/Admin/manage-event-schedule/index.js:34
 msgid "Schedule"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/ScheduleContributors.js:103
+msgid "The contributors could not be loaded."
+msgstr ""
+
+#: src/Admin/manage-event-schedule/ScheduleContributors.js:149
+msgid "Contributors"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/ScheduleContributors.js:157
+msgid "Save the schedule first, then assign contributors to this item."
+msgstr ""
+
+#: src/Admin/manage-event-schedule/ScheduleContributors.js:186
+msgid "No contributors yet."
+msgstr ""
+
+#: src/Admin/manage-event-schedule/ScheduleContributors.js:190
+msgid "Add a contributor"
+msgstr ""
+
+#: src/Admin/manage-event-schedule/ScheduleContributors.js:232
+msgid "Saved at once, separately from the schedule. On a series, changes apply to every date, past dates included."
 msgstr ""
 
 #: src/Admin/manage-event-schedule/scheduleModel.js:170
@@ -1730,7 +3102,57 @@ msgid "The end must be after the start."
 msgstr ""
 
 #: src/Admin/manage-event-schedule/scheduleModel.js:268
+#: src/Admin/manage-event-team-members/EventTeamMembers.js:72
+#: src/Admin/team-members/TeamMembersPage.js:128
 msgid "(untitled item)"
+msgstr ""
+
+#: src/Admin/manage-event-team-members/EventTeamMembers.js:93
+msgid "Programme contributors"
+msgstr ""
+
+#: src/Admin/manage-event-team-members/EventTeamMembers.js:119
+msgid "Manage programme contributors in the series’ schedule"
+msgstr ""
+
+#: src/Admin/manage-event-team-members/EventTeamMembers.js:180
+msgid "The team could not be loaded."
+msgstr ""
+
+#: src/Admin/manage-event-team-members/EventTeamMembers.js:237
+msgid "This date is part of a series. All its dates share the series’ team and programme contributors, which are managed on the series. They cannot be changed for this date alone."
+msgstr ""
+
+#: src/Admin/manage-event-team-members/EventTeamMembers.js:246
+msgid "The series has no team members yet."
+msgstr ""
+
+#: src/Admin/manage-event-team-members/EventTeamMembers.js:256
+msgid "Manage the team on the series"
+msgstr ""
+
+#: src/Admin/manage-event-team-members/EventTeamMembers.js:283
+msgid "No one is on this event’s team yet."
+msgstr ""
+
+#: src/Admin/manage-event-team-members/EventTeamMembers.js:287
+msgid "Add a team member"
+msgstr ""
+
+#: src/Admin/manage-event-team-members/EventTeamMembers.js:328
+msgid "People with a role are listed in campaigns in this order. Changes apply to every date of the series, past dates included."
+msgstr ""
+
+#: src/Admin/manage-event-team-members/EventTeamMembers.js:332
+msgid "People with a role are listed in campaigns in this order."
+msgstr ""
+
+#: src/Admin/manage-event-team-members/EventTeamMembers.js:339
+msgid "The team member directory is empty. Add people there first."
+msgstr ""
+
+#: src/Admin/manage-event-team-members/EventTeamMembers.js:347
+msgid "Manage team members"
 msgstr ""
 
 #: src/Admin/meta/MetaCalendarTest.js:28
@@ -2049,7 +3471,8 @@ msgid "Save Meta settings"
 msgstr ""
 
 #: src/Admin/meta/MetaConversions.js:716
-#: src/Admin/organizers/OrganizersPage.js:513
+#: src/Admin/organizers/OrganizersPage.js:490
+#: src/Admin/team-members/TeamMembersPage.js:836
 #: src/Admin/whatsapp/WhatsAppConnection.js:672
 msgid "Discard changes"
 msgstr ""
@@ -2350,15 +3773,12 @@ msgid "Sent by"
 msgstr ""
 
 #: src/Admin/meta/SentRequests.js:760
+#: src/Frontend/marketing-assets/App.js:310
 msgid "Everyone"
 msgstr ""
 
 #: src/Admin/meta/SentRequests.js:767
 msgid "Administrator tests"
-msgstr ""
-
-#: src/Admin/meta/SentRequests.js:795
-msgid "All events"
 msgstr ""
 
 #: src/Admin/meta/SentRequests.js:824
@@ -2452,124 +3872,131 @@ msgid "Messages: not reported"
 msgstr ""
 
 #. translators: %s: error message returned by the server
-#: src/Admin/organizers/OrganizersPage.js:75
+#: src/Admin/organizers/OrganizersPage.js:77
 #, js-format
 msgid "The organizer was not saved: %s"
 msgstr ""
 
-#: src/Admin/organizers/OrganizersPage.js:81
+#: src/Admin/organizers/OrganizersPage.js:83
 msgid "The organizer was not saved. Try again."
 msgstr ""
 
-#: src/Admin/organizers/OrganizersPage.js:231
+#: src/Admin/organizers/OrganizersPage.js:203
 msgid "Organizer added."
 msgstr ""
 
-#: src/Admin/organizers/OrganizersPage.js:263
+#: src/Admin/organizers/OrganizersPage.js:235
 msgid "Loading organizers…"
 msgstr ""
 
-#: src/Admin/organizers/OrganizersPage.js:275
+#: src/Admin/organizers/OrganizersPage.js:247
+#: src/Admin/team-members/TeamMembersPage.js:478
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:360
 msgid "Name"
 msgstr ""
 
-#: src/Admin/organizers/OrganizersPage.js:278
-#: src/Admin/organizers/OrganizersPage.js:318
+#: src/Admin/organizers/OrganizersPage.js:250
+#: src/Admin/organizers/OrganizersPage.js:290
 msgid "Notification addresses"
 msgstr ""
 
-#: src/Admin/organizers/OrganizersPage.js:284
+#: src/Admin/organizers/OrganizersPage.js:256
 #: src/Admin/sources/SourcesList.js:259
+#: src/Admin/team-members/TeamMembersPage.js:487
+#: src/Admin/whatsapp-reminders/RemindersPage.js:265
+#: src/Admin/whatsapp-reminders/RemindersPage.js:355
 msgid "Actions"
 msgstr ""
 
-#: src/Admin/organizers/OrganizersPage.js:309
+#: src/Admin/organizers/OrganizersPage.js:281
 msgid "Default — used for the whole site"
 msgstr ""
 
 #. translators: %d: number of notification email addresses
-#: src/Admin/organizers/OrganizersPage.js:326
+#: src/Admin/organizers/OrganizersPage.js:298
 #, js-format
 msgid "%d address"
 msgid_plural "%d addresses"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/organizers/OrganizersPage.js:334
+#: src/Admin/organizers/OrganizersPage.js:306
+#: src/Admin/team-members/TeamMembersPage.js:536
 msgid "None"
-msgstr ""
-
-#: src/Admin/organizers/OrganizersPage.js:342
-#: src/Admin/sources/SourcesList.js:307
-msgid "Edit"
 msgstr ""
 
 #. translators: %s: organizer name
 #. translators: %s: event feed name
-#: src/Admin/organizers/OrganizersPage.js:348
+#. translators: %s: team member name
+#: src/Admin/organizers/OrganizersPage.js:320
 #: src/Admin/sources/SourcesList.js:310
+#: src/Admin/team-members/TeamMembersPage.js:550
 #, js-format
 msgid "Edit “%s”"
 msgstr ""
 
-#: src/Admin/organizers/OrganizersPage.js:379
-#: src/Admin/organizers/OrganizersPage.js:419
+#: src/Admin/organizers/OrganizersPage.js:351
+#: src/Admin/organizers/OrganizersPage.js:391
 msgid "Add organizer"
 msgstr ""
 
-#: src/Admin/organizers/OrganizersPage.js:388
+#: src/Admin/organizers/OrganizersPage.js:360
 msgid "The default organizer identifies the whole site in its structured data. Additional organizers have their own identity and private notification addresses."
 msgstr ""
 
-#: src/Admin/organizers/OrganizersPage.js:401
+#: src/Admin/organizers/OrganizersPage.js:373
 msgid "Central sales summary"
 msgstr ""
 
-#: src/Admin/organizers/OrganizersPage.js:405
+#: src/Admin/organizers/OrganizersPage.js:377
 msgid "One email with every organizer’s ticket sales and paid revenue, grouped by organizer and event. It goes to the default organizer’s notification addresses on its own schedule, whatever each organizer chose for its own summary."
 msgstr ""
 
-#: src/Admin/organizers/OrganizersPage.js:421
+#: src/Admin/organizers/OrganizersPage.js:393
 msgid "Edit default organizer"
 msgstr ""
 
 #. translators: %s: organizer name
-#: src/Admin/organizers/OrganizersPage.js:425
+#: src/Admin/organizers/OrganizersPage.js:397
 #, js-format
 msgid "Edit organizer: %s"
 msgstr ""
 
-#: src/Admin/organizers/OrganizersPage.js:439
+#: src/Admin/organizers/OrganizersPage.js:411
 msgid "← All organizers"
 msgstr ""
 
-#: src/Admin/organizers/OrganizersPage.js:452
+#: src/Admin/organizers/OrganizersPage.js:424
+#: src/Admin/team-members/TeamMembersPage.js:759
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:250
+#: src/Admin/whatsapp-reminders/RemindersPage.js:292
 msgid "Unsaved changes"
 msgstr ""
 
-#: src/Admin/organizers/OrganizersPage.js:481
+#: src/Admin/organizers/OrganizersPage.js:453
 msgid "An additional organizer with its own identity and private notification addresses. Fields left blank stay empty: nothing is copied from the default organizer."
 msgstr ""
 
-#: src/Admin/organizers/OrganizersPage.js:494
+#: src/Admin/organizers/OrganizersPage.js:466
 msgid "Sales summary"
 msgstr ""
 
-#: src/Admin/organizers/OrganizersPage.js:498
+#: src/Admin/organizers/OrganizersPage.js:470
 msgid "An email with this organizer’s own events only: tickets sold and paid revenue per event in the previous day or week, with totals to date. It is off until you choose how often to send it, and it is saved separately from the organizer details above."
 msgstr ""
 
-#: src/Admin/organizers/OrganizersPage.js:517
+#: src/Admin/organizers/OrganizersPage.js:494
+#: src/Admin/team-members/TeamMembersPage.js:840
 msgid "Keep editing"
 msgstr ""
 
 #. translators: %s: organizer name
-#: src/Admin/organizers/OrganizersPage.js:525
+#: src/Admin/organizers/OrganizersPage.js:502
 #, js-format
 msgid "Discard your unsaved changes to “%s”? The saved organizer stays as it was."
 msgstr ""
 
-#: src/Admin/organizers/OrganizersPage.js:535
+#: src/Admin/organizers/OrganizersPage.js:512
 msgid "Discard the organizer you started adding? Nothing has been saved yet."
 msgstr ""
 
@@ -2712,10 +4139,6 @@ msgstr ""
 
 #: src/Admin/source-view/FeedHeader.js:100
 msgid "Edit event feed"
-msgstr ""
-
-#: src/Admin/source-view/FeedHeader.js:109
-msgid "Open public page"
 msgstr ""
 
 #: src/Admin/source-view/FeedHeader.js:111
@@ -2940,6 +4363,8 @@ msgstr ""
 
 #: src/Admin/sources/SourcesList.js:38
 #: src/Admin/sources/SourcesList.js:270
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:246
+#: src/Admin/whatsapp-reminders/RemindersPage.js:284
 msgid "(untitled feed)"
 msgstr ""
 
@@ -3006,6 +4431,8 @@ msgid "Feed"
 msgstr ""
 
 #: src/Admin/sources/SourcesList.js:258
+#: src/Admin/whatsapp-reminders/RemindersPage.js:256
+#: src/Admin/whatsapp-reminders/RemindersPage.js:315
 msgid "Status"
 msgstr ""
 
@@ -3017,12 +4444,10 @@ msgid_plural "%d feed inputs"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/sources/SourcesList.js:331
-msgid "Delete"
-msgstr ""
-
 #. translators: %s: event feed name
+#. translators: %s: team member name
 #: src/Admin/sources/SourcesList.js:341
+#: src/Admin/team-members/TeamMembersPage.js:571
 #, js-format
 msgid "More actions for “%s”"
 msgstr ""
@@ -3062,10 +4487,6 @@ msgstr ""
 msgid "Delete event feed"
 msgstr ""
 
-#: src/Admin/sources/SourcesList.js:480
-msgid "Deleting…"
-msgstr ""
-
 #. translators: %s: event feed slug
 #: src/Admin/sources/SourcesList.js:490
 #, js-format
@@ -3074,6 +4495,685 @@ msgstr ""
 
 #: src/Admin/sources/SourcesList.js:498
 msgid "Events and categories included in the feed are not changed. Deleting the feed cannot be undone."
+msgstr ""
+
+#: src/Admin/team-members/PortraitField.js:29
+#: src/Admin/team-members/PortraitField.js:114
+msgid "Choose portrait"
+msgstr ""
+
+#: src/Admin/team-members/PortraitField.js:30
+msgid "Use as portrait"
+msgstr ""
+
+#: src/Admin/team-members/PortraitField.js:92
+msgid "Portrait"
+msgstr ""
+
+#: src/Admin/team-members/PortraitField.js:98
+msgid "Portrait preview"
+msgstr ""
+
+#: src/Admin/team-members/PortraitField.js:113
+msgid "Replace portrait"
+msgstr ""
+
+#: src/Admin/team-members/PortraitField.js:125
+msgid "Remove portrait"
+msgstr ""
+
+#: src/Admin/team-members/PortraitField.js:131
+msgid "This image is no longer available in the Media Library, so it is left out of promotional material. Restore it there, or replace or remove it here."
+msgstr ""
+
+#: src/Admin/team-members/PortraitField.js:149
+msgid "Removing the portrait keeps the image in the Media Library. Anyone with its direct address can open it, as with other images on this site."
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:78
+msgid "Name (required)"
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:87
+msgid "Enter a name to save."
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:98
+msgid "Surname"
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:110
+msgid "Email address"
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:123
+msgid "Phone number"
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:132
+msgid "Include the international prefix, e.g. +34 600 000 000."
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:142
+msgid "Instagram handle"
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:150
+msgid "Up to 30 letters, numbers, periods or underscores, e.g. @ana.dances."
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:160
+msgid "Facebook profile"
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:169
+msgid "The full address, e.g. https://www.facebook.com/name."
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:179
+msgid "Website"
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:188
+msgid "The full address, e.g. https://example.com."
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:198
+msgid "Grammatical gender"
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:205
+msgid "Not set"
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:212
+msgid "Female"
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:219
+msgid "Male"
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:226
+msgid "Nonbinary"
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:236
+msgid "How to word texts that mention this person. Leave it unset until you know."
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:246
+msgid "Bio"
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:252
+msgid "Plain text for promotional material. Line breaks are kept."
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:266
+msgid "Contact details are visible to administrators only. Adding someone to an event does not publish anything about them."
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:287
+#: src/Admin/team-members/TeamMembersPage.js:668
+#: src/Admin/team-members/TeamMembersPage.js:732
+msgid "Add team member"
+msgstr ""
+
+#: src/Admin/team-members/TeamMemberForm.js:291
+msgid "Save team member"
+msgstr ""
+
+#. translators: %s: start date of the series' first date (YYYY-MM-DD)
+#: src/Admin/team-members/TeamMembersPage.js:102
+#, js-format
+msgid "series from %s"
+msgstr ""
+
+#. translators: %s: comma-separated titles of schedule items
+#: src/Admin/team-members/TeamMembersPage.js:116
+#, js-format
+msgid "programme item: %s"
+msgid_plural "programme items: %s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/team-members/TeamMembersPage.js:151
+msgid "The team member was not saved. Correct the highlighted fields and try again."
+msgstr ""
+
+#. translators: %s: error message returned by the server
+#: src/Admin/team-members/TeamMembersPage.js:159
+#, js-format
+msgid "The team member was not saved: %s"
+msgstr ""
+
+#: src/Admin/team-members/TeamMembersPage.js:165
+msgid "The team member was not saved. Try again."
+msgstr ""
+
+#: src/Admin/team-members/TeamMembersPage.js:206
+msgid "The team members could not be loaded."
+msgstr ""
+
+#: src/Admin/team-members/TeamMembersPage.js:303
+msgid "Team member added."
+msgstr ""
+
+#: src/Admin/team-members/TeamMembersPage.js:304
+msgid "Team member saved. Every event they are on shows the new details."
+msgstr ""
+
+#: src/Admin/team-members/TeamMembersPage.js:340
+#: src/Admin/team-members/TeamMembersPage.js:784
+msgid "The events of this team member could not be loaded."
+msgstr ""
+
+#. translators: %s: team member name
+#: src/Admin/team-members/TeamMembersPage.js:377
+#, js-format
+msgid "%s was deleted from the directory."
+msgstr ""
+
+#: src/Admin/team-members/TeamMembersPage.js:430
+msgid "Loading team members…"
+msgstr ""
+
+#: src/Admin/team-members/TeamMembersPage.js:441
+msgid "No team members yet. Add the people who help run your events, then add them to each event’s team in Manage Event."
+msgstr ""
+
+#: src/Admin/team-members/TeamMembersPage.js:454
+msgid "Clear search"
+msgstr ""
+
+#. translators: %s: search text
+#: src/Admin/team-members/TeamMembersPage.js:461
+#, js-format
+msgid "No team members match “%s”."
+msgstr ""
+
+#: src/Admin/team-members/TeamMembersPage.js:481
+#: src/Admin/team-members/TeamMembersPage.js:512
+msgid "Phone"
+msgstr ""
+
+#: src/Admin/team-members/TeamMembersPage.js:484
+#: src/Admin/team-members/TeamMembersPage.js:520
+#: src/Admin/team-members/TeamMembersPage.js:780
+msgid "Events"
+msgstr ""
+
+#. translators: %d: number of events
+#: src/Admin/team-members/TeamMembersPage.js:528
+#: src/Frontend/marketing-assets/App.js:243
+#, js-format
+msgid "%d event"
+msgid_plural "%d events"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s: team member name
+#: src/Admin/team-members/TeamMembersPage.js:591
+#, js-format
+msgid "Delete team member — %s"
+msgstr ""
+
+#: src/Admin/team-members/TeamMembersPage.js:594
+#: src/Admin/team-members/TeamMembersPage.js:818
+msgid "Delete team member"
+msgstr ""
+
+#: src/Admin/team-members/TeamMembersPage.js:611
+msgid "Checking the events of this team member…"
+msgstr ""
+
+#. translators: 1: team member name, 2: number of events
+#: src/Admin/team-members/TeamMembersPage.js:622
+#, js-format
+msgid "%1$s is assigned to %2$d event, on its team or its programme items. Remove them there in Manage Event before deleting the profile:"
+msgid_plural "%1$s is assigned to %2$d events, on their teams or programme items. Remove them from each in Manage Event before deleting the profile:"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s: team member name
+#: src/Admin/team-members/TeamMembersPage.js:639
+#, js-format
+msgid "Delete the profile of %s, with all their contact details? It is not on any event’s team. This cannot be undone."
+msgstr ""
+
+#: src/Admin/team-members/TeamMembersPage.js:677
+msgid "People who help run your events. Add them to an event’s team in Manage Event → Event Details; a series shares one team across all its dates."
+msgstr ""
+
+#. translators: %d: number of team members shown
+#: src/Admin/team-members/TeamMembersPage.js:694
+#, js-format
+msgid "%d team member"
+msgid_plural "%d team members"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/team-members/TeamMembersPage.js:707
+msgid "Search team members"
+msgstr ""
+
+#. translators: %s: team member name
+#: src/Admin/team-members/TeamMembersPage.js:729
+#, js-format
+msgid "Edit team member: %s"
+msgstr ""
+
+#: src/Admin/team-members/TeamMembersPage.js:743
+msgid "← All team members"
+msgstr ""
+
+#: src/Admin/team-members/TeamMembersPage.js:795
+msgid "Not on any event’s team yet. Add them in Manage Event → Event Details."
+msgstr ""
+
+#. translators: %s: team member name
+#: src/Admin/team-members/TeamMembersPage.js:848
+#, js-format
+msgid "Discard your unsaved changes to “%s”? The saved profile stays as it was."
+msgstr ""
+
+#: src/Admin/team-members/TeamMembersPage.js:854
+msgid "Discard the team member you started adding? Nothing has been saved yet."
+msgstr ""
+
+#: src/Admin/team-members/utils.js:69
+msgid "(unnamed team member)"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:10
+msgid "Monday"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:11
+msgid "Tuesday"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:12
+msgid "Wednesday"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:13
+msgid "Thursday"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:14
+msgid "Friday"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:15
+msgid "Saturday"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:16
+msgid "Sunday"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:148
+msgid "Choose a team member."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:151
+msgid "This team member has no phone number in international format. Add it in Team members, or enter a name and number instead."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:159
+msgid "Enter the collaborator’s name."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:165
+msgid "Enter the WhatsApp number in international format, with the country code, such as +34 600 123 456."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:172
+msgid "Confirm that the collaborator agreed to receive these reminders at this number."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:178
+msgid "Enter the time as hours and minutes."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:246
+msgid "Not set up"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:253
+msgid "Paused"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:261
+msgid "On, not sending"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:266
+msgid "On"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:281
+msgid "The event feed is disabled."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:284
+msgid "The event feed has no page, so its weekly summary is unavailable."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:291
+msgid "No collaborator is designated."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:296
+msgid "The team member directory is turned off."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:301
+msgid "The collaborator’s team member profile was deleted."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:306
+msgid "The collaborator has no number in international format."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:311
+msgid "The collaborator’s number changed. Confirm their agreement again."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:317
+msgid "No template is chosen."
+msgstr ""
+
+#. translators: %s: link to the feed's weekly summary
+#: src/Admin/whatsapp-reminders/model.js:322
+#, js-format
+msgid "The feed’s link changed to %s. Choose a template whose button opens it."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/model.js:330
+msgid "The WhatsApp connection is not validated."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:125
+msgid "No template"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:147
+msgid "Reminder saved."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:154
+msgid "The reminder could not be saved. Try again."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:192
+msgid "Collaborator removed. No reminder is sent until another one is designated."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:201
+msgid "The collaborator could not be removed. Try again."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:219
+#: src/Admin/whatsapp-reminders/RemindersPage.js:308
+msgid "Nobody yet"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:225
+msgid "A team member"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:234
+msgid "Someone else"
+msgstr ""
+
+#. translators: %s: event feed name
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:244
+#, js-format
+msgid "Reminder for %s"
+msgstr ""
+
+#. translators: %s: what keeps the reminder from sending
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:271
+#, js-format
+msgid "This reminder is on but is not sent: %s"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:281
+msgid "The collaborator gets a WhatsApp message on the chosen day. Its button opens this page, where they copy the week’s events and share them with their community themselves:"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:291
+msgid "Send the weekly reminder"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:300
+#: src/Admin/whatsapp-reminders/RemindersPage.js:250
+#: src/Admin/whatsapp-reminders/RemindersPage.js:301
+msgid "Collaborator"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:308
+#: src/Frontend/marketing-assets/App.js:302
+msgid "Team member"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:316
+msgid "Choose a team member"
+msgstr ""
+
+#. translators: %s: team member name
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:335
+#, js-format
+msgid "%s — no phone number"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:347
+msgid "Edit numbers in Team members"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:367
+msgid "WhatsApp number"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:371
+msgid "With the country code, such as +34 600 123 456."
+msgstr ""
+
+#. translators: 1: collaborator name, 2: phone number
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:387
+#, js-format
+msgid "%1$s agreed to receive these weekly WhatsApp reminders at %2$s."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:394
+msgid "The collaborator agreed to receive these weekly WhatsApp reminders at this number."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:405
+#: src/Admin/whatsapp/WhatsAppConnection.js:789
+msgid "Template"
+msgstr ""
+
+#. translators: %s: link to the feed's weekly summary
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:411
+#, js-format
+msgid "Approved templates without parameters whose button opens %s."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:420
+msgid "Validate the WhatsApp connection to choose a template."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:425
+#: src/Admin/whatsapp-reminders/RemindersPage.js:205
+msgid "Open Fair Events → WhatsApp"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:434
+#: src/Admin/whatsapp/WhatsAppConnection.js:771
+msgid "Loading templates…"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:449
+msgid "No approved template has a button opening this link yet. Submit one in WhatsApp Manager with this link as its static button URL, then reload this page."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:458
+msgid "Send on"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:465
+msgid "Send at"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:466
+msgid "In the site’s timezone."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:482
+msgid "Save reminder"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:494
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:521
+msgid "Remove collaborator"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:501
+msgid "Close"
+msgstr ""
+
+#. translators: %s: collaborator name
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:515
+#, js-format
+msgid "Remove collaborator — %s"
+msgstr ""
+
+#. translators: 1: collaborator name, 2: event feed name
+#: src/Admin/whatsapp-reminders/ReminderEditor.js:534
+#, js-format
+msgid "%1$s will no longer get the weekly WhatsApp reminder for %2$s. No reminder is sent for this feed until you designate another collaborator. The schedule, template and history are kept, and unsaved changes in the form are discarded."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RemindersPage.js:91
+msgid "The sharing reminders could not be loaded."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RemindersPage.js:123
+msgid "The templates could not be loaded from WhatsApp."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RemindersPage.js:170
+msgid "← Event notifications"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RemindersPage.js:177
+msgid "Designate one collaborator per event feed. Each week they get a WhatsApp message whose button opens the feed’s weekly summary, so they can copy the prepared message and share it with their community. Nothing is posted to groups automatically."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RemindersPage.js:194
+msgid "Loading reminders…"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RemindersPage.js:200
+msgid "The WhatsApp connection is not validated, so no reminder is sent. Validate it first."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RemindersPage.js:219
+msgid "Create an event feed"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RemindersPage.js:227
+msgid "There is no event feed yet. Each reminder links to an event feed’s weekly summary."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RemindersPage.js:236
+msgid "Sharing reminders by event feed"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RemindersPage.js:244
+#: src/Admin/whatsapp-reminders/RemindersPage.js:277
+#: src/Admin/whatsapp-reminders/RunHistory.js:116
+#: src/Admin/whatsapp-reminders/RunHistory.js:145
+msgid "Event feed"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RemindersPage.js:259
+#: src/Admin/whatsapp-reminders/RemindersPage.js:330
+msgid "Next send"
+msgstr ""
+
+#. translators: 1: weekday, 2: time of day
+#: src/Admin/whatsapp-reminders/RemindersPage.js:339
+#, js-format
+msgid "%1$s at %2$s"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RemindersPage.js:348
+msgid "Not scheduled"
+msgstr ""
+
+#. translators: %s: event feed name
+#: src/Admin/whatsapp-reminders/RemindersPage.js:367
+#, js-format
+msgid "Edit the reminder for %s"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RemindersPage.js:379
+msgid "Set up"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RunHistory.js:39
+msgid "Skipped"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RunHistory.js:44
+msgid "Failed"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RunHistory.js:49
+#: src/Admin/whatsapp/DeliveryHistory.js:73
+#: src/Admin/whatsapp/WhatsAppConnection.js:182
+msgid "Outcome unknown"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RunHistory.js:75
+#: src/Admin/whatsapp-reminders/RunHistory.js:108
+msgid "Reminder history"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RunHistory.js:83
+#: src/Admin/whatsapp/DeliveryHistory.js:216
+msgid "Refresh statuses"
+msgstr ""
+
+#. translators: %d: number of days
+#: src/Admin/whatsapp-reminders/RunHistory.js:90
+#, js-format
+msgid "Each scheduled run is listed once, whether it sent, skipped or failed. A week is never sent twice. Runs are kept for %d day."
+msgid_plural "Each scheduled run is listed once, whether it sent, skipped or failed. A week is never sent twice. Runs are kept for %d days."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/whatsapp-reminders/RunHistory.js:101
+msgid "No reminder has run yet."
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RunHistory.js:125
+#: src/Admin/whatsapp-reminders/RunHistory.js:171
+msgid "Sent to"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RunHistory.js:131
+#: src/Admin/whatsapp-reminders/RunHistory.js:180
+msgid "Outcome"
+msgstr ""
+
+#: src/Admin/whatsapp-reminders/RunHistory.js:152
+msgid "(deleted feed)"
 msgstr ""
 
 #: src/Admin/whatsapp/DefaultTestNumber.js:114
@@ -3165,11 +5265,6 @@ msgstr ""
 msgid "Not accepted"
 msgstr ""
 
-#: src/Admin/whatsapp/DeliveryHistory.js:73
-#: src/Admin/whatsapp/WhatsAppConnection.js:182
-msgid "Outcome unknown"
-msgstr ""
-
 #: src/Admin/whatsapp/DeliveryHistory.js:74
 msgid "WhatsApp did not confirm the send, so it may or may not have gone out. It was not retried."
 msgstr ""
@@ -3198,10 +5293,6 @@ msgid "Messages sent in the last %d day, with their latest delivery update. Only
 msgid_plural "Messages sent in the last %d days, with their latest delivery update. Only the last three digits of each recipient number are kept."
 msgstr[0] ""
 msgstr[1] ""
-
-#: src/Admin/whatsapp/DeliveryHistory.js:216
-msgid "Refresh statuses"
-msgstr ""
 
 #: src/Admin/whatsapp/DeliveryHistory.js:224
 msgid "Failed to load the delivery updates. Refresh to try again."
@@ -3565,14 +5656,6 @@ msgstr ""
 msgid "Sends one approved template without parameters, once. Only send to someone who agreed to receive it. Only the last three digits of the recipient number are kept, in Recent messages."
 msgstr ""
 
-#: src/Admin/whatsapp/WhatsAppConnection.js:771
-msgid "Loading templates…"
-msgstr ""
-
-#: src/Admin/whatsapp/WhatsAppConnection.js:789
-msgid "Template"
-msgstr ""
-
 #: src/Admin/whatsapp/WhatsAppConnection.js:800
 msgid "Choose a template"
 msgstr ""
@@ -3602,5 +5685,106 @@ msgid "Sending the test template…"
 msgstr ""
 
 #: src/Admin/whatsapp/WhatsAppPage.js:27
-msgid "Connect a WhatsApp Business sender and send a test template. Scheduled WhatsApp notifications are not available yet, so nothing is sent automatically."
+msgid "Connect a WhatsApp Business sender and send a test template. Weekly sharing reminders to event feed collaborators are set up in Event notifications → WhatsApp sharing reminders; nothing else is sent automatically."
+msgstr ""
+
+#: src/Frontend/marketing-assets/App.js:88
+msgid "The marketing assets could not be loaded. Check your connection and try again."
+msgstr ""
+
+#: src/Frontend/marketing-assets/App.js:118
+msgid "More entries could not be loaded. Try again."
+msgstr ""
+
+#: src/Frontend/marketing-assets/App.js:150
+msgid "Loading…"
+msgstr ""
+
+#: src/Frontend/marketing-assets/App.js:151
+msgid "Show more"
+msgstr ""
+
+#: src/Frontend/marketing-assets/App.js:172
+msgid "Loading events…"
+msgstr ""
+
+#: src/Frontend/marketing-assets/App.js:173
+msgid "Loading marketing assets…"
+msgstr ""
+
+#: src/Frontend/marketing-assets/App.js:203
+msgid "There are no events yet."
+msgstr ""
+
+#: src/Frontend/marketing-assets/App.js:214
+msgid "No assets match these filters."
+msgstr ""
+
+#: src/Frontend/marketing-assets/App.js:224
+#: src/Frontend/marketing-assets/App.js:350
+msgid "Clear filters"
+msgstr ""
+
+#: src/Frontend/marketing-assets/App.js:231
+msgid "There are no marketing assets for this event yet. Check again later."
+msgstr ""
+
+#. translators: %d: number of assets
+#: src/Frontend/marketing-assets/App.js:254
+#, js-format
+msgid "%d asset matches the filters."
+msgid_plural "%d assets match the filters."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of assets
+#: src/Frontend/marketing-assets/App.js:265
+#, js-format
+msgid "%d asset"
+msgid_plural "%d assets"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Frontend/marketing-assets/App.js:296
+msgid "Filter assets"
+msgstr ""
+
+#: src/Frontend/marketing-assets/App.js:331
+msgid "All use cases"
+msgstr ""
+
+#. translators: %s: comma-separated team member names
+#: src/Frontend/marketing-assets/App.js:420
+#, js-format
+msgid "With %s"
+msgstr ""
+
+#. translators: %s: asset use case
+#: src/Frontend/marketing-assets/App.js:434
+#, js-format
+msgid "Image for %s"
+msgstr ""
+
+#: src/Frontend/marketing-assets/App.js:447
+msgid "The image of this asset is no longer available."
+msgstr ""
+
+#: src/Frontend/marketing-assets/App.js:472
+msgid "Copy text"
+msgstr ""
+
+#: src/Frontend/marketing-assets/App.js:482
+msgid "Download image"
+msgstr ""
+
+#: src/Frontend/marketing-assets/App.js:494
+msgid "Open image"
+msgstr ""
+
+#: src/Frontend/marketing-assets/App.js:510
+msgid "Text copied."
+msgstr ""
+
+#: src/Frontend/marketing-assets/App.js:512
+msgid "Couldn’t copy automatically. The text is selected: copy it with your device’s copy command."
 msgstr ""

@@ -63,8 +63,8 @@ msgstr "Échec du traitement de la soumission. Veuillez réessayer."
 
 #: src/API/FairFormController.php:271
 #: src/blocks/fair-form/render.php:18
-#: src/blocks/fair-form/editor.js:168
-#: src/blocks/fair-form/frontend.js:138
+#: src/blocks/fair-form/editor.js:170
+#: src/blocks/fair-form/frontend.js:139
 msgid "Thank you for your submission!"
 msgstr "Merci pour votre soumission !"
 
@@ -151,8 +151,8 @@ msgid "Select an option..."
 msgstr "Sélectionnez une option..."
 
 #: src/blocks/fair-form/render.php:17
-#: src/blocks/fair-form/editor.js:160
-#: src/blocks/fair-form/editor.js:225
+#: src/blocks/fair-form/editor.js:162
+#: src/blocks/fair-form/editor.js:227
 msgid "Submit"
 msgstr "Soumettre"
 
@@ -176,7 +176,7 @@ msgstr "Nouvelle soumission de formulaire — %s"
 
 #: src/Services/FormNotificationService.php:222
 #: src/Admin/form-answers/FormAnswers.js:166
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:158
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:159
 #: src/Admin/submission-detail/SubmissionDetail.js:431
 msgid "Email"
 msgstr "E-mail"
@@ -244,7 +244,7 @@ msgstr "Impossible d'enregistrer le fichier téléchargé."
 #: src/Admin/answers-overview/AnswersOverview.js:54
 #: src/Admin/form-answers/FormAnswers.js:152
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:624
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:140
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:141
 msgid "Name"
 msgstr "Nom"
 
@@ -353,7 +353,7 @@ msgid "The submission could not be updated. Try again."
 msgstr "La soumission n’a pas pu être mise à jour. Réessayez."
 
 #: src/Admin/form-answers/FormAnswers.js:184
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:232
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:233
 #: src/Admin/submission-detail/SubmissionDetail.js:435
 msgid "Date"
 msgstr "Date"
@@ -364,12 +364,12 @@ msgid "Edit"
 msgstr "Modifier"
 
 #: src/Admin/form-answers/FormAnswers.js:213
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:364
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:365
 msgid "View"
 msgstr "Afficher"
 
 #: src/Admin/form-answers/FormAnswers.js:222
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:373
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:374
 msgid "Delete"
 msgstr "Supprimer"
 
@@ -404,83 +404,83 @@ msgstr "Réessayer"
 msgid "Save"
 msgstr "Enregistrer"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:164
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:165
 msgid "Status"
 msgstr "Statut"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:169
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:179
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:170
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:180
 msgid "Pending"
 msgstr "En attente"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:170
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:182
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:171
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:183
 msgid "Confirmed"
 msgstr "Confirmé"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:189
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:190
 msgid "Mailing"
 msgstr "Envoi postal"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:194
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:204
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:195
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:205
 msgid "Minimal"
 msgstr "Minimal"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:195
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:207
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:196
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:208
 msgid "Marketing"
 msgstr "Marketing"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:214
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:215
 msgid "Subscribed Categories"
 msgstr "Catégories abonnées"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:272
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:273
 msgid "Photo"
 msgstr "Photo"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:273
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:274
 msgid "File"
 msgstr "Fichier"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:428
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:429
 #: src/Admin/submission-detail/SubmissionDetail.js:300
 msgid "Clipboard not available."
 msgstr "Presse-papiers non disponible."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:437
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:438
 msgid "Message copied to clipboard."
 msgstr "Message copié dans le presse-papiers."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:443
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:444
 #: src/Admin/submission-detail/SubmissionDetail.js:318
 msgid "Failed to copy."
 msgstr "Échec de la copie."
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:467
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:468
 msgid "Questionnaire Responses"
 msgstr "Réponses au questionnaire"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:471
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:472
 msgid "Back to Answers Overview"
 msgstr "Retour à l'aperçu des réponses"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:479
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:480
 msgid "Event edit page"
 msgstr "Page d'édition de l'événement"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:487
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:488
 msgid "Post entry"
 msgstr "Entrée de publication"
 
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:412
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:496
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:497
 msgid "Add participants to group"
 msgstr "Ajouter des participants au groupe"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:504
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:571
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:505
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:572
 msgid "Export"
 msgstr "Exporter"
 
@@ -504,7 +504,7 @@ msgstr "Groupe"
 msgid "— Select a group —"
 msgstr "— Sélectionner un groupe —"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:646
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:647
 msgid "Close"
 msgstr "Fermer"
 
@@ -516,39 +516,39 @@ msgstr "Créer le groupe et ajouter"
 msgid "Add to group"
 msgstr "Ajouter au groupe"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:576
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:577
 msgid "Columns"
 msgstr "Colonnes"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:580
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:581
 msgid "All columns"
 msgstr "Toutes les colonnes"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:584
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:585
 msgid "Handpicked columns"
 msgstr "Colonnes sélectionnées"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:609
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:610
 msgid "Format"
 msgstr "Format"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:613
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:614
 msgid "Markdown"
 msgstr "Markdown"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:616
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:617
 msgid "CSV"
 msgstr "CSV"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:618
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:619
 msgid "One line per person"
 msgstr "Une ligne par personne"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:654
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:655
 msgid "Download CSV"
 msgstr "Télécharger CSV"
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:662
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:663
 msgid "Copy to clipboard"
 msgstr "Copier dans le presse-papiers"
 
@@ -772,7 +772,7 @@ msgstr "Un identifiant unique pour cette question (par exemple « birthdate »).
 msgid "Placeholder"
 msgstr "Espace réservé"
 
-#: src/blocks/fair-form-file-upload/editor.js:98
+#: src/blocks/fair-form-file-upload/editor.js:99
 #: src/blocks/fair-form-long-text/editor.js:102
 #: src/blocks/fair-form-phone/editor.js:99
 #: src/blocks/fair-form-url/editor.js:103
@@ -809,7 +809,7 @@ msgstr "Types MIME ou extensions (par exemple « image/* », « .pdf,.doc », «
 msgid "Max File Size (MB)"
 msgstr "Taille maximale du fichier (Mo)"
 
-#: src/blocks/fair-form-file-upload/editor.js:109
+#: src/blocks/fair-form-file-upload/editor.js:110
 msgid "Max file size:"
 msgstr "Taille maximale du fichier :"
 
@@ -890,43 +890,43 @@ msgstr "Une fois que le visiteur quitte le champ, tous les détails de l'événe
 msgid "https://example.com"
 msgstr ""
 
-#: src/blocks/fair-form/editor.js:99
+#: src/blocks/fair-form/editor.js:101
 msgid "Optional. Link this form to a specific event."
 msgstr "Facultatif. Liez ce formulaire à un événement spécifique."
 
-#: src/blocks/fair-form/editor.js:153
+#: src/blocks/fair-form/editor.js:155
 msgid "Form Settings"
 msgstr "Paramètres du formulaire"
 
-#: src/blocks/fair-form/editor.js:155
+#: src/blocks/fair-form/editor.js:157
 msgid "Submit Button Text"
 msgstr "Texte du bouton de soumission"
 
-#: src/blocks/fair-form/editor.js:163
+#: src/blocks/fair-form/editor.js:165
 msgid "Success Message"
 msgstr "Message de succès"
 
-#: src/blocks/fair-form/editor.js:172
+#: src/blocks/fair-form/editor.js:174
 msgid "Message shown after successful form submission."
 msgstr "Message affichée après la soumission réussie du formulaire."
 
-#: src/blocks/fair-form/editor.js:184
+#: src/blocks/fair-form/editor.js:186
 msgid "Notification Email"
 msgstr "Email de notification"
 
-#: src/blocks/fair-form/editor.js:193
+#: src/blocks/fair-form/editor.js:195
 msgid "Send a notification to this email when someone submits the form. Leave empty to disable."
 msgstr "Envoyer une notification à cet email lorsque quelqu'un soumet le formulaire. Laisser vide pour désactiver."
 
-#: src/blocks/fair-form/editor.js:199
+#: src/blocks/fair-form/editor.js:201
 msgid "Form Title"
 msgstr "Titre du formulaire"
 
-#: src/blocks/fair-form/editor.js:204
+#: src/blocks/fair-form/editor.js:206
 msgid "e.g. Volunteer signup"
 msgstr "par ex. Inscription bénévole"
 
-#: src/blocks/fair-form/editor.js:208
+#: src/blocks/fair-form/editor.js:210
 msgid "Internal label for grouping submissions by form. Does not appear on the frontend."
 msgstr "Étiquette interne pour regrouper les soumissions par formulaire. N'apparaît pas sur le front-end."
 
@@ -934,7 +934,7 @@ msgstr "Étiquette interne pour regrouper les soumissions par formulaire. N'appa
 msgid "Submitting..."
 msgstr "Envoi en cours..."
 
-#: src/blocks/fair-form/frontend.js:153
+#: src/blocks/fair-form/frontend.js:154
 msgid "An error occurred. Please try again."
 msgstr "Une erreur s'est produite. Veuillez réessayer."
 
@@ -1467,7 +1467,7 @@ msgstr "Groupe cible : %s"
 
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:566
 #: src/blocks/fair-form-conditional/editor.js:603
-#: src/blocks/shared/OptionSourceControls.js:149
+#: src/blocks/shared/OptionSourceControls.js:151
 msgid "Try again"
 msgstr "Réessayer"
 
@@ -1490,13 +1490,13 @@ msgid "Description (optional)"
 msgstr "Description (facultatif)"
 
 #. translators: %s: group name
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:518
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:519
 #, js-format
 msgid "Group: %s"
 msgstr "Groupe : %s"
 
 #. translators: %d: number of participants
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:533
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:534
 #, js-format
 msgid "%d participant could not be added."
 msgid_plural "%d participants could not be added."
@@ -1516,12 +1516,12 @@ msgid "“%s” is no longer one of this question’s choices. Pick a current ch
 msgstr "« %s » n'est plus l'un des choix de cette question. Choisissez un choix actuel ou mettez à jour la condition."
 
 #: src/blocks/fair-form-conditional/editor.js:581
-#: src/blocks/shared/OptionSourceControls.js:156
+#: src/blocks/shared/OptionSourceControls.js:158
 msgid "Loading categories…"
 msgstr "Chargement des catégories…"
 
 #: src/blocks/fair-form-conditional/editor.js:593
-#: src/blocks/shared/OptionSourceControls.js:144
+#: src/blocks/shared/OptionSourceControls.js:146
 msgid "The categories could not be loaded. Check your connection and try again."
 msgstr "Les catégories n'ont pas pu être chargées. Vérifiez votre connexion et réessayez."
 
@@ -1553,36 +1553,36 @@ msgstr "Les choix suivent vos catégories au fur et à mesure qu'elles sont ajou
 msgid "Parent category"
 msgstr "Catégorie parent"
 
-#: src/blocks/shared/OptionSourceControls.js:99
+#: src/blocks/shared/OptionSourceControls.js:101
 msgid "All of its subcategories, at every level, become choices. The parent itself is not one."
 msgstr "Toutes ses sous-catégories, à tous les niveaux, deviennent des choix. Le parent lui-même n'en est pas un."
 
 #. translators: %d: number of typed options
-#: src/blocks/shared/OptionSourceControls.js:129
+#: src/blocks/shared/OptionSourceControls.js:131
 #, js-format
 msgid "Your %d typed option is kept. Switch back to typed options to use it again."
 msgid_plural "Your %d typed options are kept. Switch back to typed options to use them again."
 msgstr[0] "Votre %d option saisie est conservée. Revenez aux options saisies pour l'utiliser à nouveau."
 msgstr[1] "Vos %d options saisies sont conservées. Revenez aux options saisies pour les utiliser à nouveau."
 
-#: src/blocks/shared/OptionSourceControls.js:167
+#: src/blocks/shared/OptionSourceControls.js:169
 msgid "Choose a parent category in the block settings. Until then, visitors see no choices."
 msgstr "Choisissez une catégorie parent dans les paramètres du bloc. Jusqu'à présent, les visiteurs ne voient aucun choix."
 
-#: src/blocks/shared/OptionSourceControls.js:176
+#: src/blocks/shared/OptionSourceControls.js:178
 msgid "The parent category of this question no longer exists. Choose another one in the block settings; until then, visitors see no choices."
 msgstr "La catégorie parent de cette question n'existe plus. Choisissez-en une autre dans les paramètres du bloc ; jusqu'à présent, les visiteurs ne voient aucun choix."
 
-#: src/blocks/shared/OptionSourceControls.js:186
+#: src/blocks/shared/OptionSourceControls.js:188
 msgid "This category has no subcategories yet. Visitors see no choices until you add some."
 msgstr "Cette catégorie n'a pas encore de sous-catégories. Les visiteurs ne voient aucun choix jusqu'à ce que vous en ajoutiez."
 
-#: src/blocks/shared/OptionSourceControls.js:190
+#: src/blocks/shared/OptionSourceControls.js:192
 msgid "There are no categories yet. Visitors see no choices until you add some."
 msgstr "Il n'y a pas encore de catégories. Les visiteurs ne voient aucun choix jusqu'à ce que vous en ajoutiez."
 
 #. translators: %d: number of choices
-#: src/blocks/shared/OptionSourceControls.js:203
+#: src/blocks/shared/OptionSourceControls.js:205
 #, js-format
 msgid "%d choice from categories:"
 msgid_plural "%d choices from categories:"
@@ -1590,7 +1590,7 @@ msgstr[0] "%d choix parmi les catégories :"
 msgstr[1] "%d choix parmi les catégories :"
 
 #. translators: %d: number of choices not listed in the preview
-#: src/blocks/shared/OptionSourceControls.js:221
+#: src/blocks/shared/OptionSourceControls.js:223
 #, js-format
 msgid "…and %d more."
 msgid_plural "…and %d more."

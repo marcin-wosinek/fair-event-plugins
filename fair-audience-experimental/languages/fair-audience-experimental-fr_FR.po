@@ -58,8 +58,8 @@ msgstr "Collaborateurs"
 
 #: src/Admin/AdminPages.php:83
 #: src/Admin/AdminPages.php:84
-#: src/Admin/fee-detail/FeeDetail.js:880
-#: src/Admin/fees-list/FeesList.js:483
+#: src/Admin/fee-detail/FeeDetail.js:886
+#: src/Admin/fees-list/FeesList.js:484
 msgid "Membership Fees"
 msgstr "Frais d'adhésion"
 
@@ -133,18 +133,18 @@ msgstr "Modifier le message supplémentaire"
 #: src/Admin/components/ConfirmActionModal.js:24
 #: src/Admin/edit-extra-message/EditExtraMessage.js:287
 #: src/Admin/edit-poll/EditPoll.js:775
-#: src/Admin/fee-detail/FeeDetail.js:800
-#: src/Admin/fee-detail/FeeDetail.js:1293
-#: src/Admin/fee-detail/FeeDetail.js:1464
-#: src/Admin/fee-detail/FeeDetail.js:1562
-#: src/Admin/fee-detail/FeeDetail.js:1878
-#: src/Admin/fees-list/FeesList.js:687
-#: src/Admin/fees-list/FeesList.js:831
+#: src/Admin/fee-detail/FeeDetail.js:806
+#: src/Admin/fee-detail/FeeDetail.js:1299
+#: src/Admin/fee-detail/FeeDetail.js:1470
+#: src/Admin/fee-detail/FeeDetail.js:1568
+#: src/Admin/fee-detail/FeeDetail.js:1884
+#: src/Admin/fees-list/FeesList.js:693
+#: src/Admin/fees-list/FeesList.js:837
 #: src/Admin/group-detail/GroupDetail.js:636
 #: src/Admin/groups/Groups.js:458
 #: src/Admin/groups/Groups.js:515
 #: src/Admin/manage-event-ext/EventMailings.js:699
-#: src/Admin/manage-event-ext/GroupRules.js:655
+#: src/Admin/manage-event-ext/GroupRules.js:656
 msgid "Cancel"
 msgstr "Annuler"
 
@@ -367,7 +367,7 @@ msgstr "Groupe supprimé avec succès."
 #. translators: %s: original group name
 #: src/API/GroupsController.php:385
 #: src/Admin/groups/Groups.js:215
-#, php-format, js-format
+#, php-format,js-format
 msgid "%s (copy)"
 msgstr "%s (copie)"
 
@@ -842,8 +842,8 @@ msgstr "Retour à la page d'accueil"
 #: src/Admin/edit-poll/EditPoll.js:270
 #: src/Admin/fee-detail/FeeDetail.js:181
 #: src/Admin/fees-list/FeesList.js:86
-#: src/Admin/fees-list/FeesList.js:590
-#: src/Admin/fees-list/FeesList.js:717
+#: src/Admin/fees-list/FeesList.js:596
+#: src/Admin/fees-list/FeesList.js:723
 #: src/Admin/group-detail/GroupDetail.js:367
 #: src/Admin/group-detail/GroupDetail.js:596
 #: src/Admin/groups/Groups.js:72
@@ -907,12 +907,12 @@ msgstr "Ces frais ont déjà été payés. Merci !"
 
 #: templates/fee-payment.php:385
 #: templates/fee-payment.php:459
-#: src/Admin/fee-detail/FeeDetail.js:1236
+#: src/Admin/fee-detail/FeeDetail.js:1242
 msgid "Fee:"
 msgstr "Frais :"
 
 #: templates/fee-payment.php:389
-#: src/Admin/fee-detail/FeeDetail.js:1242
+#: src/Admin/fee-detail/FeeDetail.js:1248
 msgid "Amount:"
 msgstr "Montant :"
 
@@ -933,7 +933,7 @@ msgid "Your payment is being processed..."
 msgstr "Votre paiement est en cours de traitement..."
 
 #: templates/fee-payment.php:464
-#: src/Admin/fee-detail/FeeDetail.js:955
+#: src/Admin/fee-detail/FeeDetail.js:961
 msgid "Due Date:"
 msgstr "Date d'échéance :"
 
@@ -997,8 +997,8 @@ msgstr "Intéressés"
 #: src/Admin/edit-poll/EditPoll.js:713
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:208
 #: src/Admin/fee-detail/FeeDetail.js:208
-#: src/Admin/fees-list/FeesList.js:150
-#: src/Admin/fees-list/FeesList.js:739
+#: src/Admin/fees-list/FeesList.js:151
+#: src/Admin/fees-list/FeesList.js:745
 #: src/Admin/import/WordPressUsersImport.js:277
 #: src/Admin/instagram-posts/InstagramPosts.js:527
 #: src/Admin/polls-list/PollsList.js:166
@@ -1020,7 +1020,7 @@ msgid "Duplicate"
 msgstr "Dupliquer"
 
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:280
-#: src/Admin/fees-list/FeesList.js:407
+#: src/Admin/fees-list/FeesList.js:408
 #: src/Admin/groups/Groups.js:309
 #: src/Admin/instagram-posts/InstagramPosts.js:618
 #: src/Admin/polls-list/PollsList.js:240
@@ -1052,7 +1052,7 @@ msgstr "Limitez ce message aux événements d'une catégorie spécifique, ou lai
 #: src/Admin/edit-extra-message/EditExtraMessage.js:245
 #: src/Admin/edit-poll/EditPoll.js:727
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:249
-#: src/Admin/fees-list/FeesList.js:750
+#: src/Admin/fees-list/FeesList.js:756
 msgid "Active"
 msgstr "Actif"
 
@@ -1087,11 +1087,11 @@ msgid "Inactive"
 msgstr "Inactif"
 
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:264
-#: src/Admin/fees-list/FeesList.js:400
+#: src/Admin/fees-list/FeesList.js:401
 #: src/Admin/group-detail/GroupDetail.js:330
 #: src/Admin/groups/Groups.js:295
 #: src/Admin/manage-event-ext/EventMailings.js:686
-#: src/Admin/manage-event-ext/GroupRules.js:682
+#: src/Admin/manage-event-ext/GroupRules.js:683
 #: src/Admin/polls-list/PollsList.js:226
 msgid "Edit"
 msgstr "Modifier"
@@ -1116,11 +1116,11 @@ msgstr "Aucun membre dans ce groupe."
 
 #: src/Admin/fee-detail/FeeDetail.js:311
 #: src/Admin/fee-detail/FeeDetail.js:339
-#: src/Admin/fee-detail/FeeDetail.js:757
-#: src/Admin/fee-detail/FeeDetail.js:1070
-#: src/Admin/fee-detail/FeeDetail.js:1162
-#: src/Admin/fee-detail/FeeDetail.js:1223
-#: src/Admin/fee-detail/FeeDetail.js:1408
+#: src/Admin/fee-detail/FeeDetail.js:763
+#: src/Admin/fee-detail/FeeDetail.js:1076
+#: src/Admin/fee-detail/FeeDetail.js:1168
+#: src/Admin/fee-detail/FeeDetail.js:1229
+#: src/Admin/fee-detail/FeeDetail.js:1414
 #: src/Admin/group-detail/GroupDetail.js:24
 #: src/Admin/group-detail/GroupDetail.js:397
 msgid "(unnamed)"
@@ -1128,7 +1128,7 @@ msgstr "(sans nom)"
 
 #: src/Admin/edit-poll/EditPoll.js:697
 #: src/Admin/group-detail/GroupDetail.js:415
-#: src/Admin/manage-event-ext/GroupRules.js:697
+#: src/Admin/manage-event-ext/GroupRules.js:698
 msgid "Remove"
 msgstr "Supprimer"
 
@@ -1159,9 +1159,9 @@ msgstr "Modifier le groupe"
 msgid "Enter group name..."
 msgstr "Entrez le nom du groupe..."
 
-#: src/Admin/fee-detail/FeeDetail.js:1764
-#: src/Admin/fees-list/FeesList.js:600
-#: src/Admin/fees-list/FeesList.js:723
+#: src/Admin/fee-detail/FeeDetail.js:1770
+#: src/Admin/fees-list/FeesList.js:606
+#: src/Admin/fees-list/FeesList.js:729
 #: src/Admin/group-detail/GroupDetail.js:606
 #: src/Admin/groups/Groups.js:83
 #: src/Admin/groups/Groups.js:428
@@ -1173,7 +1173,7 @@ msgstr "Description"
 msgid "Enter group description (optional)..."
 msgstr "Entrez la description du groupe (facultatif)..."
 
-#: src/Admin/fees-list/FeesList.js:839
+#: src/Admin/fees-list/FeesList.js:845
 #: src/Admin/group-detail/GroupDetail.js:644
 #: src/Admin/groups/Groups.js:467
 msgid "Update"
@@ -1189,7 +1189,7 @@ msgstr "Afficher"
 msgid "Create Group"
 msgstr "Créer un groupe"
 
-#: src/Admin/fees-list/FeesList.js:700
+#: src/Admin/fees-list/FeesList.js:706
 #: src/Admin/groups/Groups.js:468
 msgid "Create"
 msgstr "Créer"
@@ -1218,45 +1218,45 @@ msgstr "Date de fin de l'événement"
 msgid "Which date"
 msgstr "Quelle date"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:175
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:177
 msgid "Offset"
 msgstr "Décalage"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:185
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:189
 msgid "Unit"
 msgstr "Unité"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:189
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:193
 msgid "minutes"
 msgstr "minutes"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:196
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:200
 msgid "hours"
 msgstr "heures"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:200
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:204
 msgid "days"
 msgstr "jours"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:212
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:216
 msgid "before"
 msgstr "avant"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:216
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:220
 msgid "after"
 msgstr "après"
 
 #. translators: %s: computed send date/time
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:228
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:232
 #, js-format
 msgid "Will send around: %s"
 msgstr "Sera envoyé environ : %s"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:234
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:238
 msgid "Send time will be computed from the chosen date."
 msgstr "L'heure d'envoi sera calculée à partir de la date choisie."
 
-#: src/Admin/manage-event-ext/GroupRules.js:643
+#: src/Admin/manage-event-ext/GroupRules.js:644
 msgid "Save"
 msgstr "Enregistrer"
 
@@ -1432,81 +1432,81 @@ msgstr "Afficher les inscriptions"
 msgid "Manage signups"
 msgstr "Gérer les inscriptions"
 
-#: src/Admin/manage-event-ext/GroupRules.js:262
+#: src/Admin/manage-event-ext/GroupRules.js:263
 msgid "Group rules added."
 msgstr "Règles de groupe ajoutées."
 
-#: src/Admin/manage-event-ext/GroupRules.js:267
+#: src/Admin/manage-event-ext/GroupRules.js:268
 msgid "Failed to add group rules."
 msgstr "Échec de l'ajout des règles de groupe."
 
-#: src/Admin/manage-event-ext/GroupRules.js:335
+#: src/Admin/manage-event-ext/GroupRules.js:336
 msgid "Group rules updated."
 msgstr "Règles de groupe mises à jour."
 
-#: src/Admin/manage-event-ext/GroupRules.js:340
+#: src/Admin/manage-event-ext/GroupRules.js:341
 msgid "Failed to update group rules."
 msgstr "Échec de la mise à jour des règles de groupe."
 
-#: src/Admin/manage-event-ext/GroupRules.js:377
+#: src/Admin/manage-event-ext/GroupRules.js:378
 msgid "Failed to update permission."
 msgstr "Échec de la mise à jour de la permission."
 
-#: src/Admin/manage-event-ext/GroupRules.js:457
+#: src/Admin/manage-event-ext/GroupRules.js:458
 msgid "Group Rules"
 msgstr "Règles de groupe"
 
-#: src/Admin/manage-event-ext/GroupRules.js:595
-#: src/Admin/manage-event-ext/GroupRules.js:806
+#: src/Admin/manage-event-ext/GroupRules.js:596
+#: src/Admin/manage-event-ext/GroupRules.js:807
 msgid "Discount Type"
 msgstr "Type de réduction"
 
-#: src/Admin/manage-event-ext/GroupRules.js:611
-#: src/Admin/manage-event-ext/GroupRules.js:815
+#: src/Admin/manage-event-ext/GroupRules.js:612
+#: src/Admin/manage-event-ext/GroupRules.js:816
 msgid "Discount Value"
 msgstr "Valeur de réduction"
 
-#: src/Admin/manage-event-ext/GroupRules.js:624
+#: src/Admin/manage-event-ext/GroupRules.js:625
 msgid "0 = no discount"
 msgstr "0 = pas de réduction"
 
-#: src/Admin/manage-event-ext/GroupRules.js:710
+#: src/Admin/manage-event-ext/GroupRules.js:711
 msgid "Discount:"
 msgstr "Réduction :"
 
-#: src/Admin/manage-event-ext/GroupRules.js:768
+#: src/Admin/manage-event-ext/GroupRules.js:769
 msgid "No group rules yet. Add one below."
 msgstr "Aucune règle de groupe pour le moment. Ajoutez-en une ci-dessous."
 
-#: src/Admin/manage-event-ext/GroupRules.js:778
+#: src/Admin/manage-event-ext/GroupRules.js:779
 msgid "Add Group"
 msgstr "Ajouter un groupe"
 
 #: src/Admin/fees-list/FeesList.js:99
-#: src/Admin/fees-list/FeesList.js:613
-#: src/Admin/manage-event-ext/GroupRules.js:784
+#: src/Admin/fees-list/FeesList.js:619
+#: src/Admin/manage-event-ext/GroupRules.js:785
 msgid "Group"
 msgstr "Groupe"
 
-#: src/Admin/fees-list/FeesList.js:429
-#: src/Admin/manage-event-ext/GroupRules.js:791
+#: src/Admin/fees-list/FeesList.js:430
+#: src/Admin/manage-event-ext/GroupRules.js:792
 msgid "Select a group..."
 msgstr "Sélectionner un groupe..."
 
-#: src/Admin/manage-event-ext/GroupRules.js:826
+#: src/Admin/manage-event-ext/GroupRules.js:827
 msgid "e.g. 10"
 msgstr "p. ex. 10"
 
-#: src/Admin/manage-event-ext/GroupRules.js:830
+#: src/Admin/manage-event-ext/GroupRules.js:831
 msgid "e.g. 5.00"
 msgstr "p. ex. 5,00"
 
-#: src/Admin/fee-detail/FeeDetail.js:1479
-#: src/Admin/manage-event-ext/GroupRules.js:875
+#: src/Admin/fee-detail/FeeDetail.js:1485
+#: src/Admin/manage-event-ext/GroupRules.js:876
 msgid "Add"
 msgstr "Ajouter"
 
-#: src/Admin/manage-event-ext/GroupRules.js:889
+#: src/Admin/manage-event-ext/GroupRules.js:890
 msgid "All groups already have rules for this event."
 msgstr "Tous les groupes ont déjà des règles pour cet événement."
 
@@ -1575,11 +1575,11 @@ msgid "Fair Audience Experimental Settings"
 msgstr "Paramètres expérimentaux Fair Audience"
 
 #: src/Admin/components/BudgetLoadStatus.js:57
-#: src/Admin/manage-event-ext/GroupRules.js:555
+#: src/Admin/manage-event-ext/GroupRules.js:556
 msgid "Retry"
 msgstr "Réessayer"
 
-#: src/Admin/manage-event-ext/GroupRules.js:563
+#: src/Admin/manage-event-ext/GroupRules.js:564
 msgid "Group rules could not be loaded."
 msgstr "Impossible de charger les règles de groupe."
 
@@ -1607,45 +1607,45 @@ msgstr "Le rappel a été envoyé, mais il n'a pas pu être enregistré sur le p
 msgid "Payment reminder sent."
 msgstr "Rappel de paiement envoyé."
 
-#: src/Admin/fee-detail/FeeDetail.js:629
+#: src/Admin/fee-detail/FeeDetail.js:635
 msgid "The payment reminder could not be sent."
 msgstr "Le rappel de paiement n'a pas pu être envoyé."
 
 #. translators: %s: recipient email address
-#: src/Admin/fee-detail/FeeDetail.js:672
+#: src/Admin/fee-detail/FeeDetail.js:678
 #, js-format
 msgid "Payment reminder sent to %s, but this page could not be refreshed. Reload the page to see the reminder date; the email does not need to be sent again."
 msgstr "Rappel de paiement envoyé à %s, mais cette page n'a pas pu être actualisée. Rechargez la page pour voir la date du rappel ; l'e-mail n'a pas besoin d'être renvoyé."
 
 #. translators: %s: recipient email address
-#: src/Admin/fee-detail/FeeDetail.js:684
+#: src/Admin/fee-detail/FeeDetail.js:690
 #, js-format
 msgid "Payment reminder sent to %s."
 msgstr "Rappel de paiement envoyé à %s."
 
-#: src/Admin/fee-detail/FeeDetail.js:808
-#: src/Admin/fee-detail/FeeDetail.js:1190
-#: src/Admin/fee-detail/FeeDetail.js:1305
+#: src/Admin/fee-detail/FeeDetail.js:814
+#: src/Admin/fee-detail/FeeDetail.js:1196
+#: src/Admin/fee-detail/FeeDetail.js:1311
 msgid "Send Payment Reminder"
 msgstr "Envoyer un rappel de paiement"
 
-#: src/Admin/fee-detail/FeeDetail.js:1201
+#: src/Admin/fee-detail/FeeDetail.js:1207
 msgid "One reminder email will be sent to this member only."
 msgstr "Un e-mail de rappel sera envoyé à ce membre uniquement."
 
-#: src/Admin/fee-detail/FeeDetail.js:1217
+#: src/Admin/fee-detail/FeeDetail.js:1223
 msgid "Member:"
 msgstr "Membre :"
 
-#: src/Admin/fee-detail/FeeDetail.js:1230
+#: src/Admin/fee-detail/FeeDetail.js:1236
 msgid "Email:"
 msgstr "E-mail :"
 
-#: src/Admin/fee-detail/FeeDetail.js:1256
+#: src/Admin/fee-detail/FeeDetail.js:1262
 msgid "This member has no email address, so a reminder cannot be sent."
 msgstr "Ce membre n'a pas d'adresse e-mail, donc un rappel ne peut pas être envoyé."
 
-#: src/Admin/fee-detail/FeeDetail.js:1266
+#: src/Admin/fee-detail/FeeDetail.js:1272
 msgid "Reminders are being sent to all members with pending payments. Wait for that to finish before sending this one."
 msgstr "Des rappels sont en cours d'envoi à tous les membres ayant des paiements en attente. Attendez que cela se termine avant d'envoyer celui-ci."
 
@@ -1665,32 +1665,32 @@ msgstr "Les budgets ne sont pas disponibles, car Fair Finance n’est pas actif.
 msgid "Budgets could not be loaded."
 msgstr "Les budgets n’ont pas pu être chargés."
 
-#: src/Admin/fee-detail/FeeDetail.js:936
+#: src/Admin/fee-detail/FeeDetail.js:942
 msgid "Budget:"
 msgstr "Budget :"
 
-#: src/Admin/fee-detail/FeeDetail.js:1781
+#: src/Admin/fee-detail/FeeDetail.js:1787
 msgid "A transfer needs a source and a target budget."
 msgstr "Un transfert nécessite un budget source et un budget cible."
 
-#: src/Admin/fee-detail/FeeDetail.js:1785
+#: src/Admin/fee-detail/FeeDetail.js:1791
 msgid "There are no budgets yet. Add budgets in Fair Finance to create a transfer."
 msgstr "Il n’y a pas encore de budgets. Ajoutez des budgets dans Fair Finance pour créer un transfert."
 
-#: src/Admin/fees-list/FeesList.js:657
+#: src/Admin/fees-list/FeesList.js:663
 msgid "You can still create this fee without a budget."
 msgstr "Vous pouvez tout de même créer ces frais sans budget."
 
-#: src/Admin/fees-list/FeesList.js:661
-#: src/Admin/fees-list/FeesList.js:802
+#: src/Admin/fees-list/FeesList.js:667
+#: src/Admin/fees-list/FeesList.js:808
 msgid "There are no budgets yet. Add one in Fair Finance to link fees to it."
 msgstr "Il n’y a pas encore de budgets. Ajoutez-en un dans Fair Finance pour y rattacher des frais."
 
-#: src/Admin/fee-detail/FeeDetail.js:544
+#: src/Admin/fee-detail/FeeDetail.js:550
 msgid "The transfer could not be created."
 msgstr "Le transfert n’a pas pu être créé."
 
-#: src/Admin/fee-detail/FeeDetail.js:581
+#: src/Admin/fee-detail/FeeDetail.js:587
 msgid "The transfer was created, but the payment could not be marked as paid. Mark the payment as paid from its row actions; do not create the transfer again."
 msgstr "Le transfert a été créé, mais le paiement n’a pas pu être marqué comme payé. Marquez le paiement comme payé depuis les actions de sa ligne ; ne créez pas le transfert une seconde fois."
 
@@ -1699,27 +1699,27 @@ msgid "Fair Finance budget the fee is linked to, or null for none."
 msgstr "Budget Fair Finance auquel les frais sont rattachés, ou null s’il n’y en a pas."
 
 #. translators: %d: budget ID
-#: src/Admin/fees-list/FeesList.js:466
+#: src/Admin/fees-list/FeesList.js:467
 #, js-format
 msgid "Budget #%d"
 msgstr "Budget nº %d"
 
 #: src/Admin/fees-list/FeesList.js:105
-#: src/Admin/fees-list/FeesList.js:639
-#: src/Admin/fees-list/FeesList.js:772
+#: src/Admin/fees-list/FeesList.js:645
+#: src/Admin/fees-list/FeesList.js:778
 msgid "Budget"
 msgstr "Budget"
 
-#: src/Admin/fees-list/FeesList.js:783
+#: src/Admin/fees-list/FeesList.js:789
 msgid "The budget this fee is linked to is not in the list. The fee stays linked to it unless you choose another."
 msgstr "Le budget auquel ces frais sont rattachés ne figure pas dans la liste. Les frais y restent rattachés tant que vous n’en choisissez pas un autre."
 
-#: src/Admin/fees-list/FeesList.js:647
-#: src/Admin/fees-list/FeesList.js:787
+#: src/Admin/fees-list/FeesList.js:653
+#: src/Admin/fees-list/FeesList.js:793
 msgid "Optionally link to a budget for financial tracking."
 msgstr "Vous pouvez les rattacher à un budget pour le suivi financier."
 
-#: src/Admin/fees-list/FeesList.js:798
+#: src/Admin/fees-list/FeesList.js:804
 msgid "The fee keeps its current budget unless you choose another."
 msgstr "Les frais conservent leur budget actuel tant que vous n’en choisissez pas un autre."
 
@@ -1846,12 +1846,12 @@ msgid "Add Option"
 msgstr "Ajouter une option"
 
 #: src/Admin/edit-poll/EditPoll.js:720
-#: src/Admin/fees-list/FeesList.js:743
+#: src/Admin/fees-list/FeesList.js:749
 msgid "Draft"
 msgstr "Brouillon"
 
 #: src/Admin/edit-poll/EditPoll.js:734
-#: src/Admin/fees-list/FeesList.js:757
+#: src/Admin/fees-list/FeesList.js:763
 msgid "Closed"
 msgstr "Fermé"
 
@@ -1868,10 +1868,10 @@ msgid "Create Poll"
 msgstr "Créer un sondage"
 
 #: src/Admin/fee-detail/FeeDetail.js:197
-#: src/Admin/fee-detail/FeeDetail.js:1431
-#: src/Admin/fee-detail/FeeDetail.js:1738
+#: src/Admin/fee-detail/FeeDetail.js:1437
+#: src/Admin/fee-detail/FeeDetail.js:1744
 #: src/Admin/fees-list/FeesList.js:111
-#: src/Admin/fees-list/FeesList.js:620
+#: src/Admin/fees-list/FeesList.js:626
 msgid "Amount"
 msgstr "Montant"
 
@@ -1891,204 +1891,204 @@ msgstr "Montant ajusté avec succès."
 msgid "Payment link copied to clipboard."
 msgstr "Lien de paiement copié dans le presse-papiers."
 
-#: src/Admin/fee-detail/FeeDetail.js:573
+#: src/Admin/fee-detail/FeeDetail.js:579
 msgid "Transfer created and payment marked as paid."
 msgstr "Transfert créé et paiement marqué comme payé."
 
-#: src/Admin/fee-detail/FeeDetail.js:785
-#: src/Admin/fee-detail/FeeDetail.js:1494
+#: src/Admin/fee-detail/FeeDetail.js:791
+#: src/Admin/fee-detail/FeeDetail.js:1500
 msgid "Adjust Amount"
 msgstr "Ajuster le montant"
 
-#: src/Admin/fee-detail/FeeDetail.js:792
+#: src/Admin/fee-detail/FeeDetail.js:798
 msgid "Mark as Paid"
 msgstr "Marquer comme payé"
 
-#: src/Admin/fee-detail/FeeDetail.js:819
+#: src/Admin/fee-detail/FeeDetail.js:825
 msgid "Copy Payment Link"
 msgstr "Copier le lien de paiement"
 
-#: src/Admin/fee-detail/FeeDetail.js:827
+#: src/Admin/fee-detail/FeeDetail.js:833
 msgid "View Payment Attempts"
 msgstr "Afficher les tentatives de paiement"
 
-#: src/Admin/fee-detail/FeeDetail.js:838
-#: src/Admin/fee-detail/FeeDetail.js:1718
-#: src/Admin/fee-detail/FeeDetail.js:1894
+#: src/Admin/fee-detail/FeeDetail.js:844
+#: src/Admin/fee-detail/FeeDetail.js:1724
+#: src/Admin/fee-detail/FeeDetail.js:1900
 msgid "Create Transfer"
 msgstr "Créer un transfert"
 
-#: src/Admin/fee-detail/FeeDetail.js:846
+#: src/Admin/fee-detail/FeeDetail.js:852
 msgid "View Audit Log"
 msgstr "Afficher le journal d'audit"
 
-#: src/Admin/fee-detail/FeeDetail.js:867
+#: src/Admin/fee-detail/FeeDetail.js:873
 msgid "No fee ID specified."
 msgstr "Aucun ID de frais spécifié."
 
-#: src/Admin/fee-detail/FeeDetail.js:901
+#: src/Admin/fee-detail/FeeDetail.js:907
 msgid "Fee Summary"
 msgstr "Résumé des frais"
 
-#: src/Admin/fee-detail/FeeDetail.js:918
+#: src/Admin/fee-detail/FeeDetail.js:924
 msgid "Name:"
 msgstr "Nom :"
 
-#: src/Admin/fee-detail/FeeDetail.js:927
+#: src/Admin/fee-detail/FeeDetail.js:933
 msgid "Group:"
 msgstr "Groupe :"
 
-#: src/Admin/fee-detail/FeeDetail.js:945
+#: src/Admin/fee-detail/FeeDetail.js:951
 msgid "Default Amount:"
 msgstr "Montant par défaut :"
 
-#: src/Admin/fee-detail/FeeDetail.js:964
+#: src/Admin/fee-detail/FeeDetail.js:970
 msgid "Status:"
 msgstr "Statut :"
 
-#: src/Admin/fee-detail/FeeDetail.js:991
+#: src/Admin/fee-detail/FeeDetail.js:997
 msgid "Send Reminders"
 msgstr "Envoyer des rappels"
 
-#: src/Admin/fee-detail/FeeDetail.js:1001
+#: src/Admin/fee-detail/FeeDetail.js:1007
 msgid "Add Participant"
 msgstr "Ajouter un participant"
 
-#: src/Admin/fee-detail/FeeDetail.js:1317
+#: src/Admin/fee-detail/FeeDetail.js:1323
 msgid "Add Participant to Fee"
 msgstr "Ajouter un participant aux frais"
 
-#: src/Admin/fee-detail/FeeDetail.js:1346
+#: src/Admin/fee-detail/FeeDetail.js:1352
 msgid "Search group members..."
 msgstr "Rechercher les membres du groupe..."
 
-#: src/Admin/fee-detail/FeeDetail.js:1374
+#: src/Admin/fee-detail/FeeDetail.js:1380
 msgid "All group members already have a payment for this fee."
 msgstr "Tous les membres du groupe ont déjà un paiement pour ces frais."
 
-#: src/Admin/fee-detail/FeeDetail.js:1378
+#: src/Admin/fee-detail/FeeDetail.js:1384
 msgid "No matches."
 msgstr "Aucune correspondance."
 
-#: src/Admin/fee-detail/FeeDetail.js:1505
+#: src/Admin/fee-detail/FeeDetail.js:1511
 msgid "Current amount:"
 msgstr "Montant actuel :"
 
-#: src/Admin/fee-detail/FeeDetail.js:1517
+#: src/Admin/fee-detail/FeeDetail.js:1523
 msgid "New Amount"
 msgstr "Nouveau montant"
 
-#: src/Admin/fee-detail/FeeDetail.js:1529
+#: src/Admin/fee-detail/FeeDetail.js:1535
 msgid "Reason (required)"
 msgstr "Raison (obligatoire)"
 
-#: src/Admin/fee-detail/FeeDetail.js:1535
+#: src/Admin/fee-detail/FeeDetail.js:1541
 msgid "Explain why the amount is being adjusted..."
 msgstr "Expliquez pourquoi le montant est ajusté..."
 
-#: src/Admin/fee-detail/FeeDetail.js:1570
+#: src/Admin/fee-detail/FeeDetail.js:1576
 msgid "Adjust"
 msgstr "Ajuster"
 
-#: src/Admin/fee-detail/FeeDetail.js:1579
+#: src/Admin/fee-detail/FeeDetail.js:1585
 msgid "Payment Attempts"
 msgstr "Tentatives de paiement"
 
-#: src/Admin/fee-detail/FeeDetail.js:1590
+#: src/Admin/fee-detail/FeeDetail.js:1596
 msgid "No payment attempts found."
 msgstr "Aucune tentative de paiement trouvée."
 
-#: src/Admin/fee-detail/FeeDetail.js:1636
+#: src/Admin/fee-detail/FeeDetail.js:1642
 msgid "unknown"
 msgstr "inconnu"
 
-#: src/Admin/fee-detail/FeeDetail.js:1656
+#: src/Admin/fee-detail/FeeDetail.js:1662
 msgid "Transaction:"
 msgstr "Transaction :"
 
-#: src/Admin/fee-detail/FeeDetail.js:1683
+#: src/Admin/fee-detail/FeeDetail.js:1689
 msgid "Initiated:"
 msgstr "Initié :"
 
-#: src/Admin/fee-detail/FeeDetail.js:1709
-#: src/Admin/fee-detail/FeeDetail.js:2010
+#: src/Admin/fee-detail/FeeDetail.js:1715
+#: src/Admin/fee-detail/FeeDetail.js:2016
 msgid "Close"
 msgstr "Fermer"
 
-#: src/Admin/fee-detail/FeeDetail.js:1729
+#: src/Admin/fee-detail/FeeDetail.js:1735
 msgid "Participant:"
 msgstr "Participant :"
 
-#: src/Admin/fee-detail/FeeDetail.js:1752
+#: src/Admin/fee-detail/FeeDetail.js:1758
 msgid "Date"
 msgstr "Date"
 
-#: src/Admin/fee-detail/FeeDetail.js:1792
+#: src/Admin/fee-detail/FeeDetail.js:1798
 msgid "From Budget (Source)"
 msgstr "Du budget (Source)"
 
-#: src/Admin/fee-detail/FeeDetail.js:1799
-#: src/Admin/fee-detail/FeeDetail.js:1827
+#: src/Admin/fee-detail/FeeDetail.js:1805
+#: src/Admin/fee-detail/FeeDetail.js:1833
 msgid "-- Select Budget --"
 msgstr "-- Sélectionner un budget --"
 
-#: src/Admin/fee-detail/FeeDetail.js:1820
+#: src/Admin/fee-detail/FeeDetail.js:1826
 msgid "To Budget (Target)"
 msgstr "Vers le budget (Cible)"
 
-#: src/Admin/fee-detail/FeeDetail.js:1852
+#: src/Admin/fee-detail/FeeDetail.js:1858
 msgid "Source and target budgets must be different."
 msgstr "Les budgets source et cible doivent être différents."
 
-#: src/Admin/fee-detail/FeeDetail.js:1906
+#: src/Admin/fee-detail/FeeDetail.js:1912
 msgid "Audit Log"
 msgstr "Journal d'audit"
 
-#: src/Admin/fee-detail/FeeDetail.js:1914
+#: src/Admin/fee-detail/FeeDetail.js:1920
 msgid "No audit log entries found."
 msgstr "Aucune entrée de journal d'audit trouvée."
 
-#: src/Admin/fee-detail/FeeDetail.js:1987
+#: src/Admin/fee-detail/FeeDetail.js:1993
 msgid "By:"
 msgstr "Par :"
 
-#: src/Admin/fees-list/FeesList.js:144
-#: src/Admin/fees-list/FeesList.js:630
-#: src/Admin/fees-list/FeesList.js:732
+#: src/Admin/fees-list/FeesList.js:145
+#: src/Admin/fees-list/FeesList.js:636
+#: src/Admin/fees-list/FeesList.js:738
 msgid "Due Date"
 msgstr "Date d'échéance"
 
-#: src/Admin/fees-list/FeesList.js:169
+#: src/Admin/fees-list/FeesList.js:170
 #: src/Admin/instagram-posts/InstagramPosts.js:57
 msgid "Pending"
 msgstr "En attente"
 
-#: src/Admin/fees-list/FeesList.js:180
+#: src/Admin/fees-list/FeesList.js:181
 msgid "Paid"
 msgstr "Payé"
 
-#: src/Admin/fees-list/FeesList.js:391
+#: src/Admin/fees-list/FeesList.js:392
 msgid "View Details"
 msgstr "Voir les détails"
 
-#: src/Admin/fees-list/FeesList.js:437
+#: src/Admin/fees-list/FeesList.js:438
 msgid "-- No Budget --"
 msgstr "-- Aucun budget --"
 
-#: src/Admin/fees-list/FeesList.js:564
-#: src/Admin/fees-list/FeesList.js:585
+#: src/Admin/fees-list/FeesList.js:570
+#: src/Admin/fees-list/FeesList.js:591
 msgid "Create Fee"
 msgstr "Créer des frais"
 
-#: src/Admin/fees-list/FeesList.js:593
+#: src/Admin/fees-list/FeesList.js:599
 msgid "Enter fee name..."
 msgstr "Entrez le nom des frais..."
 
-#: src/Admin/fees-list/FeesList.js:606
+#: src/Admin/fees-list/FeesList.js:612
 msgid "Enter description (optional)..."
 msgstr "Entrez une description (facultatif)..."
 
-#: src/Admin/fees-list/FeesList.js:709
+#: src/Admin/fees-list/FeesList.js:715
 msgid "Edit Fee"
 msgstr "Modifier les frais"
 
@@ -2608,7 +2608,7 @@ msgid "Send invitations"
 msgstr "Envoyer les invitations"
 
 #: src/Admin/edit-poll/EditPoll.js:389
-#: src/Admin/fee-detail/FeeDetail.js:1121
+#: src/Admin/fee-detail/FeeDetail.js:1127
 msgid "Sending…"
 msgstr "Envoi en cours…"
 
@@ -2651,7 +2651,7 @@ msgid "Delete message"
 msgstr "Supprimer le message"
 
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:152
-#: src/Admin/fees-list/FeesList.js:502
+#: src/Admin/fees-list/FeesList.js:503
 #: src/Admin/groups/Groups.js:350
 #: src/Admin/instagram-posts/InstagramPosts.js:330
 #: src/Admin/polls-list/PollsList.js:120
@@ -2701,7 +2701,7 @@ msgid "The participant could not be added. Try again."
 msgstr "Le participant n'a pas pu être ajouté. Réessayez."
 
 #. translators: %d: number of reminders sent
-#: src/Admin/fee-detail/FeeDetail.js:723
+#: src/Admin/fee-detail/FeeDetail.js:729
 #, js-format
 msgid "%d reminder sent."
 msgid_plural "%d reminders sent."
@@ -2709,132 +2709,133 @@ msgstr[0] "%d rappel envoyé."
 msgstr[1] "%d rappels envoyés."
 
 #. translators: %d: number of reminders not sent
-#: src/Admin/fee-detail/FeeDetail.js:737
+#: src/Admin/fee-detail/FeeDetail.js:743
 #, js-format
 msgid "%d reminder was not sent:"
 msgid_plural "%d reminders were not sent:"
 msgstr[0] "%d rappel n'a pas été envoyé :"
 msgstr[1] "%d rappels n'ont pas été envoyés :"
 
+#. translators: 1: member name or email, 2: reason
 #. translators: 1: participant name, 2: reason
-#: src/Admin/fee-detail/FeeDetail.js:751
+#: src/Admin/fee-detail/FeeDetail.js:757
 #: src/Admin/group-detail/GroupDetail.js:518
 #, js-format
 msgid "%1$s: %2$s"
 msgstr "%1$s : %2$s"
 
-#: src/Admin/fee-detail/FeeDetail.js:774
+#: src/Admin/fee-detail/FeeDetail.js:780
 msgid "The reminders could not be sent. Some may already have gone out; check the reminder dates before trying again."
 msgstr "Les rappels n'ont pas pu être envoyés. Certains ont peut-être déjà été envoyés ; vérifiez les dates de rappel avant de réessayer."
 
 #. translators: %s: member name
-#: src/Admin/fee-detail/FeeDetail.js:1028
+#: src/Admin/fee-detail/FeeDetail.js:1034
 #, js-format
 msgid "Mark as paid — %s"
 msgstr "Marquer comme payé — %s"
 
-#: src/Admin/fee-detail/FeeDetail.js:1032
+#: src/Admin/fee-detail/FeeDetail.js:1038
 msgid "Mark as paid"
 msgstr "Marquer comme payé"
 
-#: src/Admin/fee-detail/FeeDetail.js:1036
+#: src/Admin/fee-detail/FeeDetail.js:1042
 msgid "Saving…"
 msgstr "Enregistrement…"
 
-#: src/Admin/fee-detail/FeeDetail.js:1038
+#: src/Admin/fee-detail/FeeDetail.js:1044
 msgid "This records the payment as paid by hand. No money is collected or checked with the payment provider, and there is no action to set it back to pending. The change is logged in the payment history."
 msgstr "Ceci enregistre le paiement comme payé manuellement. Aucun argent n'est collecté ou vérifié auprès du fournisseur de paiement, et il n'y a aucune action pour le remettre en attente. Le changement est enregistré dans l'historique des paiements."
 
 #. translators: %s: member name
-#: src/Admin/fee-detail/FeeDetail.js:1047
+#: src/Admin/fee-detail/FeeDetail.js:1053
 #, js-format
 msgid "Cancel payment — %s"
 msgstr "Annuler le paiement — %s"
 
-#: src/Admin/fee-detail/FeeDetail.js:1051
+#: src/Admin/fee-detail/FeeDetail.js:1057
 msgid "Cancel payment"
 msgstr "Annuler le paiement"
 
-#: src/Admin/fee-detail/FeeDetail.js:1055
+#: src/Admin/fee-detail/FeeDetail.js:1061
 msgid "Canceling…"
 msgstr "Annulation…"
 
-#: src/Admin/fee-detail/FeeDetail.js:1057
+#: src/Admin/fee-detail/FeeDetail.js:1063
 msgid "The member no longer owes this fee and gets no more reminders for it. No payment-provider transaction is canceled or refunded, and there is no action to undo this. The change is logged in the payment history."
 msgstr "Le membre ne doit plus cette cotisation et ne recevra plus de rappels pour celle-ci. Aucune transaction du fournisseur de paiement n'est annulée ou remboursée, et il n'y a aucune action pour annuler cela. Le changement est enregistré dans l'historique des paiements."
 
 #. translators: 1: fee name, 2: amount with currency, 3: member email or dash
-#: src/Admin/fee-detail/FeeDetail.js:1086
+#: src/Admin/fee-detail/FeeDetail.js:1092
 #, js-format
 msgid "%1$s: %2$s (%3$s)."
 msgstr "%1$s : %2$s (%3$s)."
 
 #. translators: %s: fee name
-#: src/Admin/fee-detail/FeeDetail.js:1111
+#: src/Admin/fee-detail/FeeDetail.js:1117
 #, js-format
 msgid "Send payment reminders — %s"
 msgstr "Envoyer des rappels de paiement — %s"
 
-#: src/Admin/fee-detail/FeeDetail.js:1117
+#: src/Admin/fee-detail/FeeDetail.js:1123
 msgid "Send reminders"
 msgstr "Envoyer des rappels"
 
-#: src/Admin/fee-detail/FeeDetail.js:1132
+#: src/Admin/fee-detail/FeeDetail.js:1138
 msgid "No member has a pending payment, so there is nobody to remind."
 msgstr "Aucun membre n'a de paiement en attente, il n'y a donc personne à rappeler."
 
 #. translators: %d: number of members with a pending payment
-#: src/Admin/fee-detail/FeeDetail.js:1142
+#: src/Admin/fee-detail/FeeDetail.js:1148
 #, js-format
 msgid "One reminder email goes to the %d member with a pending payment, including any who were reminded before:"
 msgid_plural "One reminder email goes to each of the %d members with a pending payment, including any who were reminded before:"
 msgstr[0] "Un e-mail de rappel est envoyé au %d membre ayant un paiement en attente, y compris ceux qui ont déjà été rappelés :"
 msgstr[1] "Un e-mail de rappel est envoyé à chacun des %d membres ayant un paiement en attente, y compris ceux qui ont déjà été rappelés :"
 
-#: src/Admin/fee-detail/FeeDetail.js:1168
+#: src/Admin/fee-detail/FeeDetail.js:1174
 msgid "no email address; it will be reported as not sent"
 msgstr "pas d'adresse e-mail ; il sera signalé comme non envoyé"
 
-#: src/Admin/fee-detail/FeeDetail.js:1177
+#: src/Admin/fee-detail/FeeDetail.js:1183
 msgid "Sent emails cannot be recalled."
 msgstr "Les e-mails envoyés ne peuvent pas être rappelés."
 
-#: src/Admin/fees-list/FeesList.js:294
+#: src/Admin/fees-list/FeesList.js:295
 msgid "The fee could not be created. Try again."
 msgstr "La cotisation n'a pas pu être créée. Réessayez."
 
-#: src/Admin/fees-list/FeesList.js:352
+#: src/Admin/fees-list/FeesList.js:353
 msgid "The fee could not be updated. Try again."
 msgstr "Les frais n'ont pas pu être mis à jour. Réessayez."
 
 #. translators: %s: fee name
-#: src/Admin/fees-list/FeesList.js:374
+#: src/Admin/fees-list/FeesList.js:375
 #, js-format
 msgid "Fee “%s” deleted."
 msgstr "Frais « %s » supprimés."
 
-#: src/Admin/fees-list/FeesList.js:380
+#: src/Admin/fees-list/FeesList.js:381
 msgid "The fee could not be deleted. Try again."
 msgstr "Les frais n'ont pas pu être supprimés. Réessayez."
 
 #. translators: %s: fee name
-#: src/Admin/fees-list/FeesList.js:495
+#: src/Admin/fees-list/FeesList.js:496
 #, js-format
 msgid "Delete fee — %s"
 msgstr "Supprimer les frais — %s"
 
-#: src/Admin/fees-list/FeesList.js:498
+#: src/Admin/fees-list/FeesList.js:499
 msgid "Delete fee"
 msgstr "Supprimer les frais"
 
 #. translators: 1: amount with currency, 2: group name
-#: src/Admin/fees-list/FeesList.js:515
+#: src/Admin/fees-list/FeesList.js:516
 #, js-format
 msgid "%1$s per member of %2$s."
 msgstr "%1$s par membre de %2$s."
 
 #. translators: %d: number of members with a payment record
-#: src/Admin/fees-list/FeesList.js:528
+#: src/Admin/fees-list/FeesList.js:529
 #, js-format
 msgid "This also deletes the payment record of its %d member, including its paid status and change history."
 msgid_plural "This also deletes the payment records of its %d members, including their paid status and change history."
@@ -2842,14 +2843,14 @@ msgstr[0] "Cela supprime également le dossier de paiement de son %d membre, y c
 msgstr[1] "Cela supprime également les dossiers de paiement de ses %d membres, y compris leur statut de paiement et l'historique des modifications."
 
 #. translators: %d: number of payment records marked paid
-#: src/Admin/fees-list/FeesList.js:541
+#: src/Admin/fees-list/FeesList.js:545
 #, js-format
 msgid "%d of them is marked paid."
 msgid_plural "%d of them are marked paid."
 msgstr[0] "%d d'entre eux est marqué comme payé."
 msgstr[1] "%d d'entre eux sont marqués comme payés."
 
-#: src/Admin/fees-list/FeesList.js:552
+#: src/Admin/fees-list/FeesList.js:558
 msgid "Payments already received are not refunded, and their transactions stay in Payments. This cannot be undone."
 msgstr "Les paiements déjà reçus ne sont pas remboursés, et leurs transactions restent dans Paiements. Cette action ne peut pas être annulée."
 
@@ -2895,7 +2896,7 @@ msgid "Remove from group"
 msgstr "Supprimer du groupe"
 
 #: src/Admin/group-detail/GroupDetail.js:558
-#: src/Admin/manage-event-ext/GroupRules.js:474
+#: src/Admin/manage-event-ext/GroupRules.js:475
 msgid "Removing…"
 msgstr "Suppression…"
 
@@ -2965,41 +2966,41 @@ msgstr "Cela supprime la publication de cette liste uniquement. Elle reste publi
 msgid "This removes the post from this list. This cannot be undone."
 msgstr "Cela supprime la publication de cette liste. Cette action ne peut pas être annulée."
 
-#: src/Admin/manage-event-ext/GroupRules.js:428
+#: src/Admin/manage-event-ext/GroupRules.js:429
 msgid "Some rules could not be removed; the ones still listed remain. Try again."
 msgstr "Certaines règles n'ont pas pu être supprimées ; celles toujours listées restent. Réessayez."
 
 #. translators: %s: group name
-#: src/Admin/manage-event-ext/GroupRules.js:439
+#: src/Admin/manage-event-ext/GroupRules.js:440
 #, js-format
 msgid "Rules for %s removed."
 msgstr "Règles pour %s supprimées."
 
-#: src/Admin/manage-event-ext/GroupRules.js:448
+#: src/Admin/manage-event-ext/GroupRules.js:449
 msgid "The group rules could not be removed. Try again."
 msgstr "Les règles du groupe n'ont pas pu être supprimées. Réessayez."
 
 #. translators: %s: group name
-#: src/Admin/manage-event-ext/GroupRules.js:464
+#: src/Admin/manage-event-ext/GroupRules.js:465
 #, js-format
 msgid "Remove group rules — %s"
 msgstr "Supprimer les règles du groupe — %s"
 
-#: src/Admin/manage-event-ext/GroupRules.js:470
+#: src/Admin/manage-event-ext/GroupRules.js:471
 msgid "Remove rules"
 msgstr "Supprimer les règles"
 
-#: src/Admin/manage-event-ext/GroupRules.js:485
+#: src/Admin/manage-event-ext/GroupRules.js:486
 msgid "These rules for this event date are removed:"
 msgstr "Ces règles pour cette date d'événement sont supprimées :"
 
 #. translators: %s: discount, e.g. "10%" or "€5.00"
-#: src/Admin/manage-event-ext/GroupRules.js:495
+#: src/Admin/manage-event-ext/GroupRules.js:496
 #, js-format
 msgid "Discount: %s"
 msgstr "Réduction : %s"
 
-#: src/Admin/manage-event-ext/GroupRules.js:515
+#: src/Admin/manage-event-ext/GroupRules.js:516
 msgid "Its members no longer get this discount or these permissions for this date. The group and its members are not changed."
 msgstr "Ses membres n'obtiennent plus cette réduction ou ces permissions pour cette date. Le groupe et ses membres ne sont pas modifiés."
 
@@ -3086,4 +3087,3 @@ msgstr "Instagram n'est pas connecté. Activez Instagram dans Fair Events → Pa
 #: src/Services/InstagramConnection.php:128
 msgid "The Instagram account is not known. Connect again in Fair Events → Instagram."
 msgstr "Le compte Instagram n'est pas reconnu. Connectez-vous à nouveau dans Fair Events → Instagram."
-

@@ -281,17 +281,17 @@ msgstr "Usunięto %d starych dzienników połączeń Instagram."
 msgid "You do not have permission to view Instagram connection logs."
 msgstr "Nie masz uprawnień do przeglądania dzienników połączeń Instagram."
 
-#: src/Core/Plugin.php:1419
-#: src/Core/Plugin.php:1443
-#: src/Core/Plugin.php:1467
+#: src/Core/Plugin.php:1470
+#: src/Core/Plugin.php:1494
+#: src/Core/Plugin.php:1518
 msgid "Fair Platform:"
 msgstr "Fair Platform:"
 
-#: src/Core/Plugin.php:1444
+#: src/Core/Plugin.php:1495
 msgid "Mollie OAuth credentials not configured. Please add MOLLIE_CLIENT_ID and MOLLIE_CLIENT_SECRET to wp-config.php"
 msgstr "Poświadczenia OAuth Mollie nie są skonfigurowane. Dodaj MOLLIE_CLIENT_ID i MOLLIE_CLIENT_SECRET do wp-config.php"
 
-#: src/Core/Plugin.php:1468
+#: src/Core/Plugin.php:1519
 msgid "Mollie PHP library not installed. Please run: composer require mollie/mollie-api-php"
 msgstr "Biblioteka Mollie PHP nie jest zainstalowana. Uruchom: composer require mollie/mollie-api-php"
 
@@ -568,31 +568,30 @@ msgstr[2] "%1$s zawierają przestarzałe kopie wspólnej biblioteki Fair Event P
 msgid "Page %1$d of %2$d"
 msgstr "Strona %1$d z %2$d"
 
-#: src/Core/Plugin.php:1221
+#: src/Core/Plugin.php:1272
 msgid "Instagram connections are not configured on this service yet. Try again later."
 msgstr "Połączenia z Instagramem nie są jeszcze skonfigurowane na tej usłudze. Spróbuj ponownie później."
 
-#: src/Core/Plugin.php:1231
+#: src/Core/Plugin.php:1282
 msgid "This site uses the retired Instagram connection. Update Fair Events Experimental, then connect again from Fair Events → Instagram."
 msgstr "Ta witryna używa wycofanego połączenia z Instagramem. Zaktualizuj Fair Events Experimental, a następnie połącz się ponownie z Fair Events → Instagram."
 
-#: src/Core/Plugin.php:1232
+#: src/Core/Plugin.php:1283
 msgid "This Instagram connection request is not valid. Start again from Fair Events → Instagram on your site."
 msgstr "To żądanie połączenia z Instagramem jest nieprawidłowe. Zacznij ponownie z Fair Events → Instagram na twojej witrynie."
 
-#: src/Core/Plugin.php:1240
+#: src/Core/Plugin.php:1291
 msgid "The Instagram connection could not be started. Try again."
 msgstr "Nie można było uruchomić połączenia z Instagramem. Spróbuj ponownie."
 
-#: src/Core/Plugin.php:1273
+#: src/Core/Plugin.php:1324
 msgid "This Instagram authorization expired or was already used. Start again from Fair Events → Instagram on your site."
 msgstr "Ta autoryzacja Instagrama wygasła lub została już użyta. Zacznij ponownie z Fair Events → Instagram na twojej witrynie."
 
-#: src/Core/Plugin.php:1420
+#: src/Core/Plugin.php:1471
 msgid "Instagram connections are not configured. Add META_APP_ID, META_APP_SECRET and META_INSTAGRAM_CONFIG_ID (the Unified Login configuration ID) to wp-config.php; META_GRAPH_VERSION is optional."
 msgstr "Połączenia z Instagramem nie są skonfigurowane. Dodaj META_APP_ID, META_APP_SECRET i META_INSTAGRAM_CONFIG_ID (identyfikator konfiguracji Unified Login) do wp-config.php; META_GRAPH_VERSION jest opcjonalny."
 
 #: src/Admin/instagram-connections/InstagramConnectionsPage.js:89
 msgid "Account choice pending"
 msgstr "Wybór konta oczekuje"
-
