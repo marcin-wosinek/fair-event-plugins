@@ -126,9 +126,10 @@ class Client {
 				continue;
 			}
 			$templates[] = array(
-				'name'     => $name,
-				'language' => $language,
-				'category' => self::text( $template['category'] ?? '' ),
+				'name'        => $name,
+				'language'    => $language,
+				'category'    => self::text( $template['category'] ?? '' ),
+				'button_urls' => self::button_urls( $template ),
 			);
 		}
 		usort(
@@ -320,6 +321,32 @@ class Client {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Links of a parameterless template's static URL buttons.
+	 *
+	 * @param array $template Template as listed by Meta.
+	 * @return string[] Absolute http(s) links, in button order.
+	 */
+	public static function button_urls( array $template ) {
+		$urls = array();
+		foreach ( (array) ( $template['components'] ?? array() ) as $component ) {
+			if ( ! is_array( $component ) || 'BUTTONS' !== strtoupper( (string) ( $component['type'] ?? '' ) ) ) {
+				continue;
+			}
+			foreach ( (array) ( $component['buttons'] ?? array() ) as $button ) {
+				if ( ! is_array( $button ) || 'URL' !== strtoupper( (string) ( $button['type'] ?? '' ) ) ) {
+					continue;
+				}
+				$url    = (string) ( $button['url'] ?? '' );
+				$scheme = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
+				if ( strlen( $url ) <= 2000 && false === strpos( $url, '{{' ) && in_array( $scheme, array( 'http', 'https' ), true ) && wp_parse_url( $url, PHP_URL_HOST ) ) {
+					$urls[] = esc_url_raw( $url, array( 'http', 'https' ) );
+				}
+			}
+		}
+		return array_values( array_filter( $urls ) );
 	}
 
 	/**

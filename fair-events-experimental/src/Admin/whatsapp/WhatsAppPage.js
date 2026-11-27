@@ -25,7 +25,7 @@ export default function WhatsAppPage() {
 			<h1>{ __( 'WhatsApp', 'fair-events-experimental' ) }</h1>
 			<p>
 				{ __(
-					'Connect a WhatsApp Business sender and send a test template. Scheduled WhatsApp notifications are not available yet, so nothing is sent automatically.',
+					'Connect a WhatsApp Business sender and send a test template. Weekly sharing reminders to event feed collaborators are set up in Event notifications → WhatsApp sharing reminders; nothing else is sent automatically.',
 					'fair-events-experimental'
 				) }
 			</p>

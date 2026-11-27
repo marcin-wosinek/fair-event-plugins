@@ -3,7 +3,8 @@
  * Admin Pages for Fair Events Experimental
  *
  * Registers the experimental admin pages (compare events, sources,
- * organizers, team members, Meta, Instagram and WhatsApp) as submenus under the fair-events-calendar
+ * organizers, team members, Meta, Instagram, WhatsApp and its sharing
+ * reminders) as submenus under the fair-events-calendar
  * menu. The experimental
  * settings live in an Experimental tab of the fair-events Settings page; the
  * former standalone settings slug only redirects there.
@@ -169,6 +170,51 @@ class AdminPages {
 				'manage_options',
 				'fair-events-whatsapp',
 				array( $this, 'render_whatsapp_page' )
+			);
+
+			// Sharing reminders (#2136): opened from Event notifications,
+			// which shows its entry only while this page is registered.
+			$this->page_hooks['fair-events-whatsapp-reminders'] = add_submenu_page(
+				'',
+				__( 'WhatsApp sharing reminders', 'fair-events-experimental' ),
+				__( 'WhatsApp sharing reminders', 'fair-events-experimental' ),
+				'manage_options',
+				'fair-events-whatsapp-reminders',
+				array( $this, 'render_whatsapp_reminders_page' )
+			);
+			$this->set_hidden_page_title( $this->page_hooks['fair-events-whatsapp-reminders'], __( 'WhatsApp sharing reminders', 'fair-events-experimental' ) );
+			add_action(
+				'load-' . $this->page_hooks['fair-events-whatsapp-reminders'],
+				static function () {
+					// Highlight Event notifications, where the page is opened
+					// from. Core's get_admin_page_parent() runs after the
+					// parent_file filter and would reset the parent to the
+					// hidden menu, so the entry leaves that menu here, once
+					// WordPress has checked access to the page.
+					global $submenu;
+					if ( isset( $submenu[''] ) ) {
+						$submenu[''] = array_values( // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+							array_filter(
+								$submenu[''],
+								static function ( $item ) {
+									return 'fair-events-whatsapp-reminders' !== ( $item[2] ?? '' );
+								}
+							)
+						);
+					}
+					add_filter(
+						'parent_file',
+						static function () {
+							return 'fair-events-calendar';
+						}
+					);
+					add_filter(
+						'submenu_file',
+						static function () {
+							return 'fair-events-event-notifications';
+						}
+					);
+				}
 			);
 		}
 	}
@@ -455,6 +501,32 @@ class AdminPages {
 				wp_set_script_translations( 'fair-events-whatsapp', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
 				wp_enqueue_style( 'wp-components' );
 				break;
+
+			case 'fair-events-whatsapp-reminders':
+				$asset_file = include $exp_dir . 'build/admin/whatsapp-reminders/index.asset.php';
+				wp_enqueue_script(
+					'fair-events-whatsapp-reminders',
+					$exp_url . 'build/admin/whatsapp-reminders/index.js',
+					$asset_file['dependencies'],
+					$asset_file['version'],
+					array(
+						'in_footer' => true,
+						'strategy'  => 'defer',
+					)
+				);
+				wp_localize_script(
+					'fair-events-whatsapp-reminders',
+					'fairEventsWhatsAppRemindersData',
+					array(
+						'notificationsUrl' => admin_url( 'admin.php?page=fair-events-event-notifications' ),
+						'teamMembersUrl'   => \FairEventsExperimental\Core\Plugin::team_members_available() ? admin_url( 'admin.php?page=fair-events-team-members' ) : null,
+						'sourcesUrl'       => \FairEventsExperimental\Core\Features::is_enabled( 'sources' ) ? admin_url( 'admin.php?page=fair-events-sources' ) : null,
+					)
+				);
+				wp_set_script_translations( 'fair-events-whatsapp-reminders', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
+				// The shared admin table styles are bundled from fair-events-shared.
+				wp_enqueue_style( 'fair-events-whatsapp-reminders', $exp_url . 'build/admin/whatsapp-reminders/style-index.css', array( 'wp-components' ), $asset_file['version'] );
+				break;
 		}
 	}
 
@@ -580,6 +652,17 @@ class AdminPages {
 	public function render_instagram_page() {
 		?>
 		<div id="fair-events-instagram-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render the WhatsApp sharing reminders page.
+	 *
+	 * @return void
+	 */
+	public function render_whatsapp_reminders_page() {
+		?>
+		<div id="fair-events-whatsapp-reminders-root"></div>
 		<?php
 	}
 

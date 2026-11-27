@@ -22,6 +22,7 @@ import ConfigurationView from './ConfigurationView.js';
 import HistoryView from './HistoryView.js';
 import NotificationList from './NotificationList.js';
 import SaleAlertsSection from './SaleAlertsSection.js';
+import WhatsAppRemindersEntry from './WhatsAppRemindersEntry.js';
 import { DraftsContext, useDraftStore } from './drafts.js';
 import { linkTo, useLocationState } from './navigation.js';
 import {
@@ -89,10 +90,14 @@ export function mergeRead( current, read, requested, saved, deleted = {} ) {
  * about.
  *
  * @param {Object}      props
- * @param {string|null} props.sourcesUrl Event Sources admin page, when it exists.
+ * @param {string|null} props.sourcesUrl           Event Sources admin page, when it exists.
+ * @param {string|null} props.whatsappRemindersUrl WhatsApp sharing reminders page, when it exists.
  * @return {JSX.Element} The page.
  */
-export default function EventNotifications( { sourcesUrl } ) {
+export default function EventNotifications( {
+	sourcesUrl,
+	whatsappRemindersUrl = null,
+} ) {
 	const [ data, setData ] = useState( null );
 	const [ loadError, setLoadError ] = useState( null );
 	const [ location, navigate ] = useLocationState();
@@ -387,6 +392,9 @@ export default function EventNotifications( { sourcesUrl } ) {
 					onAdd={ goToAdd }
 				/>
 				<AddNotification types={ data.types } onAdded={ onAdded } />
+				{ whatsappRemindersUrl && (
+					<WhatsAppRemindersEntry url={ whatsappRemindersUrl } />
+				) }
 				<SaleAlertsSection />
 				<p className="description">
 					{ __(

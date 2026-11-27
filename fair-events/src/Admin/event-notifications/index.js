@@ -30,6 +30,10 @@ domReady( () => {
 				sourcesUrl={
 					window.fairEventsEventNotificationsData?.sourcesUrl || null
 				}
+				whatsappRemindersUrl={
+					window.fairEventsEventNotificationsData
+						?.whatsappRemindersUrl || null
+				}
 			/>
 		);
 	}

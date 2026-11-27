@@ -24,6 +24,11 @@
  *   is business 700000000000007. A token containing `nobusiness` gets error
  *   200 for the owner only, and one containing `noapp` for `/app` only.
  * - Sending to a number ending in 131030 gets "recipient not in allowed list".
+ * - A spec can store extra approved templates, as Meta lists them (e.g. with
+ *   a static URL button), in the `fair_e2e_whatsapp_extra_templates`
+ *   option; they are listed after the canned ones. A spec storing
+ *   `{templates_error: true}` in `fair_e2e_whatsapp_response` makes the
+ *   template list fail like a Meta outage (HTTP 500).
  *
  * Each request is appended to the `fair_e2e_whatsapp_requests` option as
  * method, path and, for sends, the recipient and template. The token is
@@ -236,63 +241,71 @@ add_filter(
 		}
 
 		if ( 'GET' === $method && "$waba/message_templates" === $path ) {
+			$override = get_option( 'fair_e2e_whatsapp_response', null );
+			if ( is_array( $override ) && ! empty( $override['templates_error'] ) ) {
+				return fair_e2e_whatsapp_error( 500, 2 );
+			}
+			$extra = get_option( 'fair_e2e_whatsapp_extra_templates', array() );
 			return fair_e2e_whatsapp_answer(
 				200,
 				array(
-					'data' => array(
+					'data' => array_merge(
 						array(
-							'name'       => 'hello_world',
-							'language'   => 'en_US',
-							'status'     => 'APPROVED',
-							'category'   => 'UTILITY',
-							'components' => array(
-								array(
-									'type'   => 'HEADER',
-									'format' => 'TEXT',
-									'text'   => 'Hello World',
+							array(
+								'name'       => 'hello_world',
+								'language'   => 'en_US',
+								'status'     => 'APPROVED',
+								'category'   => 'UTILITY',
+								'components' => array(
+									array(
+										'type'   => 'HEADER',
+										'format' => 'TEXT',
+										'text'   => 'Hello World',
+									),
+									array(
+										'type' => 'BODY',
+										'text' => 'Welcome and congratulations!',
+									),
 								),
-								array(
-									'type' => 'BODY',
-									'text' => 'Welcome and congratulations!',
+							),
+							array(
+								'name'       => 'event_reminder',
+								'language'   => 'en_US',
+								'status'     => 'APPROVED',
+								'category'   => 'UTILITY',
+								'components' => array(
+									array(
+										'type' => 'BODY',
+										'text' => 'See you at {{1}}',
+									),
+								),
+							),
+							array(
+								'name'       => 'poster',
+								'language'   => 'en_US',
+								'status'     => 'APPROVED',
+								'category'   => 'MARKETING',
+								'components' => array(
+									array(
+										'type'   => 'HEADER',
+										'format' => 'IMAGE',
+									),
+								),
+							),
+							array(
+								'name'       => 'event_ready',
+								'language'   => 'es_ES',
+								'status'     => 'APPROVED',
+								'category'   => 'UTILITY',
+								'components' => array(
+									array(
+										'type' => 'BODY',
+										'text' => 'Tu evento está listo.',
+									),
 								),
 							),
 						),
-						array(
-							'name'       => 'event_reminder',
-							'language'   => 'en_US',
-							'status'     => 'APPROVED',
-							'category'   => 'UTILITY',
-							'components' => array(
-								array(
-									'type' => 'BODY',
-									'text' => 'See you at {{1}}',
-								),
-							),
-						),
-						array(
-							'name'       => 'poster',
-							'language'   => 'en_US',
-							'status'     => 'APPROVED',
-							'category'   => 'MARKETING',
-							'components' => array(
-								array(
-									'type'   => 'HEADER',
-									'format' => 'IMAGE',
-								),
-							),
-						),
-						array(
-							'name'       => 'event_ready',
-							'language'   => 'es_ES',
-							'status'     => 'APPROVED',
-							'category'   => 'UTILITY',
-							'components' => array(
-								array(
-									'type' => 'BODY',
-									'text' => 'Tu evento está listo.',
-								),
-							),
-						),
+						is_array( $extra ) ? array_values( $extra ) : array()
 					),
 				)
 			);

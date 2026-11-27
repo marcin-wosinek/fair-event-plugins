@@ -37,6 +37,7 @@ class Cron {
 		\FairEventsExperimental\Meta\Conversions::DELIVERY_HOOK,
 		\FairEventsExperimental\Meta\Conversions::CLEANUP_HOOK,
 		\FairEventsExperimental\WhatsApp\Deliveries::CLEANUP_HOOK,
+		\FairEventsExperimental\WhatsApp\ReminderSchedule::HOOK,
 		\FairEventsExperimental\Instagram\Connection::REFRESH_HOOK,
 		// Cron event of the former weekly notification sender.
 		'fair_events_experimental_weekly_notification',
